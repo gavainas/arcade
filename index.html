@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEON ARCADE · Minijuegos</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:48px 20px 80px; overflow-x:hidden;
+  }
+  /* grilla de fondo sutil */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; max-width:980px; margin:0 auto;}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(40px,9vw,76px); font-weight:900; letter-spacing:4px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite;
+    filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:10px; color:var(--pink); font-weight:600; letter-spacing:6px; font-size:13px;}
+  .tagline{margin-top:8px; color:var(--muted); font-size:14px;}
+
+  .grid{
+    margin-top:42px; display:grid; gap:22px;
+    grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+  }
+  .card{
+    position:relative; display:flex; flex-direction:column; border-radius:18px; overflow:hidden;
+    background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7));
+    border:1px solid rgba(138,75,255,.3);
+    box-shadow:0 10px 30px rgba(0,0,0,.45);
+    text-decoration:none; color:inherit; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .card.live:hover{
+    transform:translateY(-6px);
+    border-color:var(--cyan);
+    box-shadow:0 16px 40px rgba(0,0,0,.55), 0 0 30px rgba(39,232,255,.3);
+  }
+  .thumb{
+    height:150px; display:flex; align-items:center; justify-content:center; position:relative;
+    background:radial-gradient(circle at 50% 40%, rgba(39,232,255,.12), transparent 70%),
+              linear-gradient(180deg,#0a1024,#05070f);
+    font-size:74px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5));
+  }
+  .thumb .glyph{animation:float 4s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .body{padding:16px 18px 20px;}
+  .title{font-size:19px; font-weight:800; letter-spacing:.5px;}
+  .desc{margin-top:6px; font-size:13px; color:var(--muted); line-height:1.45; min-height:36px;}
+  .row{margin-top:14px; display:flex; align-items:center; justify-content:space-between;}
+  .tag{font-size:11px; letter-spacing:1px; padding:4px 10px; border-radius:999px; font-weight:700;}
+  .tag.new{color:#031018; background:var(--green);}
+  .tag.soon{color:var(--muted); background:rgba(127,166,200,.15); border:1px solid rgba(127,166,200,.25);}
+  .play{font-size:13px; font-weight:800; color:var(--cyan); letter-spacing:.5px;}
+
+  .card.soon{filter:grayscale(.4) opacity(.65); border-style:dashed;}
+  .card.soon .thumb{font-size:54px; color:var(--muted); filter:none;}
+
+  footer{margin-top:54px; text-align:center; color:var(--muted); font-size:12px; line-height:1.7;}
+  footer a{color:var(--cyan); text-decoration:none;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <header>
+      <div class="logo">NEON ARCADE</div>
+      <div class="sub">M I N I J U E G O S</div>
+      <div class="tagline">Una colección de juegos hechos para jugar en el navegador.</div>
+    </header>
+
+    <main class="grid" id="grid">
+      <!-- Juego activo -->
+      <a class="card live" href="knight-quest.html">
+        <div class="thumb"><span class="glyph">♞</span></div>
+        <div class="body">
+          <div class="title">Knight Quest</div>
+          <div class="desc">Saltá en L, esquivá a las piezas de ajedrez que te persiguen y subí lo más alto posible.</div>
+          <div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div>
+        </div>
+      </a>
+
+      <!-- Slots para próximos juegos -->
+      <div class="card soon">
+        <div class="thumb"><span class="glyph">✦</span></div>
+        <div class="body">
+          <div class="title">Próximamente</div>
+          <div class="desc">El siguiente minijuego está en construcción.</div>
+          <div class="row"><span class="tag soon">EN OBRA</span></div>
+        </div>
+      </div>
+      <div class="card soon">
+        <div class="thumb"><span class="glyph">✦</span></div>
+        <div class="body">
+          <div class="title">Próximamente</div>
+          <div class="desc">El siguiente minijuego está en construcción.</div>
+          <div class="row"><span class="tag soon">EN OBRA</span></div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      Hecho con ♥ y mucho neón · <span id="count"></span><br>
+      Más juegos en camino.
+    </footer>
+  </div>
+
+<script>
+  // Contador automático de juegos disponibles
+  const live = document.querySelectorAll('.card.live').length;
+  document.getElementById('count').textContent = live + (live===1?' juego disponible':' juegos disponibles');
+</script>
+</body>
+</html>
