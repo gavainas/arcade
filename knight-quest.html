@@ -30,110 +30,246 @@
 </head>
 <body>
   <div id="wrap"><canvas id="game" width="420" height="680"></canvas></div>
-  <div class="hint">Salta en <b>L</b> (clic o teclas <b>1-4</b>). Tras cada salto los enemigos <b>avanzan</b> como en ajedrez. Nunca caigas en una casilla <span class="r">roja</span>: te comerían.</div>
+  <div class="hint">Saltá en <b>L</b> (clic o teclas <b>1-4</b>). Tras cada salto los enemigos <b>avanzan</b> como en ajedrez. Nunca caigas en una casilla <span class="r">roja</span>: te comerían.</div>
 
 <script>
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
-const COLS = 6;
-const CELL = W / COLS;
-const CENTER_Y = H * 0.62;
 const KNIGHT_OFFS = [[1,2],[-1,2],[1,-2],[-1,-2],[2,1],[-2,1],[2,-1],[-2,-1]];
 
 // ---- Terreno ----
-const EMPTY=0, GEM=1, BLOCK=2;
-let terrain = {};                 // "c,r" -> EMPTY|GEM|BLOCK
-let topGenerated = -1;
-
-// ---- Enemigos (piezas de ajedrez) ----
-const PAWN='P', ROOK='R', BISHOP='B', QUEEN='Q';
-const GLYPH = {P:'♟', R:'♜', B:'♝', Q:'♛'};
+const EMPTY=0, GEM=1, BLOCK=2, GOAL=3;
+// ---- Piezas ----
+const PAWN='P', ROOK='R', BISHOP='B', QUEEN='Q', KING='K';
+const GLYPH = {P:'♟', R:'♜', B:'♝', Q:'♛', K:'♚'};
+const NAME  = {P:'Peón', R:'Torre', B:'Alfil', Q:'Dama', K:'Rey'};
 const ORTH = [[1,0],[-1,0],[0,1],[0,-1]];
 const DIAG = [[1,1],[1,-1],[-1,1],[-1,-1]];
 const ALL8 = ORTH.concat(DIAG);
-let enemies = [];                 // {c,r,pc,pr,type}
-let enemyMap = new Map();         // "c,r" -> enemy
-let threat = new Set();           // casillas amenazadas "c,r"
 
-let state='menu';
+// ================= NIVELES DISEÑADOS =================
+// Leyenda:  . vacío   # roca   o gema   ^ meta   N inicio del caballo
+//           P R B Q K = peón/torre/alfil/dama/rey enemigos
+const LEVELS = [
+  {
+    name:"Primeros pasos", rise:0, moves:0,
+    desc:"Aprendé el salto en L. Llegá a la meta ✦.",
+    goal:[{type:'reach'}],
+    grid:[
+      ". . ^ . .",
+      ". . . . .",
+      ". o . o .",
+      ". . . . .",
+      ". . . . .",
+      ". . . . .",
+      ". . N . .",
+    ]
+  },
+  {
+    name:"Cacería de alfiles", rise:0, moves:0,
+    desc:"Cazá a los 2 alfiles cayendo encima de ellos.",
+    goal:[{type:'capture', piece:'B', count:2}],
+    grid:[
+      ". . . . . .",
+      ". . . B . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". B . . . .",
+      ". . . . . .",
+      ". . N . . .",
+    ]
+  },
+  {
+    name:"Coleccionista", rise:0, moves:0,
+    desc:"Juntá todas las gemas. Cuidado con la torre.",
+    goal:[{type:'gems'}],
+    grid:[
+      ". o . . o .",
+      ". . . . . .",
+      ". . R . . .",
+      "o . . . o .",
+      ". . . . . .",
+      ". . . . . .",
+      ". . N . . .",
+    ]
+  },
+  {
+    name:"Regicidio", rise:0, moves:0,
+    desc:"Capturá al Rey ♚. Su escolta lo protege.",
+    goal:[{type:'king'}],
+    grid:[
+      ". . K . . .",
+      ". P . P . .",
+      ". . . . . .",
+      ". . . R . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". . N . . .",
+    ]
+  },
+  {
+    name:"Supervivencia", rise:0.16, moves:0,
+    desc:"Aguantá 15 turnos. La ola sube y los peones marchan.",
+    goal:[{type:'survive', turns:15}],
+    grid:[
+      ". . . . . .",
+      ". . . . . .",
+      ". P . . P .",
+      ". . . . . .",
+      ". . P . . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". . N . . .",
+    ]
+  },
+];
+
+// ================= ESTADO =================
+let COLS=6, ROWS=Infinity, CELL=W/6, originX=0, originY=0, scrolling=true;
+let terrain={}, topGenerated=-1;
+let enemies=[], enemyMap=new Map(), threat=new Set();
+let mode='arcade';            // 'arcade' | 'campaign'
+let levelIdx=0, level=null;
+let state='menu';             // menu | levelselect | playing | dying | over | won
 let knight, camY, dangerRow, dangerSpeed, score, best=0, height, elapsed;
+let record=0, newRecord=false;
+try{ record=+(localStorage.getItem('kq_record')||0)||0; }catch(e){}
 let moving=null, pending=null, enemyAnim={t:1}, death=null;
 let validMoves=[];
 let particles=[], shake=0, flash=0, bgScroll=0, killer=null;
+let caps, gemsTotal, gemsCollected, turns, reached;   // objetivos
+let uiButtons=[];
 
 function rnd(n){ return Math.floor(Math.random()*n); }
 function key(c,r){ return c+','+r; }
 function cheby(c,r,o){ return Math.max(Math.abs(c-o.c),Math.abs(r-o.r)); }
+function inBoard(c,r){ return c>=0&&c<COLS && (scrolling ? r>0 : (r>=0&&r<ROWS)); }
 
-// ---- Generación ----
+// ---- Coordenadas pantalla ----
+function sx(c){ return originX + c*CELL; }
+function sy(r){ return scrolling ? CENTER_Y-(r-camY)*CELL : originY+(ROWS-1-r)*CELL; }
+const CENTER_Y = H*0.60;
+function cx(c){ return sx(c)+CELL/2; }
+function cy(r){ return sy(r)+CELL/2; }
+function clickCell(px,py){
+  const c=Math.floor((px-originX)/CELL);
+  let r;
+  if(scrolling) r=Math.ceil(camY+(CENTER_Y-py)/CELL);
+  else r=ROWS-1-Math.floor((py-originY)/CELL);
+  return {c,r};
+}
+
+// ================= ARCADE (procedural) =================
+function terr(c,r){ const v=terrain[key(c,r)]; return v===undefined?EMPTY:v; }
 function genRow(row){
-  if(row<=topGenerated) return;
+  if(!scrolling || row<=topGenerated) return;
   for(let r=topGenerated+1; r<=row; r++){
     if(r<6){ for(let c=0;c<COLS;c++) terrain[key(c,r)]=EMPTY; continue; }
     const diff = Math.min(1, r/450);
     let blocks=0;
     for(let c=0;c<COLS;c++){
       let t=EMPTY, roll=Math.random();
-      if(roll < 0.14 && blocks<2){ t=BLOCK; blocks++; }
-      else if(roll < 0.42){ t=GEM; }
+      if(roll<0.14 && blocks<2){ t=BLOCK; blocks++; }
+      else if(roll<0.42){ t=GEM; }
       terrain[key(c,r)]=t;
     }
-    // colocar enemigos
-    let n = (Math.random() < 0.35+diff*0.4 ? 1 : 0) + (Math.random() < diff*0.45 ? 1 : 0);
+    let n=(Math.random()<0.35+diff*0.4?1:0)+(Math.random()<diff*0.45?1:0);
     for(let k=0;k<n;k++){
-      let c = rnd(COLS);
-      if(terrain[key(c,r)]===BLOCK) continue;
-      if(enemyMap.has(key(c,r))) continue;
-      const e = {c, r, pc:c, pr:r, type:pickType(diff)};
-      enemies.push(e); enemyMap.set(key(c,r), e);
-      if(terrain[key(c,r)]===GEM) terrain[key(c,r)]=EMPTY;
+      if(enemies.length>=5) break;          // máximo 5 piezas a la vez
+      let c=rnd(COLS);
+      if(terr(c,r)===BLOCK || enemyMap.has(key(c,r))) continue;
+      const e={c,r,pc:c,pr:r,type:pickType(diff)};
+      enemies.push(e); enemyMap.set(key(c,r),e);
+      if(terr(c,r)===GEM) terrain[key(c,r)]=EMPTY;
     }
   }
-  topGenerated = row;
+  topGenerated=row;
 }
 function pickType(diff){
-  const roll=Math.random();
-  if(diff>0.70 && roll<0.06) return QUEEN;   // ~r>315, muy rara
-  if(diff>0.45 && roll<0.18) return ROOK;    // ~r>200
-  if(diff>0.30 && roll<0.30) return BISHOP;  // ~r>135
-  return PAWN;                                // dominante al inicio
+  const r=Math.random();
+  if(diff>0.45 && r<0.10) return QUEEN;    // ~r>200, la más letal
+  if(diff>0.30 && r<0.22) return KING;     // ~r>135
+  if(diff>0.12 && r<0.42) return ROOK;     // ~r>55
+  if(r<0.60) return BISHOP;                // desde el arranque, mezclado
+  return PAWN;
 }
-function terr(c,r){ const v=terrain[key(c,r)]; return v===undefined?EMPTY:v; }
 
-// ---- Amenazas ----
-function markThreat(c,r){ if(c>=0&&c<COLS) threat.add(key(c,r)); }
+// ================= NIVEL DISEÑADO =================
+function loadLevel(idx){
+  level=LEVELS[idx]; levelIdx=idx; mode='campaign'; scrolling=false;
+  const rows=level.grid.map(s=>s.replace(/\s+/g,'').split(''));
+  ROWS=rows.length; COLS=rows[0].length;
+  terrain={}; enemies=[]; enemyMap.clear(); gemsTotal=0;
+  let start={c:Math.floor(COLS/2), r:0};
+  for(let gi=0; gi<ROWS; gi++){
+    const r=ROWS-1-gi;               // fila de arriba del grid = r alta
+    for(let c=0;c<COLS;c++){
+      const ch=rows[gi][c]; let t=EMPTY;
+      if(ch==='#') t=BLOCK;
+      else if(ch==='o') { t=GEM; gemsTotal++; }
+      else if(ch==='^') t=GOAL;
+      else if(ch==='N') start={c,r};
+      else if(GLYPH[ch]){ const e={c,r,pc:c,pr:r,type:ch}; enemies.push(e); enemyMap.set(key(c,r),e); }
+      terrain[key(c,r)]=t;
+    }
+  }
+  // encuadre estático que muestra todo el tablero
+  const padTop=92, padBot=24, padX=16;
+  CELL=Math.floor(Math.min((W-padX*2)/COLS, (H-padTop-padBot)/ROWS));
+  originX=Math.round((W-COLS*CELL)/2);
+  originY=Math.round(padTop+((H-padTop-padBot)-ROWS*CELL)/2);
+  knight={c:start.c, r:start.r};
+  dangerRow = level.rise>0 ? -1.4 : -999;
+  startCommon();
+}
+function startArcade(){
+  mode='arcade'; scrolling=true; level=null;
+  COLS=6; ROWS=Infinity; CELL=W/6; originX=0; originY=0;
+  terrain={}; enemies=[]; enemyMap.clear(); topGenerated=-1; gemsTotal=0;
+  knight={c:2,r:3}; genRow(22);
+  dangerRow=-4;
+  startCommon();
+}
+function startCommon(){
+  camY=knight.r;
+  killer=null; score=0; height=knight.r; elapsed=0; turns=0; reached=false;
+  caps={P:0,R:0,B:0,Q:0,K:0}; gemsCollected=0;
+  moving=null; pending=null; enemyAnim={t:1}; death=null;
+  particles=[]; shake=0; flash=0; dangerSpeed=0.45;
+  rebuildEnemyMap(); computeThreats(); computeMoves();
+  state='playing';
+}
+
+// ================= AMENAZAS =================
+function markThreat(c,r){ if(inBoard(c,r)) threat.add(key(c,r)); }
 function computeThreats(){
   threat.clear();
   for(const e of enemies){
-    if(Math.abs(e.r-knight.r)>15) continue;
-    if(e.type===PAWN){
-      markThreat(e.c-1, e.r-1); markThreat(e.c+1, e.r-1);  // peón ataca diagonal hacia abajo
-      continue;
-    }
+    if(scrolling && Math.abs(e.r-knight.r)>15) continue;
+    if(e.type===PAWN){ markThreat(e.c-1,e.r-1); markThreat(e.c+1,e.r-1); continue; }
+    if(e.type===KING){ for(const [dc,dr] of ALL8) markThreat(e.c+dc,e.r+dr); continue; }
     const dirs = e.type===ROOK?ORTH : e.type===BISHOP?DIAG : ALL8;
     for(const [dc,dr] of dirs){
       let c=e.c+dc, r=e.r+dr, steps=0;
-      while(steps<13 && c>=0 && c<COLS){
+      while(steps<13 && inBoard(c,r)){
         markThreat(c,r);
-        if(terr(c,r)===BLOCK) break;
-        if(enemyMap.has(key(c,r))) break;   // bloqueado por otra pieza (casilla = defendida)
+        if(terr(c,r)===BLOCK || enemyMap.has(key(c,r))) break;
         c+=dc; r+=dr; steps++;
       }
     }
   }
 }
-
-function findAttacker(tc,tr){   // qué pieza amenaza la casilla (tc,tr)
+function findAttacker(tc,tr){
   for(const e of enemies){
-    if(e.type===PAWN){
-      if(tr===e.r-1 && (tc===e.c-1||tc===e.c+1)) return e;
-      continue;
-    }
+    if(e.type===PAWN){ if(tr===e.r-1 && (tc===e.c-1||tc===e.c+1)) return e; continue; }
+    if(e.type===KING){ if(cheby(tc,tr,e)===1) return e; continue; }
     const dirs = e.type===ROOK?ORTH : e.type===BISHOP?DIAG : ALL8;
     for(const [dc,dr] of dirs){
       let c=e.c+dc, r=e.r+dr, steps=0;
-      while(steps<13 && c>=0 && c<COLS){
+      while(steps<13 && inBoard(c,r)){
         if(c===tc && r===tr) return e;
         if(terr(c,r)===BLOCK || enemyMap.has(key(c,r))) break;
         c+=dc; r+=dr; steps++;
@@ -143,140 +279,122 @@ function findAttacker(tc,tr){   // qué pieza amenaza la casilla (tc,tr)
   return null;
 }
 
-// ---- Movimientos válidos del caballo ----
+// ================= MOVIMIENTOS =================
 function computeMoves(){
   validMoves=[];
   for(const [dc,dr] of KNIGHT_OFFS){
     const c=knight.c+dc, r=knight.r+dr;
     if(c<0||c>=COLS) continue;
+    if(!scrolling && (r<0||r>=ROWS)) continue;
     if(r<=Math.ceil(dangerRow)) continue;
-    genRow(r);
+    if(scrolling) genRow(r);
     if(terr(c,r)===BLOCK) continue;
-    validMoves.push({c, r, threatened:threat.has(key(c,r)), capture:enemyMap.has(key(c,r))});
+    validMoves.push({c,r,threatened:threat.has(key(c,r)),capture:enemyMap.has(key(c,r))});
   }
-  validMoves.sort((a,b)=> (b.r-a.r) || (a.c-b.c));
+  validMoves.sort((a,b)=> (b.r-a.r)||(a.c-b.c));
 }
 
-// ---- Avance de los enemigos (estilo ajedrez) ----
+// ================= AVANCE ENEMIGOS =================
+function rebuildEnemyMap(){ enemyMap.clear(); for(const e of enemies) enemyMap.set(key(e.c,e.r),e); }
 function advanceEnemies(){
   enemyAnim={t:0};
-  // limpiar mapa para recolocar
   for(const e of enemies){ e.pc=e.c; e.pr=e.r; }
-  // recalcular ocupación mientras se mueven, secuencialmente
-  enemyMap.clear();
-  for(const e of enemies) enemyMap.set(key(e.c,e.r), e);
-
-  const free=(c,r)=> c>=0&&c<COLS&&r>0 && terr(c,r)!==BLOCK && !enemyMap.has(key(c,r)) && !(c===knight.c&&r===knight.r);
+  rebuildEnemyMap();
+  const free=(c,r)=> inBoard(c,r) && terr(c,r)!==BLOCK && !enemyMap.has(key(c,r)) && !(c===knight.c&&r===knight.r);
   for(const e of enemies){
     enemyMap.delete(key(e.c,e.r));
     let dest=null;
     if(e.type===PAWN){
-      if(free(e.c, e.r-1)) dest={c:e.c, r:e.r-1};   // peón avanza recto hacia abajo
+      if(free(e.c,e.r-1)) dest={c:e.c,r:e.r-1};
     } else {
-      const dirs = e.type===ROOK?ORTH : e.type===BISHOP?DIAG : ALL8;
+      const dirs = e.type===ROOK?ORTH : e.type===BISHOP?DIAG : ALL8;  // dama/rey = ALL8 (1 paso)
       let bestD=Infinity;
-      for(const [dc,dr] of dirs){                    // elige el paso legal que más lo acerca
+      for(const [dc,dr] of dirs){
         const c=e.c+dc, r=e.r+dr;
         if(!free(c,r)) continue;
+        if(scrolling && r>e.r) continue;     // arcade: no trepan hacia arriba
         const d=cheby(c,r,knight);
         if(d<bestD){ bestD=d; dest={c,r}; }
       }
     }
-    if(dest){ e.c=dest.c; e.r=dest.r; }              // se mueve siempre que tenga un paso legal
-    enemyMap.set(key(e.c,e.r), e);
+    if(dest){ e.c=dest.c; e.r=dest.r; }
+    enemyMap.set(key(e.c,e.r),e);
   }
-  // limpiar enemigos engullidos por el vacío o muy lejos
-  enemies = enemies.filter(e=> e.r>dangerRow-1 && e.r>camY-12);
+  enemies=enemies.filter(e=> e.r>dangerRow-1 && (scrolling? e.r>camY-12 : true));
   rebuildEnemyMap();
 }
-function rebuildEnemyMap(){ enemyMap.clear(); for(const e of enemies) enemyMap.set(key(e.c,e.r), e); }
 
-// ---- Acción del jugador ----
+// ================= OBJETIVOS =================
+function goalDone(g){
+  if(g.type==='capture') return caps[g.piece]>=g.count;
+  if(g.type==='king')    return caps.K>=1;
+  if(g.type==='reach')   return reached;
+  if(g.type==='gems')    return gemsTotal>0 && gemsCollected>=gemsTotal;
+  if(g.type==='survive') return turns>=g.turns;
+  return false;
+}
+function goalText(g){
+  if(g.type==='capture') return GLYPH[g.piece]+' '+Math.min(caps[g.piece],g.count)+'/'+g.count;
+  if(g.type==='king')    return '♚ '+(caps.K>=1?'✓':'—');
+  if(g.type==='reach')   return 'Llegá a la meta ✦';
+  if(g.type==='gems')    return '◆ '+gemsCollected+'/'+gemsTotal;
+  if(g.type==='survive') return '⏱ '+Math.min(turns,g.turns)+'/'+g.turns;
+  return '';
+}
+function allGoalsDone(){ return level && level.goal.every(goalDone); }
+
+// ================= ACCIÓN =================
 function tryMove(c,r){
-  if(state!=='playing' || moving || (enemyAnim.t<1)) return;
-  const m = validMoves.find(v=>v.c===c && v.r===r);
-  if(!m) return;
-  pending = { c, r, fromC:knight.c, fromR:knight.r, threatened:m.threatened,
-              enemy:enemyMap.get(key(c,r))||null, climbed:Math.max(0,r-knight.r) };
-  moving = { fromC:knight.c, fromR:knight.r, toC:c, toR:r, t:0 };
+  if(state!=='playing' || moving || enemyAnim.t<1) return;
+  const m=validMoves.find(v=>v.c===c&&v.r===r); if(!m) return;
+  pending={c,r,fromC:knight.c,fromR:knight.r,threatened:m.threatened,
+           enemy:enemyMap.get(key(c,r))||null, climbed:Math.max(0,r-knight.r)};
+  moving={fromC:knight.c,fromR:knight.r,toC:c,toR:r,t:0};
   knight.c=c; knight.r=r;
 }
 function landKnight(){
-  const p=pending; pending=null;
-  let gain = p.climbed*10;
-  if(p.enemy){ // capturas la pieza al caer encima
-    enemies = enemies.filter(e=>e!==p.enemy); rebuildEnemyMap();
+  const p=pending; pending=null; turns++;
+  let gain=p.climbed*10;
+  if(p.enemy){
+    caps[p.enemy.type]=(caps[p.enemy.type]||0)+1;
+    enemies=enemies.filter(e=>e!==p.enemy); rebuildEnemyMap();
     gain+=120; burst(p.c,p.r,'#ff3b5c',22); shake=9; flash=.45;
   }
-  if(terr(p.c,p.r)===GEM){ terrain[key(p.c,p.r)]=EMPTY; gain+=50; burst(p.c,p.r,'#27e8ff',14); flash=Math.max(flash,.3); }
+  if(terr(p.c,p.r)===GEM){ terrain[key(p.c,p.r)]=EMPTY; gemsCollected++; gain+=50; burst(p.c,p.r,'#27e8ff',14); flash=Math.max(flash,.3); }
+  if(terr(p.c,p.r)===GOAL){ reached=true; }
   if(p.climbed>0) burst(p.fromC,p.fromR,'#8a4bff',8);
   score+=gain;
   if(knight.r>height) height=knight.r;
 
-  if(p.threatened){ killer='¡Capturado!'; return startDeath(findAttacker(p.c,p.r), p.c, p.r); }   // caíste en casilla amenazada
+  if(p.threatened){ killer='¡Capturado!'; return startDeath(findAttacker(p.c,p.r),p.c,p.r); }
 
-  advanceEnemies();
-  computeThreats();
-  computeMoves();
-  if(validMoves.length===0){ killer='Sin salida'; gameOver(); }   // jaque mate
+  advanceEnemies(); computeThreats(); computeMoves();
+
+  if(mode==='campaign'){
+    if(allGoalsDone()){ return levelWon(); }
+    if(level.moves>0 && turns>=level.moves){ killer='Sin movimientos'; return gameOver(); }
+  }
+  if(validMoves.length===0){ killer='Sin salida'; gameOver(); }
 }
+function levelWon(){ state='won'; best=Math.max(best,score); flash=.6; burst(knight.c,knight.r,'#39ff9e',46); }
 
 function burst(c,r,color,n){
-  const x=c*CELL+CELL/2, y=screenY(r)+CELL/2;
+  const x=cx(c), y=cy(r);
   for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=1+Math.random()*4;
     particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1,color}); }
 }
 
-function reset(){
-  terrain={}; enemies=[]; enemyMap.clear(); topGenerated=-1; killer=null;
-  knight={c:2,r:3}; genRow(22);
-  camY=3; dangerRow=-4; dangerSpeed=0.45;
-  score=0; height=3; elapsed=0; moving=null; pending=null; enemyAnim={t:1}; death=null;
-  particles=[]; shake=0; flash=0;
-  computeThreats(); computeMoves();
-}
-
-// ---- Coordenadas ----
-function screenY(row){ return CENTER_Y - (row - camY)*CELL; }
-
-// ---- Bucle ----
-let last=performance.now();
-function loop(now){
-  const dt=Math.min(0.05,(now-last)/1000); last=now;
-  if(state==='playing') update(dt);
-  else if(state==='dying') updateDeath(dt);
-  render(); requestAnimationFrame(loop);
-}
-function update(dt){
-  elapsed+=dt;
-  dangerSpeed = 0.18 + elapsed*0.007;
-  dangerRow += dangerSpeed*dt;
-
-  if(moving){ moving.t+=dt/0.13; if(moving.t>=1){ moving=null; landKnight(); } }
-  if(enemyAnim.t<1){ enemyAnim.t=Math.min(1, enemyAnim.t+dt/0.12); }
-
-  camY += (knight.r - camY) * Math.min(1, dt*7);
-
-  if(knight.r <= dangerRow+0.05 && !moving){ killer='El vacío te alcanzó'; gameOver(); }
-
-  for(const p of particles){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life-=dt*1.6; }
-  particles=particles.filter(p=>p.life>0);
-  if(shake>0) shake=Math.max(0,shake-dt*40);
-  if(flash>0) flash=Math.max(0,flash-dt*2);
-  bgScroll+=dt*7;
-  genRow(Math.ceil(camY)+13);
-}
-function gameOver(){ if(state==='over')return; state='over'; best=Math.max(best,score); shake=14; flash=.6; burst(knight.c,knight.r,'#ff3b5c',40); }
-
-// ---- Secuencia de muerte cinematográfica ----
-function startDeath(atk, c, r){
+// ================= MUERTE =================
+function gameOver(){ if(state==='over')return; state='over'; best=Math.max(best,score);
+  newRecord=false;
+  if(mode==='arcade' && score>record){ record=score; newRecord=true; try{localStorage.setItem('kq_record',record);}catch(e){} }
+  shake=14; flash=.6; burst(knight.c,knight.r,'#ff3b5c',40); }
+function startDeath(atk,c,r){
   state='dying';
-  death={ attacker:atk, phase:'lunge', t:0, lt:0, st:0,
-          lungeDur:0.78, slashDur:0.55,
-          toX:c*CELL+CELL/2, toY:screenY(r)+CELL/2,
-          fromX:atk?atk.c*CELL+CELL/2:c*CELL+CELL/2,
-          fromY:atk?screenY(atk.r)+CELL/2:screenY(r)+CELL/2-90 };
-  if(!atk){ death.phase='slash'; doSlash(); }   // muerte sin atacante: solo tajo
+  death={attacker:atk,phase:'lunge',t:0,lt:0,st:0,lungeDur:0.78,slashDur:0.55,
+         toX:cx(c),toY:cy(r),
+         fromX:atk?cx(atk.c):cx(c), fromY:atk?cy(atk.r):cy(r)-90};
+  if(!atk){ death.phase='slash'; doSlash(); }
 }
 function doSlash(){
   death.slashX=death.toX; death.slashY=death.toY;
@@ -291,113 +409,133 @@ function updateDeath(dt){
   if(shake>0) shake=Math.max(0,shake-dt*40);
   if(flash>0) flash=Math.max(0,flash-dt*2);
   const d=death; d.t+=dt;
-  if(d.phase==='lunge'){
-    d.lt=Math.min(1, d.lt+dt/d.lungeDur);
-    if(d.lt>=1){ d.phase='slash'; doSlash(); }
-  } else if(d.phase==='slash'){
-    d.st=Math.min(1, d.st+dt/d.slashDur);
-    if(d.st>=1) gameOver();
-  }
+  if(d.phase==='lunge'){ d.lt=Math.min(1,d.lt+dt/d.lungeDur); if(d.lt>=1){ d.phase='slash'; doSlash(); } }
+  else if(d.phase==='slash'){ d.st=Math.min(1,d.st+dt/d.slashDur); if(d.st>=1) gameOver(); }
 }
 function easeOutBack(t){ const c1=2.2,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
 
-// ---- Render ----
+// ================= LOOP =================
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  if(state==='playing') update(dt);
+  else if(state==='dying') updateDeath(dt);
+  render(); requestAnimationFrame(loop);
+}
+function update(dt){
+  elapsed+=dt;
+  let speed=0;
+  if(mode==='arcade'){ dangerSpeed=0.18+elapsed*0.007; speed=dangerSpeed; }
+  else if(level.rise>0){ speed=level.rise; }
+  if(speed>0) dangerRow+=speed*dt;
+
+  if(moving){ moving.t+=dt/0.13; if(moving.t>=1){ moving=null; landKnight(); } }
+  if(enemyAnim.t<1) enemyAnim.t=Math.min(1,enemyAnim.t+dt/0.12);
+  if(scrolling) camY += (knight.r-camY)*Math.min(1,dt*7);
+
+  // sobrevivir por tiempo de la ola
+  if(mode==='campaign' && state==='playing' && allGoalsDone()) return levelWon();
+
+  if(knight.r<=dangerRow+0.05 && !moving){ killer = mode==='campaign'?'La ola te alcanzó':'El vacío te alcanzó'; gameOver(); }
+
+  for(const p of particles){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life-=dt*1.6; }
+  particles=particles.filter(p=>p.life>0);
+  if(shake>0) shake=Math.max(0,shake-dt*40);
+  if(flash>0) flash=Math.max(0,flash-dt*2);
+  bgScroll+=dt*7;
+  if(scrolling) genRow(Math.ceil(camY)+13);
+}
+
+// ================= RENDER =================
 function knightPos(){
   if(moving){
-    const e = moving.t<.5 ? 2*moving.t*moving.t : -1+(4-2*moving.t)*moving.t;
-    const c=moving.fromC+(moving.toC-moving.fromC)*e;
-    const r=moving.fromR+(moving.toR-moving.fromR)*e;
-    return {x:c*CELL+CELL/2, y:screenY(r)+CELL/2 - Math.sin(moving.t*Math.PI)*28};
+    const e=moving.t<.5?2*moving.t*moving.t:-1+(4-2*moving.t)*moving.t;
+    const c=moving.fromC+(moving.toC-moving.fromC)*e, r=moving.fromR+(moving.toR-moving.fromR)*e;
+    return {x:cx(c), y:cy(r)-Math.sin(moving.t*Math.PI)*CELL*0.42};
   }
-  return {x:knight.c*CELL+CELL/2, y:screenY(knight.r)+CELL/2};
+  return {x:cx(knight.c), y:cy(knight.r)};
 }
 function enemyPos(e){
   if(enemyAnim.t<1){
     const t=enemyAnim.t, ease=t<.5?2*t*t:-1+(4-2*t)*t;
-    const c=e.pc+(e.c-e.pc)*ease, r=e.pr+(e.r-e.pr)*ease;
-    return {x:c*CELL+CELL/2, y:screenY(r)+CELL/2};
+    return {x:cx(e.pc+(e.c-e.pc)*ease), y:cy(e.pr+(e.r-e.pr)*ease)};
   }
-  return {x:e.c*CELL+CELL/2, y:screenY(e.r)+CELL/2};
+  return {x:cx(e.c), y:cy(e.r)};
 }
-
 function render(){
+  uiButtons=[];
   ctx.save(); ctx.clearRect(0,0,W,H);
   if(shake>0) ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
-
-  drawBoard();
-  if(state!=='menu') drawThreat();
-  drawDanger();
-  if(state==='playing') drawHighlights();
-  if(state!=='menu') drawEnemies();
-  drawParticles();
-  if(state!=='menu') drawKnight();
-  if(state==='dying') drawDeath();
-  drawHUD();
+  if(state!=='menu' && state!=='levelselect'){
+    drawBoard(); drawThreat(); drawDanger();
+    if(state==='playing') drawHighlights();
+    drawEnemies(); drawParticles(); drawKnight();
+    if(state==='dying') drawDeath();
+    drawHUD();
+  }
   ctx.restore();
-
   if(flash>0){ ctx.fillStyle=`rgba(255,255,255,${flash*0.35})`; ctx.fillRect(0,0,W,H); }
   if(state==='menu') drawMenu();
-  if(state==='over') drawOver();
+  else if(state==='levelselect') drawLevelSelect();
+  else if(state==='over') drawOver();
+  else if(state==='won') drawWon();
 }
-
 function drawBoard(){
-  const rTop=Math.ceil(camY+H/CELL)+1, rBot=Math.floor(camY-H/CELL)-1;
-  for(let r=rBot;r<=rTop;r++){
-    const y=screenY(r); if(y<-CELL||y>H+CELL) continue;
+  let rLo,rHi;
+  if(scrolling){ rHi=Math.ceil(camY+H/CELL)+1; rLo=Math.floor(camY-H/CELL)-1; }
+  else { rLo=0; rHi=ROWS-1; }
+  for(let r=rLo;r<=rHi;r++){
+    const y=sy(r); if(y<-CELL||y>H+CELL) continue;
     for(let c=0;c<COLS;c++){
-      const x=c*CELL, dark=(c+r)%2===0;
-      ctx.fillStyle = dark?'rgba(20,28,58,.55)':'rgba(12,18,40,.5)';
+      const x=sx(c), dark=(c+r)%2===0;
+      ctx.fillStyle=dark?'rgba(20,28,58,.55)':'rgba(12,18,40,.5)';
       ctx.fillRect(x,y,CELL,CELL);
       const t=terr(c,r);
-      if(t===GEM) drawGem(x+CELL/2,y+CELL/2,c+r);
+      if(t===GEM) drawGem(cx(c),cy(r),c+r);
       else if(t===BLOCK) drawRock(x,y);
+      else if(t===GOAL) drawGoal(cx(c),cy(r));
     }
   }
   ctx.strokeStyle='rgba(39,232,255,.10)'; ctx.lineWidth=1;
-  for(let c=0;c<=COLS;c++){ ctx.beginPath(); ctx.moveTo(c*CELL,0); ctx.lineTo(c*CELL,H); ctx.stroke(); }
+  for(let c=0;c<=COLS;c++){ ctx.beginPath(); ctx.moveTo(sx(c),0); ctx.lineTo(sx(c),H); ctx.stroke(); }
+}
+function drawGoal(x,y){
+  ctx.save(); ctx.translate(x,y); const s=CELL*0.30+Math.sin(bgScroll*1.5)*CELL*0.03;
+  ctx.shadowColor='#39ff9e'; ctx.shadowBlur=20; ctx.fillStyle='#39ff9e';
+  ctx.font=`${CELL*0.7}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('✦',0,0); ctx.restore();
 }
 function drawRock(x,y){
-  ctx.save(); ctx.translate(x+CELL/2, y+CELL/2);
-  const s=CELL*0.36;
-  // sombra base
+  ctx.save(); ctx.translate(x+CELL/2,y+CELL/2); const s=CELL*0.36;
   ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(0,s*0.85,s*1.05,s*0.35,0,0,7); ctx.fill();
-  // cuerpo de la roca (polígono irregular)
   const pts=[[-s,-s*0.35],[-s*0.45,-s],[s*0.55,-s*0.9],[s,-s*0.1],[s*0.7,s*0.85],[-s*0.55,s*0.9],[-s,s*0.25]];
-  const grad=ctx.createLinearGradient(-s,-s,s,s);
-  grad.addColorStop(0,'#9aa6b8'); grad.addColorStop(0.5,'#6d7a90'); grad.addColorStop(1,'#444f63');
-  ctx.fillStyle=grad; ctx.strokeStyle='#ffb347'; ctx.lineWidth=2.5;
-  ctx.shadowColor='#ffb347'; ctx.shadowBlur=8;
-  ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath();
-  ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
-  // facetas / grietas
+  const g=ctx.createLinearGradient(-s,-s,s,s);
+  g.addColorStop(0,'#9aa6b8'); g.addColorStop(.5,'#6d7a90'); g.addColorStop(1,'#444f63');
+  ctx.fillStyle=g; ctx.strokeStyle='#ffb347'; ctx.lineWidth=2.5; ctx.shadowColor='#ffb347'; ctx.shadowBlur=8;
+  ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
   ctx.strokeStyle='rgba(30,36,48,.6)'; ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(-s*0.2,-s*0.9); ctx.lineTo(s*0.1,0); ctx.lineTo(-s*0.5,s*0.9); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(s*0.1,0); ctx.lineTo(s,-s*0.1); ctx.stroke();
-  // brillo superior
-  ctx.fillStyle='rgba(255,255,255,.25)';
-  ctx.beginPath(); ctx.moveTo(-s*0.45,-s); ctx.lineTo(s*0.1,-s*0.55); ctx.lineTo(-s*0.2,-s*0.4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.22)'; ctx.beginPath(); ctx.moveTo(-s*0.45,-s); ctx.lineTo(s*0.1,-s*0.55); ctx.lineTo(-s*0.2,-s*0.4); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 function drawGem(x,y,seed){
-  ctx.save(); ctx.translate(x,y); const s=10+Math.sin(bgScroll*0.9+seed)*1.1;
+  ctx.save(); ctx.translate(x,y); const s=CELL*0.16+Math.sin(bgScroll*0.9+seed)*CELL*0.018;
   ctx.shadowColor='#27e8ff'; ctx.shadowBlur=18; ctx.fillStyle='#27e8ff';
   ctx.beginPath(); ctx.moveTo(0,-s); ctx.lineTo(s,0); ctx.lineTo(0,s); ctx.lineTo(-s,0); ctx.closePath(); ctx.fill();
   ctx.fillStyle='rgba(255,255,255,.8)'; ctx.beginPath(); ctx.moveTo(0,-s*.5); ctx.lineTo(s*.4,0); ctx.lineTo(0,s*.2); ctx.lineTo(-s*.4,0); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 function drawThreat(){
-  ctx.save();
   for(const k of threat){
-    const [c,r]=k.split(',').map(Number); const y=screenY(r);
+    const [c,r]=k.split(',').map(Number); const y=sy(r);
     if(y<-CELL||y>H+CELL) continue;
-    const x=c*CELL;
-    ctx.fillStyle='rgba(255,59,92,.15)'; ctx.fillRect(x,y,CELL,CELL);
-    ctx.strokeStyle='rgba(255,59,92,.35)'; ctx.lineWidth=1; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2);
+    ctx.fillStyle='rgba(255,59,92,.15)'; ctx.fillRect(sx(c),y,CELL,CELL);
+    ctx.strokeStyle='rgba(255,59,92,.30)'; ctx.lineWidth=1; ctx.strokeRect(sx(c)+1,y+1,CELL-2,CELL-2);
   }
-  ctx.restore();
 }
 function drawDanger(){
-  const y=screenY(dangerRow); if(y>=H+40) return;
+  if(dangerRow<-50) return;
+  const y=sy(dangerRow); if(y>=H+40) return;
   const g=ctx.createLinearGradient(0,y,0,H);
   g.addColorStop(0,'rgba(255,43,108,0)'); g.addColorStop(.25,'rgba(255,43,108,.35)'); g.addColorStop(1,'rgba(120,0,40,.85)');
   ctx.fillStyle=g; ctx.fillRect(0,y,W,H-y);
@@ -407,40 +545,38 @@ function drawDanger(){
 function drawHighlights(){
   if(moving||enemyAnim.t<1) return;
   for(let i=0;i<validMoves.length;i++){
-    const m=validMoves[i], x=m.c*CELL, y=screenY(m.r);
+    const m=validMoves[i], x=sx(m.c), y=sy(m.r);
     ctx.save();
-    const col = m.threatened ? '255,59,92' : '57,255,158';
-    ctx.strokeStyle=`rgba(${col},.9)`; ctx.lineWidth=3;
-    ctx.shadowColor=m.threatened?'#ff3b5c':'#39ff9e'; ctx.shadowBlur=12;
+    const col=m.threatened?'255,59,92':'57,255,158';
+    ctx.strokeStyle=`rgba(${col},.9)`; ctx.lineWidth=3; ctx.shadowColor=m.threatened?'#ff3b5c':'#39ff9e'; ctx.shadowBlur=12;
     if(m.threatened) ctx.setLineDash([6,5]);
-    ctx.strokeRect(x+5,y+5,CELL-10,CELL-10);
-    ctx.setLineDash([]);
+    ctx.strokeRect(x+5,y+5,CELL-10,CELL-10); ctx.setLineDash([]);
     ctx.fillStyle=`rgba(${col},.10)`; ctx.fillRect(x+5,y+5,CELL-10,CELL-10);
-    if(i<4){ ctx.fillStyle=m.threatened?'#ff7a90':'#39ff9e'; ctx.font='bold 14px system-ui';
+    if(i<4){ ctx.fillStyle=m.threatened?'#ff7a90':'#39ff9e'; ctx.font=`bold ${Math.max(11,CELL*0.2)}px system-ui`;
       ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText((i+1),x+CELL-13,y+15); }
     ctx.restore();
   }
 }
 function drawEnemies(){
   for(const e of enemies){
-    if(e.r<camY-H/CELL-1||e.r>camY+H/CELL+1) continue;
-    if(state==='dying' && e===death.attacker) continue;   // lo dibuja drawDeath
-    const p=enemyPos(e);
+    if(scrolling && (e.r<camY-H/CELL-1||e.r>camY+H/CELL+1)) continue;
+    if(state==='dying' && e===death.attacker) continue;
+    const p=enemyPos(e), big=(e.type===KING||e.type===QUEEN);
     ctx.save();
-    const g=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,26);
-    g.addColorStop(0,'rgba(255,59,92,.35)'); g.addColorStop(1,'rgba(255,59,92,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,26,0,7); ctx.fill();
-    glyph(GLYPH[e.type], p.x, p.y, '#ff5470', e.type===PAWN?32:36);
+    const g=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,CELL*0.5);
+    g.addColorStop(0, e.type===KING?'rgba(255,210,59,.4)':'rgba(255,59,92,.35)'); g.addColorStop(1,'rgba(255,59,92,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,CELL*0.5,0,7); ctx.fill();
+    glyph(GLYPH[e.type], p.x, p.y, e.type===KING?'#ffd23b':'#ff5470', CELL*(big?0.6:0.52));
     ctx.restore();
   }
 }
 function drawKnight(){
   const p=knightPos(); ctx.save();
-  const g=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,34);
+  const g=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,CELL*0.6);
   g.addColorStop(0,'rgba(39,232,255,.55)'); g.addColorStop(1,'rgba(39,232,255,0)');
-  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,34,0,7); ctx.fill();
-  const hurt = state==='over' || (state==='dying' && death.phase==='slash');
-  glyph('♞', p.x, p.y+2, hurt?'#ff3b5c':'#ffffff', 46); ctx.restore();
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,CELL*0.6,0,7); ctx.fill();
+  const hurt=state==='over'||(state==='dying'&&death.phase==='slash');
+  glyph('♞', p.x, p.y+2, hurt?'#ff3b5c':'#ffffff', CELL*0.66); ctx.restore();
 }
 function drawDeath(){
   const d=death;
@@ -448,26 +584,20 @@ function drawDeath(){
     const lt=Math.max(0,Math.min(1,d.lt)), e=easeOutBack(lt);
     const x=d.fromX+(d.toX-d.fromX)*e, y=d.fromY+(d.toY-d.fromY)*e;
     for(let i=4;i>=1;i--){ const tt=lt-i*0.07; if(tt<0)continue; const ee=easeOutBack(tt);
-      glyph(GLYPH[d.attacker.type], d.fromX+(d.toX-d.fromX)*ee, d.fromY+(d.toY-d.fromY)*ee,
-            'rgba(255,84,112,'+(0.16*(1-i/5))+')', 36); }
+      glyph(GLYPH[d.attacker.type], d.fromX+(d.toX-d.fromX)*ee, d.fromY+(d.toY-d.fromY)*ee, 'rgba(255,84,112,'+(0.16*(1-i/5))+')', CELL*0.52); }
     const sc=1+0.35*Math.sin(lt*Math.PI);
-    ctx.save(); ctx.translate(x,y); ctx.scale(sc,sc);
-    glyph(GLYPH[d.attacker.type], 0, 0, '#ff3b5c', 36); ctx.restore();
+    ctx.save(); ctx.translate(x,y); ctx.scale(sc,sc); glyph(GLYPH[d.attacker.type],0,0,'#ff3b5c',CELL*0.52); ctx.restore();
   }
   if(d.phase==='slash'){
-    const t=d.st;
-    ctx.save(); ctx.translate(d.slashX, d.slashY);
-    ctx.fillStyle='rgba(255,255,255,'+(0.5*(1-t))+')';
-    ctx.beginPath(); ctx.arc(0,0,CELL*(0.35+t*0.9),0,7); ctx.fill();
+    const t=d.st; ctx.save(); ctx.translate(d.slashX,d.slashY);
+    ctx.fillStyle='rgba(255,255,255,'+(0.5*(1-t))+')'; ctx.beginPath(); ctx.arc(0,0,CELL*(0.35+t*0.9),0,7); ctx.fill();
     const L=CELL*1.6*Math.min(1,t*2.4); ctx.lineCap='round'; ctx.shadowColor='#fff'; ctx.shadowBlur=20;
     ctx.strokeStyle='rgba(255,255,255,'+(1-t)+')'; ctx.lineWidth=7*(1-t)+1.5;
     ctx.beginPath(); ctx.moveTo(-L,-L*0.65); ctx.lineTo(L,L*0.65); ctx.stroke();
-    ctx.strokeStyle='rgba(39,232,255,'+(1-t)+')';
-    ctx.beginPath(); ctx.moveTo(-L,L*0.65); ctx.lineTo(L,-L*0.65); ctx.stroke();
+    ctx.strokeStyle='rgba(39,232,255,'+(1-t)+')'; ctx.beginPath(); ctx.moveTo(-L,L*0.65); ctx.lineTo(L,-L*0.65); ctx.stroke();
     ctx.restore();
   }
-  const bar=Math.min(1,d.t/0.45)*46;   // barras de cine
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,bar); ctx.fillRect(0,H-bar,W,bar);
+  const bar=Math.min(1,d.t/0.45)*46; ctx.fillStyle='#000'; ctx.fillRect(0,0,W,bar); ctx.fillRect(0,H-bar,W,bar);
 }
 function glyph(g,x,y,color,size){
   ctx.save(); ctx.font=`${size}px "Segoe UI Symbol",serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -479,59 +609,117 @@ function drawParticles(){
 }
 function drawHUD(){
   ctx.save();
-  ctx.font='bold 22px system-ui'; ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.fillStyle='#27e8ff'; ctx.shadowColor='#27e8ff'; ctx.shadowBlur=10; ctx.fillText(score.toLocaleString('es'),14,12);
-  ctx.font='12px system-ui'; ctx.fillStyle='#7fa6c8'; ctx.shadowBlur=0; ctx.fillText('PUNTOS',14,38);
-  ctx.textAlign='right'; ctx.fillStyle='#ffd23b'; ctx.shadowColor='#ffd23b'; ctx.shadowBlur=8; ctx.font='bold 20px system-ui';
-  ctx.fillText('▲ '+Math.max(0,height-3),W-14,14);
-  ctx.font='12px system-ui'; ctx.fillStyle='#7fa6c8'; ctx.shadowBlur=0; ctx.fillText('ALTURA',W-14,38);
+  if(mode==='arcade'){
+    ctx.font='bold 22px system-ui'; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillStyle='#27e8ff'; ctx.shadowColor='#27e8ff'; ctx.shadowBlur=10; ctx.fillText(score.toLocaleString('es'),14,12);
+    ctx.font='12px system-ui'; ctx.fillStyle='#7fa6c8'; ctx.shadowBlur=0; ctx.fillText('PUNTOS',14,38);
+    if(record>0){ ctx.fillStyle='#ffd23b'; ctx.font='bold 12px system-ui'; ctx.fillText('🏆 '+record.toLocaleString('es'),14,54); }
+    ctx.textAlign='right'; ctx.fillStyle='#ffd23b'; ctx.shadowColor='#ffd23b'; ctx.shadowBlur=8; ctx.font='bold 20px system-ui';
+    ctx.fillText('▲ '+Math.max(0,height-3),W-14,14);
+    ctx.font='12px system-ui'; ctx.fillStyle='#7fa6c8'; ctx.shadowBlur=0; ctx.fillText('ALTURA',W-14,38);
+  } else {
+    // panel de objetivos
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillStyle='#9ec4e0'; ctx.font='bold 13px system-ui'; ctx.fillText(level.name.toUpperCase(),14,10);
+    let x=14;
+    for(const g of level.goal){
+      const done=goalDone(g), txt=goalText(g);
+      ctx.font='bold 16px "Segoe UI Symbol",system-ui';
+      const w=ctx.measureText(txt).width+22;
+      ctx.fillStyle=done?'rgba(57,255,158,.18)':'rgba(127,166,200,.12)';
+      roundRect(x,30,w,26,8); ctx.fill();
+      ctx.fillStyle=done?'#39ff9e':'#cfe6f7'; ctx.shadowColor=done?'#39ff9e':'transparent'; ctx.shadowBlur=done?8:0;
+      ctx.fillText(txt,x+11,34); ctx.shadowBlur=0;
+      x+=w+8;
+    }
+    if(level.moves>0){ ctx.textAlign='right'; ctx.fillStyle='#ffd23b'; ctx.font='bold 14px system-ui';
+      ctx.fillText('Movs '+(level.moves-turns),W-14,12); }
+  }
   ctx.restore();
 }
+
+// ================= MENÚS =================
 function overlay(a){ ctx.fillStyle=`rgba(4,6,14,${a})`; ctx.fillRect(0,0,W,H); }
-function ctext(t,y,size,color,weight='bold'){ ctx.font=`${weight} ${size}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=18; ctx.fillText(t,W/2,y); ctx.shadowBlur=0; }
+function ctext(t,y,size,color,weight='bold'){ ctx.font=`${weight} ${size}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur=18; ctx.fillText(t,W/2,y); ctx.shadowBlur=0; }
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
-let startBtn=null, retryBtn=null;
-function button(label,y){ const bw=210,bh=54,bx=W/2-bw/2; ctx.save();
-  ctx.fillStyle='rgba(39,232,255,.12)'; ctx.strokeStyle='#27e8ff'; ctx.lineWidth=2; ctx.shadowColor='#27e8ff'; ctx.shadowBlur=18;
-  roundRect(bx,y-bh/2,bw,bh,14); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
-  ctx.fillStyle='#eaffff'; ctx.font='bold 22px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(label,W/2,y);
-  ctx.restore(); return {x:bx,y:y-bh/2,w:bw,h:bh}; }
+function button(label,x,y,w,h,fn,color='#27e8ff'){
+  ctx.save(); ctx.fillStyle='rgba(39,232,255,.10)'; ctx.strokeStyle=color; ctx.lineWidth=2; ctx.shadowColor=color; ctx.shadowBlur=16;
+  roundRect(x,y,w,h,12); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
+  ctx.fillStyle='#eaffff'; ctx.font='bold 19px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(label,x+w/2,y+h/2);
+  ctx.restore(); uiButtons.push({x,y,w,h,fn});
+}
 function drawMenu(){
-  overlay(.55); glyph('♞',W/2,H*0.27,'#27e8ff',90);
-  ctext('KNIGHT QUEST',H*0.40,38,'#ffffff'); ctext('NEON  RUNNER',H*0.46,18,'#ff2bd6','600');
-  ctx.fillStyle='#9ec4e0'; ctx.font='13px system-ui'; ctx.textAlign='center';
-  ctx.fillText('Salta en L · recoge gemas · captura piezas',W/2,H*0.545);
-  ctx.fillStyle='#ff7a90'; ctx.fillText('los enemigos avanzan tras tu salto — evita las casillas rojas',W/2,H*0.575);
-  startBtn=button('JUGAR ▶',H*0.69);
+  overlay(.55); glyph('♞',W/2,H*0.24,'#27e8ff',90);
+  ctext('KNIGHT QUEST',H*0.37,36,'#ffffff'); ctext('NEON  RUNNER',H*0.42,17,'#ff2bd6','600');
+  if(record>0) ctext('🏆 RÉCORD: '+record.toLocaleString('es'),H*0.475,15,'#ffd23b','700');
+  button('MODO ARCADE', W/2-120,H*0.54,240,54, ()=>startArcade());
+  button('NIVELES',     W/2-120,H*0.63,240,54, ()=>{state='levelselect';}, '#ff2bd6');
+  ctx.fillStyle='#7fa6c8'; ctx.font='12px system-ui'; ctx.textAlign='center';
+  ctx.fillText('Arcade: subí infinito. Niveles: puzzles de ajedrez.',W/2,H*0.74);
+}
+function drawLevelSelect(){
+  overlay(.6); ctext('NIVELES',H*0.13,32,'#ff2bd6');
+  const bw=W-90, x=45; let y=H*0.20;
+  for(let i=0;i<LEVELS.length;i++){
+    const L=LEVELS[i]; const idx=i;
+    ctx.save(); ctx.fillStyle='rgba(20,28,58,.7)'; ctx.strokeStyle='rgba(138,75,255,.5)'; ctx.lineWidth=1.5;
+    roundRect(x,y,bw,58,12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#eaffff'; ctx.font='bold 17px system-ui'; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText((i+1)+'. '+L.name,x+16,y+10);
+    ctx.fillStyle='#7fa6c8'; ctx.font='12px system-ui'; ctx.fillText(L.desc,x+16,y+32);
+    ctx.restore();
+    uiButtons.push({x,y,w:bw,h:58,fn:()=>loadLevel(idx)});
+    y+=68;
+  }
+  button('← Volver', W/2-80, H*0.92, 160, 42, ()=>{state='menu';}, '#7fa6c8');
 }
 function drawOver(){
-  overlay(.6); ctext('GAME OVER',H*0.30,40,'#ff3b5c');
-  if(killer){ ctx.fillStyle='#ff7a90'; ctx.font='15px system-ui'; ctx.textAlign='center'; ctx.fillText(killer,W/2,H*0.37); }
-  ctext(score.toLocaleString('es')+' pts',H*0.44,34,'#27e8ff');
-  ctx.fillStyle='#ffd23b'; ctx.font='16px system-ui'; ctx.textAlign='center';
-  ctx.fillText('Altura: '+Math.max(0,height-3)+'   ·   Mejor: '+best.toLocaleString('es'),W/2,H*0.51);
-  retryBtn=button('REINTENTAR ⟳',H*0.66);
+  overlay(.6); ctext('GAME OVER',H*0.28,40,'#ff3b5c');
+  if(killer){ ctx.fillStyle='#ff7a90'; ctx.font='15px system-ui'; ctx.textAlign='center'; ctx.fillText(killer,W/2,H*0.35); }
+  if(mode==='arcade'){ ctext(score.toLocaleString('es')+' pts',H*0.43,32,'#27e8ff');
+    if(newRecord) ctext('🏆 ¡NUEVO RÉCORD!',H*0.50,20,'#ffd23b');
+    else { ctx.fillStyle='#ffd23b'; ctx.font='16px system-ui'; ctx.textAlign='center';
+      ctx.fillText('Altura: '+Math.max(0,height-3)+'  ·  🏆 Récord: '+record.toLocaleString('es'),W/2,H*0.50); }
+    button('REINTENTAR ⟳',W/2-120,H*0.62,240,52,()=>startArcade());
+    button('MENÚ',W/2-120,H*0.71,240,46,()=>{state='menu';},'#7fa6c8');
+  } else {
+    button('REINTENTAR ⟳',W/2-120,H*0.50,240,52,()=>loadLevel(levelIdx));
+    button('NIVELES',W/2-120,H*0.59,240,46,()=>{state='levelselect';},'#ff2bd6');
+    button('MENÚ',W/2-120,H*0.67,240,42,()=>{state='menu';},'#7fa6c8');
+  }
+}
+function drawWon(){
+  overlay(.6); glyph('✦',W/2,H*0.24,'#39ff9e',70);
+  ctext('¡NIVEL SUPERADO!',H*0.36,30,'#39ff9e');
+  ctx.fillStyle='#cfe6f7'; ctx.font='15px system-ui'; ctx.textAlign='center';
+  ctx.fillText(level.name+'  ·  '+turns+' turnos  ·  '+score+' pts',W/2,H*0.43);
+  if(levelIdx<LEVELS.length-1) button('SIGUIENTE ▶',W/2-120,H*0.55,240,52,()=>loadLevel(levelIdx+1),'#39ff9e');
+  else { ctx.fillStyle='#ffd23b'; ctx.font='14px system-ui'; ctx.fillText('¡Completaste todos los niveles!',W/2,H*0.55); }
+  button('NIVELES',W/2-120,H*0.64,240,46,()=>{state='levelselect';},'#ff2bd6');
+  button('MENÚ',W/2-120,H*0.72,240,42,()=>{state='menu';},'#7fa6c8');
 }
 
-// ---- Input ----
+// ================= INPUT =================
 function canvasPos(e){ const r=cv.getBoundingClientRect();
-  const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left, cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
-  return {x:cx*(W/r.width), y:cy*(H/r.height)}; }
-function inBtn(b,p){ return b&&p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h; }
+  const cxp=(e.touches?e.touches[0].clientX:e.clientX)-r.left, cyp=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+  return {x:cxp*(W/r.width), y:cyp*(H/r.height)}; }
 function handlePress(p){
-  if(state==='menu'){ if(inBtn(startBtn,p)){ reset(); state='playing'; } return; }
-  if(state==='over'){ if(inBtn(retryBtn,p)){ reset(); state='playing'; } return; }
-  const c=Math.floor(p.x/CELL), r=Math.ceil(camY+(CENTER_Y-p.y)/CELL); tryMove(c,r);
+  for(let i=uiButtons.length-1;i>=0;i--){ const b=uiButtons[i];
+    if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h){ b.fn(); return; } }
+  if(state==='playing'){ const cell=clickCell(p.x,p.y); tryMove(cell.c,cell.r); }
 }
 cv.addEventListener('mousedown',e=>handlePress(canvasPos(e)));
 cv.addEventListener('touchstart',e=>{ e.preventDefault(); handlePress(canvasPos(e)); },{passive:false});
 window.addEventListener('keydown',e=>{
-  if(state==='menu'||state==='over'){ if(e.key===' '||e.key==='Enter'){ reset(); state='playing'; } return; }
-  const n=parseInt(e.key,10); if(n>=1&&n<=4&&validMoves[n-1]) tryMove(validMoves[n-1].c,validMoves[n-1].r);
+  if(state==='playing'){ const n=parseInt(e.key,10); if(n>=1&&n<=4&&validMoves[n-1]) tryMove(validMoves[n-1].c,validMoves[n-1].r); return; }
+  if((e.key===' '||e.key==='Enter') && (state==='over'||state==='won'||state==='menu')){
+    if(state==='menu') startArcade();
+    else if(mode==='arcade') startArcade();
+    else loadLevel(levelIdx);
+  }
 });
 
-reset(); state='menu'; requestAnimationFrame(loop);
+state='menu'; requestAnimationFrame(loop);
 </script>
 </body>
 </html>
