@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIG BRAIN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:28px 16px 60px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:560px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:14px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:18px;}
+  .logo{
+    font-size:clamp(34px,8vw,58px); font-weight:900; letter-spacing:3px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .panel{
+    margin-top:8px; border-radius:20px; padding:26px 22px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    min-height:420px; display:flex; flex-direction:column;
+  }
+
+  /* HUD */
+  .hud{display:flex; justify-content:space-between; align-items:center; font-size:12px; letter-spacing:1px; color:var(--muted); margin-bottom:6px;}
+  .hud b{color:var(--cyan);}
+  .bar{height:8px; border-radius:999px; background:rgba(127,166,200,.15); overflow:hidden; margin-bottom:18px;}
+  .bar>i{display:block; height:100%; width:100%; border-radius:999px;
+    background:linear-gradient(90deg,var(--green),var(--cyan)); transition:width .12s linear;}
+
+  .round-tag{font-size:12px; letter-spacing:2px; font-weight:800; text-transform:uppercase; margin-bottom:4px;}
+  .prompt{font-size:18px; font-weight:700; line-height:1.4; margin-bottom:18px; min-height:26px;}
+  .arena{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;}
+  .bignum{font-size:clamp(40px,12vw,72px); font-weight:900; letter-spacing:2px;
+    filter:drop-shadow(0 0 18px rgba(39,232,255,.4));}
+
+  .opts{display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%;}
+  .opt{
+    padding:18px 10px; border-radius:14px; font-size:22px; font-weight:800; cursor:pointer;
+    background:linear-gradient(180deg, rgba(39,232,255,.08), rgba(39,232,255,.02));
+    border:1px solid rgba(39,232,255,.35); color:var(--ink); transition:.12s; user-select:none;
+  }
+  .opt:hover{border-color:var(--cyan); transform:translateY(-2px); box-shadow:0 8px 20px rgba(39,232,255,.18);}
+  .opt.good{background:rgba(57,255,158,.2); border-color:var(--green); color:var(--green);}
+  .opt.bad{background:rgba(255,84,112,.2); border-color:var(--red); color:var(--red);}
+  .opt:disabled{cursor:default; transform:none; box-shadow:none;}
+
+  /* Memoria - grilla simon */
+  .simon{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:100%; max-width:320px;}
+  .pad{aspect-ratio:1; border-radius:14px; background:rgba(127,166,200,.08);
+    border:1px solid rgba(127,166,200,.22); cursor:pointer; transition:.1s;}
+  .pad.on{background:var(--cyan); box-shadow:0 0 26px var(--cyan); border-color:var(--cyan);}
+  .pad.tap{transform:scale(.94);}
+
+  /* Visión - puntos */
+  .dots{position:relative; width:100%; max-width:340px; height:200px; border-radius:14px;
+    background:rgba(0,0,0,.25); border:1px solid rgba(127,166,200,.15); overflow:hidden;}
+  .dot{position:absolute; border-radius:50%;}
+
+  .feedback{text-align:center; font-weight:800; font-size:15px; letter-spacing:1px; min-height:22px; margin-top:14px;}
+  .feedback.ok{color:var(--green);} .feedback.no{color:var(--red);}
+
+  .btn{
+    margin-top:8px; padding:15px 22px; border-radius:14px; border:none; cursor:pointer;
+    font-size:15px; font-weight:800; letter-spacing:1px; color:#03121a;
+    background:linear-gradient(90deg,var(--cyan),var(--green)); transition:.15s;
+    box-shadow:0 8px 24px rgba(39,232,255,.25);
+  }
+  .btn:hover{filter:brightness(1.1); transform:translateY(-2px);}
+  .btn.ghost{background:transparent; color:var(--cyan); border:1px solid rgba(39,232,255,.4); box-shadow:none;}
+
+  /* Pantallas intro / final */
+  .center{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px;}
+  .intro-list{text-align:left; color:var(--muted); font-size:14px; line-height:1.9; margin:6px auto;}
+  .intro-list b{color:var(--ink);}
+  .score-big{font-size:clamp(56px,16vw,96px); font-weight:900; line-height:1;
+    background:linear-gradient(90deg,var(--gold),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 22px rgba(255,210,59,.35));}
+  .rank{font-size:22px; font-weight:900; letter-spacing:1px; color:var(--cyan);}
+  .brainsize{font-size:14px; color:var(--muted);}
+  .breakdown{width:100%; margin-top:10px; font-size:13px;}
+  .breakdown .line{display:flex; justify-content:space-between; padding:7px 2px; border-bottom:1px solid rgba(127,166,200,.12);}
+  .breakdown .line span:last-child{color:var(--green); font-weight:800;}
+  .best{margin-top:6px; color:var(--gold); font-size:13px; letter-spacing:1px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">‹ volver al arcade</a>
+    <header>
+      <div class="logo">BIG BRAIN</div>
+      <div class="sub">¿ Q U É   T A N   G R A N D E   E S   T U   C E R E B R O ?</div>
+    </header>
+
+    <div class="panel">
+      <!-- HUD -->
+      <div id="hud" class="hidden">
+        <div class="hud"><span>RETO <b id="roundNum">1</b>/<span id="roundTot">8</span></span><span>PUNTOS <b id="scoreNow">0</b></span></div>
+        <div class="bar"><i id="timeBar"></i></div>
+      </div>
+
+      <!-- INTRO -->
+      <div id="intro" class="center">
+        <div style="font-size:60px;filter:drop-shadow(0 0 18px rgba(138,75,255,.6))">🧠</div>
+        <div style="font-size:20px;font-weight:800">Poné a prueba tu cerebro</div>
+        <div class="intro-list">
+          🧮 <b>Cálculo</b> — resolvé rápido<br>
+          🧠 <b>Memoria</b> — repetí la secuencia<br>
+          👁️ <b>Visión</b> — ¿cuántos puntos hay?<br>
+          🧩 <b>Lógica</b> — encontrá el patrón
+        </div>
+        <div class="brainsize">8 retos · cuanto más rápido y certero, más grande tu cerebro.</div>
+        <button class="btn" id="startBtn">EMPEZAR ▶</button>
+      </div>
+
+      <!-- JUEGO -->
+      <div id="game" class="hidden" style="flex:1; display:flex; flex-direction:column;">
+        <div class="round-tag" id="roundTag"></div>
+        <div class="prompt" id="prompt"></div>
+        <div class="arena" id="arena"></div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+
+      <!-- FINAL -->
+      <div id="final" class="hidden center">
+        <div class="brainsize">TU CEREBRO PESA</div>
+        <div class="score-big" id="finalScore">0</div>
+        <div class="rank" id="rank"></div>
+        <div class="best" id="best"></div>
+        <div class="breakdown" id="breakdown"></div>
+        <button class="btn" id="againBtn">JUGAR DE NUEVO ↻</button>
+        <a class="btn ghost" href="index.html" style="text-decoration:none">VOLVER AL ARCADE</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const arena = $('arena'), prompt = $('prompt'), roundTag = $('roundTag'), feedback = $('feedback');
+  const KEY = 'bigbrain_best';
+
+  // Definición de los 8 retos (mezcla de categorías)
+  const PLAN = ['math','memory','vision','logic','math','vision','memory','logic'];
+  const CAT = {
+    math:   {tag:'🧮 Cálculo', color:'var(--cyan)'},
+    memory: {tag:'🧠 Memoria', color:'var(--purple)'},
+    vision: {tag:'👁️ Visión', color:'var(--green)'},
+    logic:  {tag:'🧩 Lógica', color:'var(--gold)'},
+  };
+
+  let round=0, total=PLAN.length, score=0, locked=false, timer=null, timeLeft=0, timeMax=0, perCat={};
+
+  const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]);
+
+  // -------- timer / barra --------
+  function startTimer(ms, onEnd){
+    stopTimer(); timeMax=ms; timeLeft=ms;
+    const t0 = performance.now();
+    const tick = now =>{
+      timeLeft = ms - (now - t0);
+      const pct = Math.max(0, timeLeft/ms*100);
+      $('timeBar').style.width = pct+'%';
+      $('timeBar').style.background = pct<30 ? 'linear-gradient(90deg,var(--red),var(--gold))'
+                                            : 'linear-gradient(90deg,var(--green),var(--cyan))';
+      if(timeLeft<=0){ stopTimer(); onEnd(); return; }
+      timer = requestAnimationFrame(tick);
+    };
+    timer = requestAnimationFrame(tick);
+  }
+  function stopTimer(){ if(timer) cancelAnimationFrame(timer); timer=null; }
+
+  function award(correct, fracTimeLeft){
+    if(correct){
+      const speedBonus = Math.round(fracTimeLeft*100); // hasta 100 por velocidad
+      const pts = 100 + speedBonus;                     // base 100 + bonus
+      score += pts;
+      perCat[curCat]=(perCat[curCat]||0)+pts;
+      feedback.textContent = '¡BIEN!  +'+pts;
+      feedback.className='feedback ok';
+    } else {
+      feedback.textContent = 'Fallaste';
+      feedback.className='feedback no';
+    }
+    $('scoreNow').textContent = score;
+  }
+
+  // -------- flujo --------
+  let curCat='';
+  function nextRound(){
+    if(round>=total){ return finish(); }
+    curCat = PLAN[round];
+    round++;
+    locked=false;
+    $('roundNum').textContent = round;
+    roundTag.textContent = CAT[curCat].tag;
+    roundTag.style.color = CAT[curCat].color;
+    feedback.textContent=''; feedback.className='feedback';
+    arena.innerHTML=''; prompt.textContent='';
+    ({math:roundMath, memory:roundMemory, vision:roundVision, logic:roundLogic})[curCat]();
+  }
+  function advance(){ setTimeout(nextRound, 850); }
+
+  // ---------- RETO: CÁLCULO ----------
+  function roundMath(){
+    const ops=['+','-','×']; const op=ops[rnd(0,2)];
+    let a,b,ans;
+    if(op==='+'){ a=rnd(12,89); b=rnd(12,89); ans=a+b; }
+    else if(op==='-'){ a=rnd(40,99); b=rnd(10,a-1); ans=a-b; }
+    else { a=rnd(3,12); b=rnd(3,12); ans=a*b; }
+    prompt.textContent='Resolvé:';
+    const big=document.createElement('div'); big.className='bignum'; big.textContent=`${a} ${op} ${b}`;
+    arena.appendChild(big);
+    const opts=document.createElement('div'); opts.className='opts';
+    const choices=new Set([ans]);
+    while(choices.size<4){ const d=ans+rnd(-9,9)*(Math.random()<.5?1:1); const v=ans+(rnd(1,12)*(Math.random()<.5?-1:1)); choices.add(Math.max(0,v)); }
+    shuffle([...choices]).forEach(v=>{
+      const b2=document.createElement('button'); b2.className='opt'; b2.textContent=v;
+      b2.onclick=()=>pick(b2, v===ans, opts);
+      opts.appendChild(b2);
+    });
+    arena.appendChild(opts);
+    startTimer(7000, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+  }
+
+  // ---------- RETO: MEMORIA (Simon) ----------
+  function roundMemory(){
+    const len = 3 + Math.min(2, Math.floor(round/3)); // 3..5
+    prompt.textContent='Memorizá la secuencia…';
+    const grid=document.createElement('div'); grid.className='simon';
+    const pads=[];
+    for(let i=0;i<9;i++){ const p=document.createElement('div'); p.className='pad'; grid.appendChild(p); pads.push(p); }
+    arena.appendChild(grid);
+    const seq=[]; for(let i=0;i<len;i++) seq.push(rnd(0,8));
+    // reproducir
+    let i=0; const flashes=[];
+    const playStep=()=>{
+      if(i>=seq.length){ acceptInput(); return; }
+      const p=pads[seq[i]]; p.classList.add('on');
+      flashes.push(setTimeout(()=>p.classList.remove('on'), 420));
+      i++; setTimeout(playStep, 620);
+    };
+    let input=[];
+    function acceptInput(){
+      prompt.textContent='¡Tu turno! Repetí el orden.';
+      startTimer(6000, ()=>{ if(!locked){ locked=true; pads.forEach(p=>p.onclick=null); award(false,0); advance(); }});
+      pads.forEach((p,idx)=>{
+        p.onclick=()=>{
+          if(locked) return;
+          p.classList.add('tap'); setTimeout(()=>p.classList.remove('tap'),120);
+          p.classList.add('on'); setTimeout(()=>p.classList.remove('on'),200);
+          input.push(idx);
+          if(input[input.length-1]!==seq[input.length-1]){
+            locked=true; pads.forEach(x=>x.onclick=null); award(false,0); advance(); return;
+          }
+          if(input.length===seq.length){
+            locked=true; pads.forEach(x=>x.onclick=null);
+            award(true, timeLeft/timeMax); stopTimer(); advance();
+          }
+        };
+      });
+    }
+    setTimeout(playStep, 500);
+  }
+
+  // ---------- RETO: VISIÓN (contar puntos) ----------
+  function roundVision(){
+    const n = rnd(7,18);
+    prompt.textContent='¿Cuántos puntos hay? (rápido)';
+    const box=document.createElement('div'); box.className='dots';
+    const colors=['var(--cyan)','var(--pink)','var(--green)','var(--gold)','var(--purple)'];
+    for(let i=0;i<n;i++){
+      const d=document.createElement('div'); d.className='dot';
+      const s=rnd(14,26);
+      d.style.width=s+'px'; d.style.height=s+'px';
+      d.style.left=rnd(2,92)+'%'; d.style.top=rnd(2,82)+'%';
+      const c=colors[rnd(0,colors.length-1)];
+      d.style.background=c; d.style.boxShadow='0 0 12px '+c;
+      box.appendChild(d);
+    }
+    arena.appendChild(box);
+    const opts=document.createElement('div'); opts.className='opts';
+    const choices=new Set([n]);
+    while(choices.size<4){ choices.add(Math.max(1,n+rnd(-4,4))); }
+    shuffle([...choices]).forEach(v=>{
+      const b=document.createElement('button'); b.className='opt'; b.textContent=v;
+      b.onclick=()=>pick(b, v===n, opts);
+      opts.appendChild(b);
+    });
+    arena.appendChild(opts);
+    startTimer(6500, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+  }
+
+  // ---------- RETO: LÓGICA (¿cuál sigue? / intruso) ----------
+  function roundLogic(){
+    const mode=rnd(0,1);
+    if(mode===0){
+      // secuencia aritmética: ¿qué número sigue?
+      const start=rnd(2,9), step=rnd(2,9);
+      const seq=[start, start+step, start+2*step, start+3*step];
+      const ans=start+4*step;
+      prompt.textContent='¿Qué número sigue?';
+      const big=document.createElement('div'); big.className='bignum'; big.style.fontSize='clamp(28px,8vw,44px)';
+      big.textContent = seq.join('  ·  ')+'  ·  ?';
+      arena.appendChild(big);
+      buildChoices(ans, v=>v, 1, 40);
+    } else {
+      // intruso: 3 iguales + 1 distinto (emoji)
+      const sets=[['🔵','🟣'],['🟢','🟡'],['🔺','🔻'],['◆','◇'],['★','☆']];
+      const pair=sets[rnd(0,sets.length-1)];
+      prompt.textContent='Encontrá el que no encaja';
+      const opts=document.createElement('div'); opts.className='opts';
+      const oddIndex=rnd(0,3);
+      for(let i=0;i<4;i++){
+        const b=document.createElement('button'); b.className='opt'; b.style.fontSize='34px';
+        b.textContent = i===oddIndex ? pair[1] : pair[0];
+        b.onclick=()=>pick(b, i===oddIndex, opts);
+        opts.appendChild(b);
+      }
+      arena.appendChild(opts);
+      startTimer(6000, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+    }
+  }
+  function buildChoices(ans, fmt, min, max){
+    const opts=document.createElement('div'); opts.className='opts';
+    const choices=new Set([ans]);
+    while(choices.size<4){ choices.add(Math.max(min, ans+rnd(-7,7))); }
+    shuffle([...choices]).forEach(v=>{
+      const b=document.createElement('button'); b.className='opt'; b.textContent=fmt(v);
+      b.onclick=()=>pick(b, v===ans, opts);
+      opts.appendChild(b);
+    });
+    arena.appendChild(opts);
+    startTimer(7000, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+  }
+
+  // pick para retos de opciones
+  function pick(btn, correct, opts){
+    if(locked) return; locked=true; stopTimer();
+    disableOpts(opts);
+    btn.classList.add(correct?'good':'bad');
+    if(!correct){
+      // marcar la correcta
+      [...opts.children].forEach(b=>{ });
+    }
+    award(correct, correct? timeLeft/timeMax : 0);
+    advance();
+  }
+  function disableOpts(opts){ [...opts.children].forEach(b=>b.disabled=true); }
+
+  // -------- final --------
+  function finish(){
+    stopTimer();
+    $('hud').classList.add('hidden');
+    $('game').classList.add('hidden');
+    $('final').classList.remove('hidden');
+    $('finalScore').textContent = score + ' g';
+    // rango por puntaje (máx ~1600)
+    let rank, emoji;
+    if(score>=1300){ rank='CEREBRO COLOSAL'; emoji='🧠⚡'; }
+    else if(score>=1000){ rank='MENTE BRILLANTE'; emoji='🧠✨'; }
+    else if(score>=700){ rank='CEREBRO EN FORMA'; emoji='🧠'; }
+    else if(score>=400){ rank='CALENTANDO NEURONAS'; emoji='🔥'; }
+    else { rank='CEREBRO EN PRÁCTICAS'; emoji='🌱'; }
+    $('rank').textContent = emoji+'  '+rank;
+
+    // desglose por categoría
+    const bd=$('breakdown'); bd.innerHTML='';
+    Object.keys(CAT).forEach(c=>{
+      const line=document.createElement('div'); line.className='line';
+      line.innerHTML='<span>'+CAT[c].tag+'</span><span>'+(perCat[c]||0)+' g</span>';
+      bd.appendChild(line);
+    });
+
+    // récord
+    const best = +(localStorage.getItem(KEY)||0);
+    if(score>best){
+      localStorage.setItem(KEY, score);
+      $('best').textContent='🏆 ¡NUEVO RÉCORD!';
+    } else {
+      $('best').textContent='Tu récord: '+best+' g';
+    }
+  }
+
+  function startGame(){
+    round=0; score=0; perCat={}; locked=false;
+    $('intro').classList.add('hidden');
+    $('final').classList.add('hidden');
+    $('hud').classList.remove('hidden');
+    $('game').classList.remove('hidden');
+    $('scoreNow').textContent='0'; $('roundTot').textContent=total;
+    nextRound();
+  }
+
+  $('startBtn').onclick=startGame;
+  $('againBtn').onclick=startGame;
+})();
+</script>
+</body>
+</html>
