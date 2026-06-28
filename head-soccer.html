@@ -137,6 +137,7 @@
   const GOAL_D = 66;            // profundidad del arco
   const GOAL_TOP = GROUND - 150; // alto del travesaño
   const GRAV = 0.62;
+  const BALL_GRAV = 0.52;   // la pelota flota un poco más que los jugadores
   const BALL_R = 13;
 
   // ---- Estado ----
@@ -144,6 +145,7 @@
   let mode = 1;         // 1 = vs CPU, 2 = dos jugadores
   let timeLeft = 90;    // segundos
   let goalFlash = 0, goalFlashMax = 1, goalText = '', goalColor = '#ffd23b';
+  let shake = 0;        // screen shake (decae solo)
   const WIN_GOALS = 5;
 
   const keys = {};
@@ -161,20 +163,22 @@
   function mkPlayer(x, color, dir, isCPU, name){
     return {x, y:GROUND-56, vx:0, vy:0, r:30, dir, color, isCPU, name,
             onGround:true, kickT:0, kickCD:0, kicked:false, score:0,
-            aiT:0, aiAggr:0};
+            aiT:0, aiAggr:0, stretch:0, stretchV:0, runPhase:0, mood:'normal', moodT:0,
+            kbVX:0, hitP:false};
   }
   let p1, p2, ball;
 
   function resetPositions(serveDir){
-    p1.x=180; p1.y=GROUND-56; p1.vx=p1.vy=0; p1.kickT=0; p1.kicked=false;
-    p2.x=W-180; p2.y=GROUND-56; p2.vx=p2.vy=0; p2.kickT=0; p2.kicked=false;
+    p1.x=180; p1.y=GROUND-56; p1.vx=p1.vy=0; p1.kbVX=0; p1.kickT=0; p1.kicked=false;
+    p2.x=W-180; p2.y=GROUND-56; p2.vx=p2.vy=0; p2.kbVX=0; p2.kickT=0; p2.kicked=false;
     ball.x=W/2; ball.y=GROUND-180; ball.vx=(serveDir||0)*2; ball.vy=0;
+    if(ball.trail) ball.trail.length=0; ball.spin=0;
   }
 
   function newMatch(){
     p1 = mkPlayer(180, getCSS('--cyan'), 1, false, 'P1');
     p2 = mkPlayer(W-180, getCSS('--pink'), -1, mode===1, mode===1?'CPU':'P2');
-    ball = {x:W/2, y:GROUND-180, vx:0, vy:0, r:BALL_R};
+    ball = {x:W/2, y:GROUND-180, vx:0, vy:0, r:BALL_R, trail:[], spin:0};
     timeLeft = 90; goalFlash=0; acc=0;
     resetPositions(0);
     state='play';
@@ -196,8 +200,8 @@
       if(code==='ArrowDown') kick(p2);
     }
   }
-  function jump(p){ if(p.onGround){ p.vy=-12.8; p.onGround=false; } }
-  function kick(p){ if(p.kickCD<=0){ p.kickT=11; p.kickCD=20; p.kicked=false; } }
+  function jump(p){ if(p.onGround){ p.vy=-12.8; p.onGround=false; p.stretch=0.40; } }
+  function kick(p){ if(p.kickCD<=0){ p.kickT=11; p.kickCD=20; p.kicked=false; p.hitP=false; } }
 
   // ---- Movimiento continuo desde teclado ----
   function readMove(){
@@ -233,10 +237,28 @@
   // ---- Física jugador ----
   function stepPlayer(p){
     p.vy += GRAV;
-    p.x += p.vx;
+    p.x += p.vx + p.kbVX;   // input + empujón (knockback)
+    p.kbVX *= 0.86;
     p.y += p.vy;
     const floorY = GROUND-56;
-    if(p.y >= floorY){ p.y=floorY; p.vy=0; p.onGround=true; }
+    if(p.y >= floorY){
+      if(!p.onGround){
+        const imp=Math.min(p.vy,16);
+        p.stretch = Math.max(-0.55, -0.18 - imp*0.022); // achate al aterrizar
+        if(imp>5){ // polvito a los costados
+          spawnBurst(p.x-12, GROUND-3, 5, 'rgba(190,210,240,.85)', {ang:Math.PI, spread:0.7, spMin:1, spMax:3, grav:0.04, size:2.6, decay:0.04});
+          spawnBurst(p.x+12, GROUND-3, 5, 'rgba(190,210,240,.85)', {ang:0,       spread:0.7, spMin:1, spMax:3, grav:0.04, size:2.6, decay:0.04});
+        }
+      }
+      p.y=floorY; p.vy=0; p.onGround=true;
+    }
+    if(p.moodT>0){ p.moodT--; if(p.moodT===0) p.mood='normal'; }
+    // resorte tipo gelatina: rebota varias veces antes de asentarse
+    p.stretchV += -0.16*p.stretch;
+    p.stretchV *= 0.82;
+    p.stretch  += p.stretchV;
+    // ciclo de carrera
+    if(p.onGround && Math.abs(p.vx)>0.4) p.runPhase += 0.42;
     // no salir de la cancha (puede pisar frente al arco pero no meterse en el net)
     const minX = GOAL_D + p.r - 30, maxX = W - GOAL_D - p.r + 30;
     if(p.x < p.r){ p.x=p.r; } if(p.x > W-p.r){ p.x=W-p.r; }
@@ -245,26 +267,50 @@
   }
 
   // ---- Colisión círculo-pelota con jugador ----
-  function ballVsHead(p){
-    let dx = ball.x-p.x, dy = ball.y-p.y;
-    let dist = Math.hypot(dx,dy);
-    const minD = ball.r + p.r;
-    if(dist < minD){
+  // resuelve la pelota contra un círculo (cabeza, cuerpo o pie) que se mueve con el jugador
+  function ballVsCircle(cx,cy,rad,p){
+    let dx=ball.x-cx, dy=ball.y-cy, dist=Math.hypot(dx,dy);
+    const minD=ball.r+rad;
+    if(dist<minD){
       if(dist===0){ dist=0.01; dx=0.01; }
       const nx=dx/dist, ny=dy/dist;
-      ball.x = p.x + nx*minD; ball.y = p.y + ny*minD;
-      const rvx=ball.vx-p.vx, rvy=ball.vy-p.vy;
+      ball.x=cx+nx*minD; ball.y=cy+ny*minD;
+      const rvx=ball.vx-(p.vx+p.kbVX), rvy=ball.vy-p.vy;
       const dot=rvx*nx+rvy*ny;
-      if(dot<0){ const e=0.92; ball.vx-=(1+e)*dot*nx; ball.vy-=(1+e)*dot*ny; }
-      ball.vx += p.vx*0.28; ball.vy += p.vy*0.2;
+      if(dot<0){ const e=0.9; ball.vx-=(1+e)*dot*nx; ball.vy-=(1+e)*dot*ny; }
+      ball.vx += (p.vx+p.kbVX)*0.28; ball.vy += p.vy*0.2;
     }
-    // patada
+  }
+
+  function ballVsHead(p){
+    // cabeza (círculo) + cuerpo (cápsula hasta los pies): la pelota ya no pasa por abajo
+    ballVsCircle(p.x, p.y, p.r, p);
+    const by = Math.max(p.y+12, Math.min(ball.y, p.y+50));
+    ballVsCircle(p.x, by, 15, p);
+    // patada: disparo recto y fuerte tipo head soccer
     if(p.kickT>0 && !p.kicked){
-      const fx = p.x + p.dir*(p.r+8), fy = p.y+24;
-      if(Math.hypot(ball.x-fx, ball.y-fy) < ball.r+30){
-        ball.vx = p.dir*8.4 + p.vx*0.4;
-        ball.vy = -6.8;
+      const fx = p.x + p.dir*(p.r+14), fy = p.y+26;
+      if(Math.hypot(ball.x-fx, ball.y-fy) < ball.r+32){
+        ball.vx = p.dir*12 + p.vx*0.5;
+        ball.vy = Math.min(ball.vy,0) - 2.2;   // sale casi recto, apenas levanta
         p.kicked = true;
+        spawnBurst(fx, fy, 11, getCSS('--gold'), {ang:p.dir>0?-0.4:Math.PI+0.4, spread:1.1, spMin:3, spMax:7.5, up:0.4, size:3, grav:0.18});
+      }
+    }
+  }
+
+  // patear al rival: lo empuja hacia atrás + "sangre" cartoon de su color
+  function kickVsPlayer(a, v){
+    if(a.kickT>0 && !a.hitP){
+      const fx = a.x + a.dir*(a.r+16), fy = a.y+20;
+      const vy = Math.max(v.y, Math.min(fy, v.y+50));
+      if(Math.hypot(fx - v.x, fy - vy) < a.r+18){
+        v.kbVX += a.dir*9.5;       // sale despedido para atrás
+        v.vy -= 4.5; v.onGround=false;
+        v.stretch = -0.2;
+        a.hitP = true;
+        shake = Math.max(shake, 7);
+        spawnBurst(v.x + a.dir*8, v.y+6, 18, v.color, {ang:a.dir>0?-0.3:Math.PI+0.3, spread:1.7, spMin:2.5, spMax:8, up:1.5, size:3.6, grav:0.28});
       }
     }
   }
@@ -285,11 +331,14 @@
   }
 
   function stepBall(){
-    ball.vy += GRAV;
-    ball.vx *= 0.992;  // rozamiento del aire para que no se descontrole
+    ball.spin += ball.vx*0.045;   // gira según se mueve
+    ball.trail.push({x:ball.x, y:ball.y});
+    if(ball.trail.length>9) ball.trail.shift();
+    ball.vy += BALL_GRAV;
+    ball.vx *= 0.993;  // rozamiento del aire para que no se descontrole
     // límite de velocidad para evitar atravesar paredes
-    ball.vx = Math.max(-13, Math.min(13, ball.vx));
-    ball.vy = Math.max(-15, Math.min(15, ball.vy));
+    ball.vx = Math.max(-16, Math.min(16, ball.vx));
+    ball.vy = Math.max(-16, Math.min(16, ball.vy));
     const steps = 5;
     for(let i=0;i<steps;i++){
       ball.x += ball.vx/steps;
@@ -312,15 +361,21 @@
       if(ball.y < ball.r){ ball.y=ball.r; ball.vy=Math.abs(ball.vy)*0.7; }
       // piso
       const fy = GROUND-ball.r;
-      if(ball.y > fy){ ball.y=fy; ball.vy=-Math.abs(ball.vy)*0.72; ball.vx*=0.99; }
+      if(ball.y > fy){ ball.y=fy; ball.vy=-Math.abs(ball.vy)*0.78; ball.vx*=0.99; }
     }
   }
 
   // arco izquierdo = lo defiende P1, si entra ahí marca P2. arco derecho = lo defiende P2, marca P1.
   function scoreGoal(scorerSideOwner, rightGoal){
-    if(rightGoal){ p1.score++; goalText=p1.name; goalColor=getCSS('--cyan'); }
-    else { p2.score++; goalText=p2.name; goalColor=getCSS('--pink'); }
+    let winner, loser;
+    if(rightGoal){ p1.score++; goalText=p1.name; goalColor=getCSS('--cyan'); winner=p1; loser=p2; }
+    else { p2.score++; goalText=p2.name; goalColor=getCSS('--pink'); winner=p2; loser=p1; }
+    winner.mood='happy'; winner.moodT=165; loser.mood='sad'; loser.moodT=165;
     state='goal'; goalFlash = 165; goalFlashMax = 165; // ~2.75s
+    shake = 16;
+    // explosión de festejo en el arco
+    spawnBurst(ball.x, ball.y, 42, goalColor, {spMin:2, spMax:8.5, up:2.5, size:4, grav:0.13});
+    spawnBurst(ball.x, ball.y, 22, getCSS('--gold'), {spMin:2, spMax:7, up:2.5, size:3.5, grav:0.13});
     ball.vx=0; ball.vy=0; // la pelota queda quieta en el arco
     return true;
   }
@@ -338,6 +393,7 @@
         readMove();
         if(p2.isCPU) ai(p2, p1);
         stepPlayer(p1); stepPlayer(p2);
+        kickVsPlayer(p1, p2); kickVsPlayer(p2, p1);
         stepBall();
         timeLeft -= 1/60;
         if(timeLeft<=0){ timeLeft=0; endMatch(); }
@@ -354,6 +410,7 @@
         else { acc=0; state='play'; }
       }
     }
+    stepParts();
     draw();
     requestAnimationFrame(frame);
   }
@@ -389,10 +446,15 @@
   function draw(){
     ctx.clearRect(0,0,W,H);
     if(!p1||!p2||!ball){ drawField(); return; }
+    ctx.save();
+    if(shake>0.4){ ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake); shake*=0.86; }
+    else shake=0;
     drawField();
     drawPlayer(p1); drawPlayer(p2);
     drawBall();
+    drawParts();
     drawHUD();
+    ctx.restore();
 
     if(state==='goal' && goalFlash>0){
       const e = goalFlashMax - goalFlash;                 // frames transcurridos
@@ -438,44 +500,168 @@
     ctx.restore();
   }
 
-  function drawPlayer(p){
+  function roundRectPath(x,y,w,h,r){
+    ctx.beginPath();
+    if(ctx.roundRect){ ctx.roundRect(x,y,w,h,r); return; }
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+
+  // ---- Partículas ----
+  const parts = [];
+  function spawnBurst(x,y,n,color,o){
+    o=o||{};
+    for(let i=0;i<n;i++){
+      const a = (o.ang!=null ? o.ang + (Math.random()-0.5)*(o.spread||Math.PI*2) : Math.random()*Math.PI*2);
+      const sp = (o.spMin||1) + Math.random()*((o.spMax||4)-(o.spMin||1));
+      parts.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - (o.up||0),
+        life:1, decay:(o.decay||0.025)*(0.7+Math.random()*0.7),
+        size:(o.size||3)*(0.6+Math.random()*0.8), color, grav:(o.grav!=null?o.grav:0.12) });
+    }
+  }
+  function stepParts(){
+    for(let i=parts.length-1;i>=0;i--){
+      const q=parts[i];
+      q.vy+=q.grav; q.x+=q.vx; q.y+=q.vy; q.vx*=0.98;
+      q.life-=q.decay;
+      if(q.life<=0) parts.splice(i,1);
+    }
+  }
+  function drawParts(){
     ctx.save();
-    // pierna / patada
-    const legX = p.x + p.dir*(p.r-4);
+    for(const q of parts){
+      ctx.globalAlpha=Math.max(0,q.life);
+      ctx.fillStyle=q.color; ctx.shadowColor=q.color; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.arc(q.x,q.y,q.size*Math.max(.3,q.life),0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawPlayer(p){
+    // --- sombra en el piso (se achica y aclara con la altura del salto) ---
+    const airH = (GROUND-56) - p.y;
+    const shF = Math.max(0.4, 1 - airH/170);
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,'+(0.32*shF)+')';
+    ctx.beginPath(); ctx.ellipse(p.x, GROUND-2, (p.r+8)*shF, 6.5*shF, 0, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    // --- juice: squash & stretch + inclinación hacia el movimiento ---
+    const sy = 1 + p.stretch;          // alto al saltar, bajo al aterrizar
+    const sx = 1 - p.stretch*0.9;      // angosto al saltar, ancho al aterrizar
+    const lean = Math.max(-0.18, Math.min(0.18, p.vx*0.025));
+    const anchorY = p.y + p.r - 2 + 28; // pivote en los pies
+    ctx.translate(p.x, anchorY);
+    ctx.rotate(lean);
+    ctx.scale(sx, sy);
+    ctx.translate(-p.x, -anchorY);
+
     const kick = p.kickT>0;
-    ctx.strokeStyle=p.color; ctx.lineWidth=8; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(p.x, p.y+p.r-2);
-    if(kick){ ctx.lineTo(p.x + p.dir*(p.r+22), p.y+p.r+6); }
-    else { ctx.lineTo(p.x + p.dir*8, GROUND); }
-    ctx.stroke();
-    // otra pierna fija
-    ctx.beginPath(); ctx.moveTo(p.x-p.dir*4, p.y+p.r-2); ctx.lineTo(p.x-p.dir*6, GROUND); ctx.stroke();
-    // cabeza
+    const hipY = p.y + p.r - 2;        // cadera (bajo la cabeza)
+    const shoulderY = p.y + p.r*0.55;  // hombros
+    const LEG = 28;
+    const tuck = p.onGround ? 0 : 9;   // recoge piernas en el aire
+    const footY = hipY + LEG - tuck;
+
+    // ciclo de carrera: dos piernas en contrafase
+    const moving = p.onGround && Math.abs(p.vx) > 0.4;
+    const ph = p.runPhase, amp = moving ? 12 : 0;
+    const aSwing = Math.sin(ph)*amp,         aLift = moving ? Math.max(0,-Math.cos(ph))*9 : 0;
+    const bSwing = Math.sin(ph+Math.PI)*amp, bLift = moving ? Math.max(0,-Math.cos(ph+Math.PI))*9 : 0;
+
+    function drawLeg(baseX, swing, lift, isFront){
+      const hx = p.x + p.dir*baseX;
+      let fx = hx + swing, fy = footY - lift;
+      if(kick && isFront){ fx = p.x + p.dir*(p.r+22); fy = hipY + 10; } // patada
+      ctx.strokeStyle=p.color; ctx.lineWidth=9; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(hx, hipY); ctx.lineTo(fx, fy); ctx.stroke();
+      // zapatilla
+      ctx.save(); ctx.translate(fx, fy);
+      ctx.fillStyle='#fff'; ctx.shadowColor=p.color; ctx.shadowBlur=10;
+      ctx.beginPath(); ctx.ellipse(p.dir*4, 2, 9, 5.5, 0, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    drawLeg(-4, bSwing, bLift, false); // pierna trasera
+    drawLeg(6,  aSwing, aLift, true);  // pierna delantera (la que patea)
+
+    // --- cuerpo / camiseta ---
+    ctx.save();
+    const bw = p.r*0.95, bodyTop = shoulderY, bodyBot = hipY+2;
+    const bg = ctx.createLinearGradient(0, bodyTop, 0, bodyBot);
+    bg.addColorStop(0, p.color); bg.addColorStop(1, 'rgba(0,0,0,.5)');
+    ctx.fillStyle=bg; ctx.shadowColor=p.color; ctx.shadowBlur=12;
+    roundRectPath(p.x-bw/2, bodyTop, bw, bodyBot-bodyTop, 8); ctx.fill();
+    ctx.restore();
+
+    // --- brazos (contrafase con las piernas) ---
+    ctx.strokeStyle=p.color; ctx.lineWidth=6; ctx.lineCap='round';
+    const armSwing = moving ? Math.sin(ph)*8 : 0;
+    ctx.beginPath(); ctx.moveTo(p.x - bw*0.42, shoulderY+3); ctx.lineTo(p.x - bw*0.42 - armSwing, shoulderY+19); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p.x + bw*0.42, shoulderY+3); ctx.lineTo(p.x + bw*0.42 + armSwing, shoulderY+19); ctx.stroke();
+
+    // --- cabeza ---
     ctx.shadowColor=p.color; ctx.shadowBlur=20;
     const hg = ctx.createRadialGradient(p.x-8,p.y-8,4,p.x,p.y,p.r);
     hg.addColorStop(0,'#ffffff'); hg.addColorStop(.25,p.color); hg.addColorStop(1,'rgba(0,0,0,.35)');
     ctx.fillStyle=hg;
     ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
     ctx.shadowBlur=0;
-    // ojos (mirando hacia su rival)
-    ctx.fillStyle='#0a0f1e';
-    ctx.beginPath(); ctx.arc(p.x+p.dir*8, p.y-4, 4.5, 0, Math.PI*2); ctx.fill();
+    // --- cara expresiva ---
+    const exX = p.x + p.dir*6, exY = p.y - 4;
+    const lx = Math.max(-4, Math.min(4, (ball.x-exX)*0.05)); // la pupila sigue la pelota
+    const ly = Math.max(-3, Math.min(3, (ball.y-exY)*0.05));
+    // blanco del ojo
     ctx.fillStyle='#fff';
-    ctx.beginPath(); ctx.arc(p.x+p.dir*9, p.y-5, 1.6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(exX, exY, 7, 0, Math.PI*2); ctx.fill();
+    // pupila + brillo
+    ctx.fillStyle='#0a0f1e';
+    ctx.beginPath(); ctx.arc(exX+lx, exY+ly, 3.6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(exX+lx+1, exY+ly-1, 1.3, 0, Math.PI*2); ctx.fill();
+    // ceja (expresión)
+    ctx.strokeStyle='#0a0f1e'; ctx.lineWidth=3; ctx.lineCap='round';
+    let browTilt = (p.mood==='happy') ? -0.35*p.dir : (p.mood==='sad') ? 0.5*p.dir : 0.12*p.dir;
+    const browY = exY - 9 - (p.mood==='happy'?1:0);
+    ctx.save(); ctx.translate(exX, browY); ctx.rotate(browTilt);
+    ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.stroke(); ctx.restore();
+    // boca
+    ctx.strokeStyle='#0a0f1e'; ctx.lineWidth=2.6;
+    const mX = p.x + p.dir*4, mY = p.y + 12;
+    ctx.beginPath();
+    if(p.mood==='happy'){ ctx.arc(mX, mY-2, 5, 0.12*Math.PI, 0.88*Math.PI); }
+    else if(p.mood==='sad'){ ctx.arc(mX, mY+5, 5, 1.12*Math.PI, 1.88*Math.PI); }
+    else { ctx.moveTo(mX-4, mY); ctx.lineTo(mX+4, mY); }
+    ctx.stroke();
     ctx.restore();
   }
 
   function drawBall(){
+    // estela
+    if(ball.trail){
+      for(let i=0;i<ball.trail.length;i++){
+        const t=ball.trail[i], a=(i+1)/ball.trail.length;
+        ctx.save(); ctx.globalAlpha=a*0.32;
+        ctx.fillStyle=getCSS('--gold'); ctx.shadowColor=getCSS('--gold'); ctx.shadowBlur=10;
+        ctx.beginPath(); ctx.arc(t.x,t.y,ball.r*a*0.9,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+    }
     ctx.save();
+    ctx.translate(ball.x, ball.y); ctx.rotate(ball.spin);
     ctx.shadowColor=getCSS('--gold'); ctx.shadowBlur=16;
-    const bg = ctx.createRadialGradient(ball.x-4,ball.y-4,2,ball.x,ball.y,ball.r);
+    const bg = ctx.createRadialGradient(-4,-4,2,0,0,ball.r);
     bg.addColorStop(0,'#fff'); bg.addColorStop(1,'#cfd8e6');
     ctx.fillStyle=bg;
-    ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,ball.r,0,Math.PI*2); ctx.fill();
     ctx.shadowBlur=0;
-    // pentágonos simples
+    // pentágonos para que se note el giro
     ctx.fillStyle='#1a2236';
-    ctx.beginPath(); ctx.arc(ball.x,ball.y,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,3.5,0,Math.PI*2); ctx.fill();
+    for(let k=0;k<5;k++){
+      const ang=k*Math.PI*2/5;
+      ctx.beginPath(); ctx.arc(Math.cos(ang)*ball.r*0.6, Math.sin(ang)*ball.r*0.6, 2.2, 0, Math.PI*2); ctx.fill();
+    }
     ctx.restore();
   }
 
