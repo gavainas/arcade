@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#070a16">
+<title>Vector Pilot</title>
+<style>
+:root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--green:#39ff9e;--gold:#ffd23b;--ink:#eefaff;--muted:#8ca9c8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none}
+body{background:radial-gradient(circle at 50% 0,#172552,#070a16 55%,#02030a)}
+#game{display:block;width:100vw;height:100vh}
+.ui{position:fixed;inset:0;pointer-events:none;padding:max(12px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:space-between}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.panel{background:rgba(5,9,23,.78);border:1px solid rgba(39,232,255,.25);border-radius:14px;padding:9px 12px;backdrop-filter:blur(8px);box-shadow:0 8px 25px rgba(0,0,0,.3)}
+.title{font-weight:900;letter-spacing:1.5px;color:var(--cyan);text-shadow:0 0 16px rgba(39,232,255,.65)}.stats{font-size:12px;color:var(--muted);line-height:1.5}.stats b{color:var(--ink)}
+.bottom{display:flex;justify-content:center;align-items:flex-end;gap:10px}.btn{pointer-events:auto;border:1px solid rgba(39,232,255,.35);background:rgba(8,14,35,.9);color:var(--ink);border-radius:999px;padding:11px 17px;font-weight:800;font-size:14px}.btn:active{transform:scale(.96)}
+.help{position:fixed;left:50%;top:20%;transform:translateX(-50%);width:min(88vw,420px);text-align:center;background:rgba(5,9,23,.9);border:1px solid rgba(255,43,214,.35);border-radius:18px;padding:16px;pointer-events:none;transition:.35s}.help.hide{opacity:0;transform:translate(-50%,-15px)}
+.help strong{color:var(--pink)}.help small{display:block;color:var(--muted);margin-top:6px;line-height:1.4}
+.toast{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%) scale(.8);font-size:clamp(28px,8vw,56px);font-weight:1000;letter-spacing:2px;opacity:0;pointer-events:none;text-align:center;text-shadow:0 0 30px currentColor}.toast.show{animation:pop 1.1s ease}@keyframes pop{20%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0}}
+@media(min-width:800px){.ui{padding:20px 24px}.panel{padding:11px 15px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div class="ui">
+  <div class="top">
+    <div class="panel"><div class="title">VECTOR PILOT</div><div class="stats">Nivel <b id="level">1</b> · Impulsos <b id="shots">0/3</b></div></div>
+    <div class="panel stats">Velocidad <b id="speed">0.0</b><br>Mejor <b id="best">—</b></div>
+  </div>
+  <div class="bottom"><button class="btn" id="reset">↻ Reiniciar</button><button class="btn" id="next" hidden>Siguiente ▶</button></div>
+</div>
+<div class="help" id="help"><strong>Arrastrá desde la nave</strong><small>La flecha indica dirección y magnitud del impulso. Soltá para aplicar el vector y llegá al portal usando pocos impulsos.</small></div>
+<div class="toast" id="toast"></div>
+<script>
+(()=>{
+const c=document.getElementById('game'),x=c.getContext('2d');let W,H,dpr;
+const ui={level:byId('level'),shots:byId('shots'),speed:byId('speed'),best:byId('best'),help:byId('help'),toast:byId('toast'),next:byId('next')};
+function byId(id){return document.getElementById(id)}
+const levels=[
+ {ship:[.18,.72],goal:[.82,.28],max:3,gravity:[0,0],planets:[]},
+ {ship:[.16,.25],goal:[.82,.72],max:3,gravity:[0,18],planets:[]},
+ {ship:[.14,.72],goal:[.86,.28],max:4,gravity:[0,4],planets:[{p:[.5,.5],r:.10,g:105000}]},
+ {ship:[.12,.5],goal:[.88,.5],max:4,gravity:[0,0],planets:[{p:[.5,.28],r:.085,g:80000},{p:[.5,.72],r:.085,g:80000}]},
+ {ship:[.12,.82],goal:[.88,.18],max:5,gravity:[0,8],planets:[{p:[.38,.55],r:.09,g:100000},{p:[.68,.38],r:.07,g:-65000}]}
+];
+let level=0,ship,goal,planets,gravity,shots,maxShots,drag=null,won=false,last=performance.now(),stars=[],trail=[];
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';x.setTransform(dpr,0,0,dpr,0,0);stars=Array.from({length:Math.floor(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.8+.3,a:Math.random()*.7+.2}));reset()}
+function reset(){const L=levels[level];ship={x:L.ship[0]*W,y:L.ship[1]*H,vx:0,vy:0,r:13};goal={x:L.goal[0]*W,y:L.goal[1]*H,r:25};gravity=L.gravity;planets=L.planets.map(o=>({x:o.p[0]*W,y:o.p[1]*H,r:o.r*Math.min(W,H),g:o.g}));shots=0;maxShots=L.max;drag=null;won=false;trail=[];ui.next.hidden=true;ui.level.textContent=level+1;updateUI();ui.help.classList.remove('hide');setTimeout(()=>ui.help.classList.add('hide'),3200)}
+function updateUI(){ui.shots.textContent=shots+'/'+maxShots;ui.speed.textContent=Math.hypot(ship.vx,ship.vy).toFixed(1);ui.best.textContent=localStorage.getItem('vp-best-'+level)||'—'}
+function pointer(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left),y:(e.clientY-r.top)}}
+c.addEventListener('pointerdown',e=>{if(won)return;const p=pointer(e);if(Math.hypot(p.x-ship.x,p.y-ship.y)<44&&shots<maxShots){drag=p;c.setPointerCapture(e.pointerId)}});
+c.addEventListener('pointermove',e=>{if(drag)drag=pointer(e)});
+c.addEventListener('pointerup',e=>{if(!drag)return;const p=pointer(e),dx=p.x-ship.x,dy=p.y-ship.y,len=Math.hypot(dx,dy),cap=Math.min(130,len);if(len>8){const power=cap*1.22;ship.vx+=dx/len*power;ship.vy+=dy/len*power;shots++;navigator.vibrate?.(25)}drag=null;updateUI()});
+byId('reset').onclick=reset;ui.next.onclick=()=>{level=(level+1)%levels.length;reset()};
+function physics(dt){if(won)return;ship.vx+=gravity[0]*dt;ship.vy+=gravity[1]*dt;for(const p of planets){let dx=p.x-ship.x,dy=p.y-ship.y,d2=Math.max(900,dx*dx+dy*dy),d=Math.sqrt(d2),a=p.g/d2;ship.vx+=dx/d*a*dt;ship.vy+=dy/d*a*dt;if(d<p.r+ship.r){fail('IMPACTO')}}ship.x+=ship.vx*dt;ship.y+=ship.vy*dt;ship.vx*=Math.pow(.998,dt*60);ship.vy*=Math.pow(.998,dt*60);trail.push({x:ship.x,y:ship.y,a:1});if(trail.length>120)trail.shift();trail.forEach(t=>t.a-=dt*.65);
+ if(Math.hypot(ship.x-goal.x,ship.y-goal.y)<goal.r+ship.r&&Math.hypot(ship.vx,ship.vy)<210){win()}
+ if(ship.x<-90||ship.x>W+90||ship.y<-90||ship.y>H+90)fail('PERDIDO EN EL ESPACIO')}
+let failTimer=0;function fail(msg){if(failTimer)return;toast(msg,'#ff5c7a');failTimer=setTimeout(()=>{failTimer=0;reset()},900)}
+function win(){won=true;const score=shots;const key='vp-best-'+level,old=+(localStorage.getItem(key)||99);if(score<old)localStorage.setItem(key,score);toast(shots<=Math.ceil(maxShots/2)?'¡VECTOR PERFECTO!':'¡MISIÓN CUMPLIDA!','#39ff9e');ui.next.hidden=false;updateUI();navigator.vibrate?.([40,40,90])}
+function toast(t,color){ui.toast.textContent=t;ui.toast.style.color=color;ui.toast.classList.remove('show');void ui.toast.offsetWidth;ui.toast.classList.add('show')}
+function arrow(ax,ay,bx,by,color){const dx=bx-ax,dy=by-ay,l=Math.hypot(dx,dy);if(l<3)return;const ux=dx/l,uy=dy/l;x.strokeStyle=color;x.fillStyle=color;x.lineWidth=4;x.beginPath();x.moveTo(ax,ay);x.lineTo(bx,by);x.stroke();x.beginPath();x.moveTo(bx,by);x.lineTo(bx-ux*15-uy*8,by-uy*15+ux*8);x.lineTo(bx-ux*15+uy*8,by-uy*15-ux*8);x.closePath();x.fill()}
+function draw(){x.clearRect(0,0,W,H);for(const s of stars){x.globalAlpha=s.a;x.fillStyle='#dff8ff';x.fillRect(s.x,s.y,s.s,s.s)}x.globalAlpha=1;
+ x.strokeStyle='rgba(39,232,255,.055)';x.lineWidth=1;for(let i=0;i<W;i+=45){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke()}for(let i=0;i<H;i+=45){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke()}
+ for(const t of trail){if(t.a<=0)continue;x.globalAlpha=Math.max(0,t.a)*.55;x.fillStyle='#27e8ff';x.beginPath();x.arc(t.x,t.y,3,0,Math.PI*2);x.fill()}x.globalAlpha=1;
+ for(const p of planets){let gr=x.createRadialGradient(p.x-p.r*.25,p.y-p.r*.3,2,p.x,p.y,p.r);gr.addColorStop(0,p.g<0?'#ffb5f2':'#9cf8ff');gr.addColorStop(.35,p.g<0?'#ff2bd6':'#2477ff');gr.addColorStop(1,'#080b22');x.fillStyle=gr;x.shadowColor=p.g<0?'#ff2bd6':'#27e8ff';x.shadowBlur=20;x.beginPath();x.arc(p.x,p.y,p.r,0,Math.PI*2);x.fill();x.shadowBlur=0}
+ const pulse=1+Math.sin(performance.now()/250)*.08;x.strokeStyle='#39ff9e';x.lineWidth=5;x.shadowColor='#39ff9e';x.shadowBlur=18;x.beginPath();x.arc(goal.x,goal.y,goal.r*pulse,0,Math.PI*2);x.stroke();x.shadowBlur=0;x.fillStyle='rgba(57,255,158,.12)';x.fill();
+ x.save();x.translate(ship.x,ship.y);x.rotate(Math.atan2(ship.vy,ship.vx)||0);x.shadowColor='#27e8ff';x.shadowBlur=14;x.fillStyle='#eafcff';x.beginPath();x.moveTo(18,0);x.lineTo(-11,-10);x.lineTo(-5,0);x.lineTo(-11,10);x.closePath();x.fill();x.fillStyle='#ff2bd6';x.beginPath();x.moveTo(-7,-5);x.lineTo(-17,0);x.lineTo(-7,5);x.fill();x.restore();x.shadowBlur=0;
+ if(drag){let dx=drag.x-ship.x,dy=drag.y-ship.y,l=Math.hypot(dx,dy),cap=Math.min(130,l);arrow(ship.x,ship.y,ship.x+dx/(l||1)*cap,ship.y+dy/(l||1)*cap,'#ffd23b');x.fillStyle='#ffd23b';x.font='700 13px system-ui';x.fillText('Impulso '+Math.round(cap),ship.x+12,ship.y-20)}
+}
+function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;physics(dt);updateUI();draw();requestAnimationFrame(loop)}
+addEventListener('resize',resize);resize();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
