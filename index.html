@@ -16,7 +16,6 @@
     color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
     min-height:100vh; padding:48px 20px 80px; overflow-x:hidden;
   }
-  /* grilla de fondo sutil */
   body::before{
     content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
     background:
@@ -36,97 +35,27 @@
   @keyframes shine{to{background-position:300% center;}}
   .sub{margin-top:10px; color:var(--pink); font-weight:600; letter-spacing:6px; font-size:13px;}
   .tagline{margin-top:8px; color:var(--muted); font-size:14px;}
-
-  .grid{
-    margin-top:42px; display:grid; gap:22px;
-    grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
-  }
-  .card{
-    position:relative; display:flex; flex-direction:column; border-radius:18px; overflow:hidden;
-    background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7));
-    border:1px solid rgba(138,75,255,.3);
-    box-shadow:0 10px 30px rgba(0,0,0,.45);
-    text-decoration:none; color:inherit; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-  }
-  .card.live:hover{
-    transform:translateY(-6px);
-    border-color:var(--cyan);
-    box-shadow:0 16px 40px rgba(0,0,0,.55), 0 0 30px rgba(39,232,255,.3);
-  }
-  .thumb{
-    height:150px; display:flex; align-items:center; justify-content:center; position:relative;
-    background:radial-gradient(circle at 50% 40%, rgba(39,232,255,.12), transparent 70%),
-              linear-gradient(180deg,#0a1024,#05070f);
-    font-size:74px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5));
-  }
+  .grid{margin-top:42px; display:grid; gap:22px; grid-template-columns:repeat(auto-fill, minmax(240px,1fr));}
+  .card{position:relative; display:flex; flex-direction:column; border-radius:18px; overflow:hidden; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 30px rgba(0,0,0,.45); text-decoration:none; color:inherit; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;}
+  .card.live:hover{transform:translateY(-6px); border-color:var(--cyan); box-shadow:0 16px 40px rgba(0,0,0,.55), 0 0 30px rgba(39,232,255,.3);}
+  .thumb{height:150px; display:flex; align-items:center; justify-content:center; position:relative; background:radial-gradient(circle at 50% 40%, rgba(39,232,255,.12), transparent 70%),linear-gradient(180deg,#0a1024,#05070f); font-size:74px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5));}
   .thumb .glyph{animation:float 4s ease-in-out infinite;}
   @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
-  .body{padding:16px 18px 20px;}
-  .title{font-size:19px; font-weight:800; letter-spacing:.5px;}
-  .desc{margin-top:6px; font-size:13px; color:var(--muted); line-height:1.45; min-height:36px;}
-  .row{margin-top:14px; display:flex; align-items:center; justify-content:space-between;}
-  .tag{font-size:11px; letter-spacing:1px; padding:4px 10px; border-radius:999px; font-weight:700;}
-  .tag.new{color:#031018; background:var(--green);}
-  .tag.soon{color:var(--muted); background:rgba(127,166,200,.15); border:1px solid rgba(127,166,200,.25);}
-  .play{font-size:13px; font-weight:800; color:var(--cyan); letter-spacing:.5px;}
-
-  .card.soon{filter:grayscale(.4) opacity(.65); border-style:dashed;}
-  .card.soon .thumb{font-size:54px; color:var(--muted); filter:none;}
-
+  .body{padding:16px 18px 20px;}.title{font-size:19px; font-weight:800; letter-spacing:.5px;}.desc{margin-top:6px; font-size:13px; color:var(--muted); line-height:1.45; min-height:36px;}.row{margin-top:14px; display:flex; align-items:center; justify-content:space-between;}.tag{font-size:11px; letter-spacing:1px; padding:4px 10px; border-radius:999px; font-weight:700;}.tag.new{color:#031018; background:var(--green);}.play{font-size:13px; font-weight:800; color:var(--cyan); letter-spacing:.5px;}
   footer{margin-top:54px; text-align:center; color:var(--muted); font-size:12px; line-height:1.7;}
-  footer a{color:var(--cyan); text-decoration:none;}
 </style>
 </head>
 <body>
   <div class="stage">
-    <header>
-      <div class="logo">NEON ARCADE</div>
-      <div class="sub">M I N I J U E G O S</div>
-      <div class="tagline">Una colección de juegos hechos para jugar en el navegador.</div>
-    </header>
-
+    <header><div class="logo">NEON ARCADE</div><div class="sub">M I N I J U E G O S</div><div class="tagline">Una colección de juegos hechos para jugar en el navegador.</div></header>
     <main class="grid" id="grid">
-      <!-- Juego activo -->
-      <a class="card live" href="knight-quest.html">
-        <div class="thumb"><span class="glyph">♞</span></div>
-        <div class="body">
-          <div class="title">Knight Quest</div>
-          <div class="desc">Saltá en L, esquivá a las piezas de ajedrez que te persiguen y subí lo más alto posible.</div>
-          <div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div>
-        </div>
-      </a>
-
-      <!-- Juego activo -->
-      <a class="card live" href="brain-test.html">
-        <div class="thumb"><span class="glyph">🧠</span></div>
-        <div class="body">
-          <div class="title">Big Brain</div>
-          <div class="desc">Cálculo, memoria, visión y lógica contra reloj. ¿Qué tan grande es tu cerebro?</div>
-          <div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div>
-        </div>
-      </a>
-
-      <!-- Juego activo -->
-      <a class="card live" href="head-soccer.html">
-        <div class="thumb"><span class="glyph">⚽</span></div>
-        <div class="body">
-          <div class="title">Neon Heads</div>
-          <div class="desc">Fútbol cabezón: 1 jugador vs CPU o 2 jugadores. Cabezazos, saltos y patadas al arco.</div>
-          <div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div>
-        </div>
-      </a>
+      <a class="card live" href="vector-pilot.html"><div class="thumb"><span class="glyph">🚀</span></div><div class="body"><div class="title">Vector Pilot</div><div class="desc">Aplicá vectores de impulso, dominá la gravedad y guiá la nave hasta el portal.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
+      <a class="card live" href="knight-quest.html"><div class="thumb"><span class="glyph">♞</span></div><div class="body"><div class="title">Knight Quest</div><div class="desc">Saltá en L, esquivá a las piezas de ajedrez que te persiguen y subí lo más alto posible.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
+      <a class="card live" href="brain-test.html"><div class="thumb"><span class="glyph">🧠</span></div><div class="body"><div class="title">Big Brain</div><div class="desc">Cálculo, memoria, visión y lógica contra reloj. ¿Qué tan grande es tu cerebro?</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
+      <a class="card live" href="head-soccer.html"><div class="thumb"><span class="glyph">⚽</span></div><div class="body"><div class="title">Neon Heads</div><div class="desc">Fútbol cabezón: 1 jugador vs CPU o 2 jugadores. Cabezazos, saltos y patadas al arco.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
     </main>
-
-    <footer>
-      Hecho con ♥ y mucho neón · <span id="count"></span><br>
-      Más juegos en camino.
-    </footer>
+    <footer>Hecho con ♥ y mucho neón · <span id="count"></span><br>Más juegos en camino.</footer>
   </div>
-
-<script>
-  // Contador automático de juegos disponibles
-  const live = document.querySelectorAll('.card.live').length;
-  document.getElementById('count').textContent = live + (live===1?' juego disponible':' juegos disponibles');
-</script>
+<script>const live=document.querySelectorAll('.card.live').length;document.getElementById('count').textContent=live+(live===1?' juego disponible':' juegos disponibles');</script>
 </body>
 </html>
