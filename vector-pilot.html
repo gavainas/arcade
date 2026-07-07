@@ -109,7 +109,7 @@
   <div class="top">
     <div class="panel">
       <div class="title" id="lvName">VECTOR PILOT</div>
-      <div class="stats">Nivel <b id="level">1</b> · Impulsos <b id="shots">0/3</b></div>
+      <div class="stats">Nivel <b id="level">1</b> · Par <b id="par">1</b> · Impulsos <b id="shots">0/3</b></div>
       <div class="stats stars-line" id="curStars" style="color:var(--gold)">☆☆☆</div>
     </div>
     <div class="panel stats right">
@@ -118,6 +118,7 @@
     </div>
   </div>
   <div class="bottom">
+    <a class="btn" href="index.html" title="Volver al arcade">‹ Arcade</a>
     <button class="btn icon" id="menu" title="Niveles">☰</button>
     <button class="btn" id="reset">↻ Reiniciar</button>
     <button class="btn icon" id="mute" title="Sonido">🔊</button>
@@ -349,7 +350,7 @@ function updateParticles(dt){
 /* --- 6) Estado y persistencia ---------------------------------------------- */
 const c=document.getElementById('game'), x=c.getContext('2d');
 const $=id=>document.getElementById(id);
-const ui={level:$('level'),shots:$('shots'),speed:$('speed'),best:$('best'),lvName:$('lvName'),
+const ui={level:$('level'),shots:$('shots'),speed:$('speed'),best:$('best'),lvName:$('lvName'),par:$('par'),
           curStars:$('curStars'),help:$('help'),toast:$('toast'),next:$('next'),mute:$('mute')};
 
 let W,H,dpr,scale,ox,oy;               // métricas de pantalla (CSS px)
@@ -424,6 +425,7 @@ const dailyKey=()=>{const d=new Date();return 'vp-daily-'+d.getFullYear()+'-'+(d
 
 function updateUI(){
   ui.shots.textContent=shots+'/'+maxShots;
+  ui.par.textContent=cfg.par;
   ui.speed.textContent=Math.round(Math.hypot(ship.vx,ship.vy));
   if(dailyMode){
     const b=localStorage.getItem(dailyKey());
@@ -500,6 +502,22 @@ function hitsPlanet(px,py,r){
   for(const p of planets){if((px-p.x)**2+(py-p.y)**2<(p.r+r)**2)return p}
   return null;
 }
+
+// Aceleración ambiental (gravedad + planetas + viento) en un punto, SIN el
+// impulso del jugador ni el rozamiento. Sirve para el medidor de fuerzas del HUD.
+function envForce(px,py){
+  let ax=gravity[0], ay=gravity[1];
+  for(const p of planets){
+    let dx=p.x-px, dy=p.y-py, d2=Math.max(CFG.DMIN*CFG.DMIN,dx*dx+dy*dy), d=Math.sqrt(d2), a=p.g/d2;
+    ax+=dx/d*a; ay+=dy/d*a;
+  }
+  for(const w of winds){
+    if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h){ax+=w.fx; ay+=w.fy}
+  }
+  return {ax,ay};
+}
+// ¿La nave está dentro de alguna corriente de viento?
+function inWind(px,py){return winds.some(w=>px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)}
 
 // Posición del portal en un tiempo dado (soporta portal móvil).
 function goalAt(time){
@@ -702,6 +720,41 @@ function draw(){
     const dd=60+Math.sin(t*3)*14;
     arrow(ship.x,ship.y,ship.x,ship.y-dd,'rgba(255,210,59,.55)',4,14);
   }
+
+  drawGauge();   // Medidor de fuerzas del HUD (viento/gravedad), en coordenadas de pantalla.
+}
+
+// Medidor tipo golf: brújula que muestra la fuerza ambiental que empuja la nave
+// (viento, gravedad o campo de un planeta) en tiempo real. Ayuda a entender el nivel.
+function drawGauge(){
+  // Solo si el nivel tiene fuerzas ambientales (los niveles vacíos no lo muestran).
+  if(!(gravity[0]||gravity[1]||planets.length||winds.length))return;
+  const f=envForce(ship.x,ship.y), mag=Math.hypot(f.ax,f.ay), wind=inWind(ship.x,ship.y);
+  x.setTransform(dpr,0,0,dpr,0,0);           // pantalla, no mundo
+  const cx=W-42, cy=H*0.5, R=26;
+  // Disco de fondo.
+  x.fillStyle='rgba(5,9,23,.82)'; x.strokeStyle='rgba(39,232,255,.25)'; x.lineWidth=1;
+  x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.fill(); x.stroke();
+  // Flecha en la dirección de la fuerza; el largo crece con la intensidad (con tope).
+  if(mag>1){
+    const ux=f.ax/mag, uy=f.ay/mag, s=Math.min(1,mag/420), len=R*(.45+.5*s);
+    const col=wind?'#8a4bff':'#27e8ff';
+    x.strokeStyle=col; x.fillStyle=col; x.lineWidth=3;
+    x.beginPath(); x.moveTo(cx-ux*len*.55,cy-uy*len*.55); x.lineTo(cx+ux*len,cy+uy*len); x.stroke();
+    const hx=cx+ux*len, hy=cy+uy*len;
+    x.beginPath(); x.moveTo(hx,hy);
+    x.lineTo(hx-ux*8-uy*5,hy-uy*8+ux*5); x.lineTo(hx-ux*8+uy*5,hy-uy*8-ux*5);
+    x.closePath(); x.fill();
+  }
+  // Etiqueta honesta: nombra la fuerza que actúa ahora (o la del nivel si la nave
+  // aún no siente nada), sin inventar gravedad donde no la hay.
+  const label = wind ? 'VIENTO'
+              : mag>1 ? (planets.length?'CAMPO':'GRAVEDAD')
+              : (winds.length?'VIENTO':'GRAVEDAD');
+  x.textAlign='center';
+  x.fillStyle=wind?'#c9a8ff':'#8ca9c8'; x.font='700 10px system-ui';
+  x.fillText(label,cx,cy+R+13);
+  x.textAlign='left';
 }
 
 // Helpers de dibujo (en coordenadas virtuales).
