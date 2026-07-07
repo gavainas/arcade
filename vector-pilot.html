@@ -128,8 +128,8 @@
 
 <!-- Tutorial / ayuda contextual -->
 <div class="help" id="help">
-  <strong>Arrastrá desde la nave</strong>
-  <small>La flecha marca dirección y fuerza del impulso. Soltá para lanzar y llegá al portal con la menor cantidad de impulsos.</small>
+  <strong>Arrastrá para dar un impulso</strong>
+  <small>La flecha verde (resultante) es tu velocidad: apuntala al portal. La nave viaja en línea recta a velocidad constante.</small>
 </div>
 
 <!-- Toast de estado -->
@@ -191,95 +191,89 @@ const VW=720, VH=1280;
 
 const CFG={
   SHIP_R:14,            // radio de la nave (px virtuales)
-  GOAL_R:30,            // radio del portal
+  GOAL_R:32,            // radio del portal
   DRAG_MAX:300,         // largo máximo del gesto de arrastre
   IMPULSE_K:2.4,        // velocidad (px/s) agregada por px de arrastre
-  DAMP:0.12,            // rozamiento suave del espacio (1/s)
-  DMIN:55,              // distancia mínima para gravedad puntual (evita infinitos)
+  // CAPÍTULO 1 · VECTORES: velocidad constante (sin rozamiento ni fuerzas).
+  // La aceleración (gravedad, planetas, viento) queda para el capítulo 2.
+  DAMP:0,               // rozamiento del espacio (0 = velocidad constante)
+  DMIN:55,              // distancia mínima para gravedad puntual (reservado cap. 2)
   BOUND:130,            // margen fuera del campo antes de "perderse"
   MAX_DT:0.033,         // dt máximo (evita saltos al volver de segundo plano)
   SUBSTEP:12,           // avance máx por subpaso (px) para colisiones robustas
+  VEC_SCALE:1/2.4,      // px de pantalla por (px/s): 1/IMPULSE_K → la flecha de impulso sigue al dedo
   PREVIEW_DT:0.025,     // dt de la vista previa de trayectoria
-  PREVIEW_STEPS:70      // cantidad de puntos de la vista previa
+  PREVIEW_STEPS:90      // cantidad de puntos de la vista previa
 };
 
-/* --- 2) Niveles -------------------------------------------------------------
-   Coordenadas normalizadas: x en [0,1] sobre VW, y en [0,1] sobre VH.
-   planets[].r es fracción de VW (círculos redondos en el campo virtual).
-   planets[].g es la fuerza gravitatoria: a = g / d²  (positivo atrae, negativo repele).
-   walls[]  = rectángulos sólidos {x,y,w,h} (colisión = choque).
-   winds[]  = zonas de viento {x,y,w,h, fx,fy}  (fuerza en px/s² mientras la nave está dentro).
-   goal.move = movimiento del portal {axis:'x'|'y', amp, speed} (amp en fracción, speed en rad/s).
-   par = impulsos ideales para 3 estrellas.  max = impulsos permitidos.
+/* --- 2) Niveles · CAPÍTULO 1: VECTORES --------------------------------------
+   Movimiento a VELOCIDAD CONSTANTE (sin gravedad ni rozamiento). Cada impulso
+   SUMA un vector a la velocidad actual; la nave viaja en línea recta hasta el
+   próximo impulso, un muro o el borde. Se trata de entender la suma de vectores.
+
+   Coordenadas normalizadas: x en [0,1] sobre VW, y en [0,1] sobre VH (y crece hacia abajo).
+   ship  = posición inicial.
+   vel   = velocidad inicial opcional [vx,vy] en px/s (obliga a pensar la resultante).
+   goal  = portal {x,y}. goal.move = {axis:'x'|'y', amp, speed} para portal móvil.
+   walls = rectángulos sólidos {x,y,w,h} (chocar = perder). Son geometría, no fuerzas.
+   par   = impulsos ideales para 3 estrellas.  max = impulsos permitidos.
+   (gravity/planets/winds quedan reservados para el capítulo 2 de aceleración.)
 --------------------------------------------------------------------------- */
 const LEVELS=[
-  { // 1 · Movimiento sin gravedad (tutorial)
-    name:"PRIMER VUELO", tutorial:true, par:1, max:3,
-    ship:[.5,.82], goal:{x:.5,y:.16},
+  { // 1 · El impulso ES tu velocidad (tutorial)
+    name:"IMPULSO", tutorial:true, par:1, max:3,
+    ship:[.5,.8], goal:{x:.5,y:.2},
     gravity:[0,0], planets:[], walls:[], winds:[]
   },
-  { // 2 · Gravedad vertical suave
-    name:"CAÍDA SUAVE", par:2, max:3,
-    ship:[.2,.82], goal:{x:.8,y:.2},
-    gravity:[0,190], planets:[], walls:[], winds:[]
+  { // 2 · Apuntar en diagonal
+    name:"DIAGONAL", par:1, max:3,
+    ship:[.2,.82], goal:{x:.8,y:.22},
+    gravity:[0,0], planets:[], walls:[], winds:[]
   },
-  { // 3 · Un planeta atractivo
-    name:"ÓRBITA", par:2, max:4,
+  { // 3 · Ya venís con velocidad: apuntá la RESULTANTE
+    name:"RESULTANTE", par:1, max:3,
+    ship:[.25,.8], vel:[300,0], goal:{x:.75,y:.28},
+    gravity:[0,0], planets:[], walls:[], winds:[]
+  },
+  { // 4 · Un muro cruzado: rodealo con dos vectores
+    name:"RODEO", par:2, max:4,
     ship:[.5,.86], goal:{x:.5,y:.14},
-    gravity:[0,0],
-    planets:[{x:.5,y:.5,r:.135,g:11000000}],
-    walls:[], winds:[]
+    gravity:[0,0], planets:[],
+    walls:[{x:.18,y:.47,w:.64,h:.05}], winds:[]
   },
-  { // 4 · Dos planetas
-    name:"DOBLE POZO", par:2, max:4,
-    ship:[.5,.9], goal:{x:.5,y:.08},
-    gravity:[0,0],
-    planets:[{x:.5,y:.34,r:.1,g:9000000},{x:.5,y:.66,r:.1,g:9000000}],
-    walls:[], winds:[]
+  { // 5 · Colar la nave por un pasillo desalineado
+    name:"PASILLO", par:2, max:4,
+    ship:[.3,.85], goal:{x:.7,y:.15},
+    gravity:[0,0], planets:[],
+    walls:[{x:0,y:.45,w:.5,h:.06},{x:.66,y:.45,w:.34,h:.06}], winds:[]
   },
-  { // 5 · Cuerpo repulsivo (bloquea la diagonal: hay que rodearlo)
-    name:"REPULSOR", par:3, max:5,
-    ship:[.15,.85], goal:{x:.85,y:.15},
-    gravity:[0,0],
-    planets:[{x:.62,y:.62,r:.1,g:-8000000}],
-    walls:[], winds:[]
+  { // 6 · Portal en movimiento: cronometrá el disparo
+    name:"BLANCO MÓVIL", par:1, max:4,
+    ship:[.5,.85], goal:{x:.5,y:.2,move:{axis:'x',amp:.3,speed:1.2}},
+    gravity:[0,0], planets:[], walls:[], winds:[]
   },
-  { // 6 · Obstáculos estrechos
-    name:"PASO ANGOSTO", par:2, max:4,
+  { // 7 · Redirigir una velocidad fuerte
+    name:"REDIRECCIÓN", par:1, max:3,
+    ship:[.5,.86], vel:[0,-420], goal:{x:.82,y:.55},
+    gravity:[0,0], planets:[], walls:[], winds:[]
+  },
+  { // 8 · Zigzag entre muros
+    name:"ZIGZAG", par:3, max:5,
     ship:[.5,.9], goal:{x:.5,y:.1},
     gravity:[0,0], planets:[],
-    walls:[{x:0,y:.46,w:.4,h:.06},{x:.6,y:.46,w:.4,h:.06}],
-    winds:[]
+    walls:[{x:0,y:.62,w:.66,h:.05},{x:.34,y:.36,w:.66,h:.05}], winds:[]
   },
-  { // 7 · Portal móvil
-    name:"BLANCO MÓVIL", par:2, max:4,
-    ship:[.5,.88], goal:{x:.5,y:.16,move:{axis:'x',amp:.32,speed:1.1}},
-    gravity:[0,60], planets:[], walls:[], winds:[]
-  },
-  { // 8 · Impulsos muy limitados (asistencia gravitatoria)
-    name:"DOS TIROS", par:2, max:2,
-    ship:[.14,.85], goal:{x:.86,y:.18},
-    gravity:[0,0],
-    planets:[{x:.5,y:.5,r:.13,g:13000000}],
-    walls:[], winds:[]
-  },
-  { // 9 · Corrientes de viento espacial
-    name:"VIENTO SOLAR", par:3, max:5,
-    ship:[.15,.85], goal:{x:.85,y:.15},
+  { // 9 · Solo dos vectores para rodear el muro
+    name:"DOS VECTORES", par:2, max:2,
+    ship:[.15,.85], goal:{x:.85,y:.2},
     gravity:[0,0], planets:[],
-    walls:[],
-    winds:[
-      {x:.0,y:.25,w:1,h:.22,fx:300,fy:0},   // corriente hacia la derecha
-      {x:.0,y:.55,w:1,h:.22,fx:-300,fy:0}   // corriente hacia la izquierda
-    ]
+    walls:[{x:.4,y:.3,w:.06,h:.5}], winds:[]
   },
-  { // 10 · Nivel final: combina todo
-    name:"NEBULOSA FINAL", par:4, max:6,
-    ship:[.12,.9], goal:{x:.88,y:.1,move:{axis:'y',amp:.14,speed:.9}},
-    gravity:[0,70],
-    planets:[{x:.38,y:.5,r:.11,g:10000000},{x:.7,y:.66,r:.09,g:-9000000}],
-    walls:[{x:.44,y:.2,w:.06,h:.26}],
-    winds:[{x:.0,y:.7,w:1,h:.18,fx:260,fy:0}]
+  { // 10 · Final: slalom + portal móvil
+    name:"SLALOM FINAL", par:3, max:5,
+    ship:[.12,.88], goal:{x:.85,y:.16,move:{axis:'y',amp:.12,speed:1}},
+    gravity:[0,0], planets:[],
+    walls:[{x:.4,y:.5,w:.06,h:.5},{x:.55,y:0,w:.06,h:.4}], winds:[]
   }
 ];
 
@@ -377,7 +371,8 @@ function resize(){
 // Convierte una definición de nivel (normalizada) a objetos en coordenadas virtuales.
 function buildLevel(L){
   gravity=[L.gravity[0],L.gravity[1]];
-  ship={x:L.ship[0]*VW,y:L.ship[1]*VH,vx:0,vy:0};
+  // Velocidad inicial opcional (px/s). Sin ella, la nave arranca quieta.
+  ship={x:L.ship[0]*VW,y:L.ship[1]*VH,vx:L.vel?L.vel[0]:0,vy:L.vel?L.vel[1]:0};
   goal={bx:L.goal.x*VW,by:L.goal.y*VH,x:L.goal.x*VW,y:L.goal.y*VH,r:L.goal.r?L.goal.r*VW:CFG.GOAL_R,
         move:L.goal.move||null};
   planets=(L.planets||[]).map(p=>({x:p.x*VW,y:p.y*VH,r:p.r*VW,g:p.g}));
@@ -403,20 +398,17 @@ function loadLevel(i){
   reset();
 }
 
-// ---- Desafío diario: nivel determinista según la fecha ----
+// ---- Desafío diario: nivel de vectores determinista según la fecha ----
 function loadDaily(){
   const d=new Date(), seed=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
   const rnd=mulberry32(seed);
-  const nPlanets=1+Math.floor(rnd()*2);
-  const planetsD=[];
-  for(let i=0;i<nPlanets;i++){
-    planetsD.push({x:.3+rnd()*.4, y:.32+rnd()*.36, r:.09+rnd()*.05,
-                   g:(rnd()<.35?-1:1)*(8000000+rnd()*6000000)});
-  }
-  const windsD = rnd()<.5 ? [{x:0,y:.55,w:1,h:.2,fx:(rnd()<.5?-1:1)*(220+rnd()*140),fy:0}] : [];
+  const gx=.25+rnd()*.5;                                   // portal en la franja superior
+  const move = rnd()<.4 ? {axis:'x',amp:.16+rnd()*.14,speed:.9+rnd()*.6} : null;
+  const wall = {x:.35+rnd()*.3, y:rnd()<.5?0:.46, w:.06, h:.4+rnd()*.14};  // muro para rodear
+  const vel = rnd()<.5 ? [(rnd()<.5?-1:1)*(160+rnd()*200), 0] : null;      // a veces, velocidad inicial
   cfg={ name:"DESAFÍO DIARIO", par:3, max:5,
-        ship:[.14,.86], goal:{x:.86,y:.14}, gravity:[0, rnd()<.5?0:60+rnd()*120],
-        planets:planetsD, walls:[], winds:windsD };
+        ship:[.15,.85], vel, goal:{x:gx,y:.16,move}, gravity:[0,0], planets:[],
+        walls:[wall], winds:[] };
   dailyMode=true; level=-1;
   ui.level.textContent='★';
   reset();
@@ -448,8 +440,9 @@ c.addEventListener('pointerdown',e=>{
   e.preventDefault(); Audio_.ensure();
   if(state!=='play')return;
   const p=toWorld(e);
-  // El gesto empieza si se toca cerca de la nave y quedan impulsos.
-  if(Math.hypot(p.x-ship.x,p.y-ship.y)<70 && shots<maxShots){
+  // Tocá en cualquier parte para apuntar: la nave se congela mientras arrastrás
+  // (así podés planear el vector con calma) y quedan impulsos disponibles.
+  if(shots<maxShots){
     drag=p; try{c.setPointerCapture(e.pointerId)}catch(_){}
     Audio_.ui();
   }
@@ -541,7 +534,8 @@ function simulate(startVx,startVy){
 /* --- 9) Actualización, colisiones, victoria/derrota ------------------------- */
 function step(dt){
   if(state!=='play')return;
-  t+=dt;
+  t+=dt;                       // el tiempo sigue (el portal móvil se mueve)...
+  if(drag)return;              // ...pero la nave queda congelada mientras apuntás.
   // Subpasos: mantiene colisiones fiables aunque la nave vaya muy rápido.
   const speed=Math.hypot(ship.vx,ship.vy);
   const sub=Math.max(1,Math.ceil(speed*dt/CFG.SUBSTEP));
@@ -680,14 +674,14 @@ function draw(){
   x.strokeStyle='rgba(57,255,158,.4)'; x.lineWidth=1.5; circle(gp.x,gp.y,goal.r*pulse*.55); x.stroke();
   x.restore();
 
-  // Vista previa punteada de la trayectoria (mientras se arrastra).
+  // Vista previa punteada del recorrido: la línea recta de la RESULTANTE (verde).
   if(drag&&state==='play'){
     const dx=drag.x-ship.x, dy=drag.y-ship.y, len=Math.hypot(dx,dy);
     if(len>10){
       const cap=Math.min(CFG.DRAG_MAX,len), power=cap*CFG.IMPULSE_K;
       const pts=simulate(ship.vx+dx/len*power, ship.vy+dy/len*power);
-      x.fillStyle='rgba(255,210,59,.9)';
-      for(let i=0;i<pts.length;i++){x.globalAlpha=1-i/pts.length;circle(pts[i].x,pts[i].y,3);x.fill()}
+      x.fillStyle='rgba(57,255,158,.85)';
+      for(let i=0;i<pts.length;i++){x.globalAlpha=1-i/pts.length;circle(pts[i].x,pts[i].y,2.5);x.fill()}
       x.globalAlpha=1;
     }
   }
@@ -701,16 +695,8 @@ function draw(){
   x.fillStyle='#ff2bd6'; x.beginPath(); x.moveTo(-7,-5); x.lineTo(-18,0); x.lineTo(-7,5); x.fill();
   x.restore();
 
-  // Flecha de impulso + etiqueta.
-  if(drag&&state==='play'){
-    const dx=drag.x-ship.x, dy=drag.y-ship.y, len=Math.hypot(dx,dy), cap=Math.min(CFG.DRAG_MAX,len);
-    if(len>4){
-      const ux=dx/len, uy=dy/len;
-      arrow(ship.x,ship.y,ship.x+ux*cap,ship.y+uy*cap,'#ffd23b',5,16);
-      x.fillStyle='#ffd23b'; x.font='700 20px system-ui';
-      x.fillText('Impulso '+Math.round(cap*CFG.IMPULSE_K),ship.x+16,ship.y-24);
-    }
-  }
+  // Diagrama de vectores: velocidad (cian) + impulso (dorado) = resultante (verde).
+  drawVectors();
 
   // Guía animada del tutorial (nivel 1).
   if(tutorialStep===1&&!drag){
@@ -757,6 +743,41 @@ function drawGauge(){
   x.textAlign='left';
 }
 
+// Diagrama de vectores (en coordenadas del mundo). Muestra, con el método del
+// paralelogramo, cómo se SUMAN los vectores:
+//   velocidad actual (cian) + impulso que aplicás (dorado) = resultante (verde).
+// La resultante es la velocidad con la que saldrá la nave.
+function drawVectors(){
+  const S=CFG.VEC_SCALE, vx=ship.vx, vy=ship.vy, vMag=Math.hypot(vx,vy);
+  if(drag&&state==='play'){
+    const dx=drag.x-ship.x, dy=drag.y-ship.y, len=Math.hypot(dx,dy);
+    if(len<4)return;
+    const cap=Math.min(CFG.DRAG_MAX,len), ux=dx/len, uy=dy/len, power=cap*CFG.IMPULSE_K;
+    const ix=ux*power, iy=uy*power, rx=vx+ix, ry=vy+iy;      // impulso y resultante (px/s)
+    const iT={x:ship.x+ix*S,y:ship.y+iy*S};                 // punta del impulso (≈ el dedo)
+    x.font='700 22px system-ui';
+    if(vMag<6){
+      // Desde el reposo: el impulso ES la velocidad resultante (nivel tutorial).
+      arrow(ship.x,ship.y,iT.x,iT.y,'#39ff9e',5,17);
+      x.fillStyle='#39ff9e'; x.fillText('impulso = velocidad',iT.x+8,iT.y-10);
+    }else{
+      const vT={x:ship.x+vx*S,y:ship.y+vy*S}, rT={x:ship.x+rx*S,y:ship.y+ry*S};
+      // Lados punteados del paralelogramo (para "ver" la suma).
+      x.strokeStyle='rgba(230,240,255,.28)'; x.lineWidth=1.5; x.setLineDash([5,7]);
+      line(vT.x,vT.y,rT.x,rT.y); line(iT.x,iT.y,rT.x,rT.y); x.setLineDash([]);
+      arrow(ship.x,ship.y,vT.x,vT.y,'#27e8ff',4,14);         // velocidad (cian)
+      arrow(ship.x,ship.y,iT.x,iT.y,'#ffd23b',4,14);         // impulso (dorado)
+      arrow(ship.x,ship.y,rT.x,rT.y,'#39ff9e',5,17);         // resultante (verde)
+      x.fillStyle='#27e8ff'; x.fillText('v',vT.x+8,vT.y+2);
+      x.fillStyle='#ffd23b'; x.fillText('impulso',iT.x+8,iT.y+22);
+      x.fillStyle='#39ff9e'; x.fillText('resultante '+Math.round(Math.hypot(rx,ry)),rT.x+8,rT.y-8);
+    }
+  }else if(vMag>6){
+    // Sin apuntar: mostrar el vector velocidad actual (cian), siempre visible.
+    arrow(ship.x,ship.y,ship.x+vx*S,ship.y+vy*S,'#27e8ff',4,14);
+  }
+}
+
 // Helpers de dibujo (en coordenadas virtuales).
 function circle(cx,cy,r){x.beginPath();x.arc(cx,cy,r,0,Math.PI*2)}
 function line(x1,y1,x2,y2){x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke()}
@@ -778,8 +799,8 @@ function showHelp(){
   ui.help.classList.remove('hide');
   const h=ui.help;
   if(cfg.tutorial){
-    h.querySelector('strong').textContent='Arrastrá desde la nave';
-    h.querySelector('small').textContent='La flecha marca dirección y fuerza. Soltá para lanzar hacia el portal ▲.';
+    h.querySelector('strong').textContent='Arrastrá para dar un impulso';
+    h.querySelector('small').textContent='La flecha verde (resultante) es tu velocidad: apuntala al portal ▲. La nave viaja en línea recta a velocidad constante.';
   }else{
     h.querySelector('strong').textContent=cfg.name;
     h.querySelector('small').textContent=hintFor(cfg);
@@ -787,13 +808,11 @@ function showHelp(){
   clearTimeout(helpTimer); helpTimer=setTimeout(()=>ui.help.classList.add('hide'),3400);
 }
 function hintFor(L){
-  if(L.winds.length)return'Cuidado con las corrientes de viento: te empujan de costado.';
-  if(L.planets.some(p=>p.g<0))return'El cuerpo rosa repele: usá su empuje a tu favor.';
-  if(L.planets.length)return'Los planetas atraen: rodealos o aprovechá su gravedad.';
-  if(L.walls.length)return'Colá la nave por el hueco sin tocar los muros.';
-  if(L.goal.move)return'El portal se mueve: cronometrá tu llegada.';
-  if(L.max<=2)return'Solo '+L.max+' impulsos: planificá cada vector.';
-  return'Llegá al portal con la menor cantidad de impulsos.';
+  if(L.vel)return'Ya venís con velocidad (cian). Sumale tu impulso para que la resultante verde apunte al portal.';
+  if(L.max<=2)return'Solo '+L.max+' impulsos: tocá la nave en pleno vuelo para redirigirla.';
+  if(L.walls.length)return'Viajás en línea recta: rodeá los muros encadenando vectores (tocá para reorientar).';
+  if(L.goal.move)return'El portal se mueve: soltá en el momento justo para cruzarte con él.';
+  return'Arrastrá para apuntar la resultante verde al portal. Velocidad constante.';
 }
 function toast(txt,color){
   ui.toast.textContent=txt; ui.toast.style.color=color;
