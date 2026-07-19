@@ -24,6 +24,12 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 
 El prompt maestro para continuar el desarrollo está en [`VECTOR_PILOT_PROMPT.md`](VECTOR_PILOT_PROMPT.md).
 
+## Juego del día
+
+Una rutina automática publica un juego nuevo por día, siguiendo el calendario de
+[`PLAN_JUEGOS.md`](PLAN_JUEGOS.md). Para planificar qué juegos vienen, editá ese archivo:
+la rutina siempre construye la primera fila pendiente de la tabla.
+
 ## Agregar un juego nuevo
 
 1. Sumá `mi-juego.html` en la raíz.
