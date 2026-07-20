@@ -131,9 +131,10 @@
           🧮 <b>Cálculo</b> — resolvé rápido<br>
           🧠 <b>Memoria</b> — repetí la secuencia<br>
           👁️ <b>Visión</b> — ¿cuántos puntos hay?<br>
-          🧩 <b>Lógica</b> — encontrá el intruso
+          🧩 <b>Lógica</b> — encontrá el intruso<br>
+          ⚖️ <b>Peso</b> — ¿qué pesa más?
         </div>
-        <div class="brainsize">16 retos · cuanto más rápido y certero, más grande tu cerebro.</div>
+        <div class="brainsize">20 retos · cuanto más rápido y certero, más grande tu cerebro.</div>
         <button class="btn" id="startBtn">EMPEZAR ▶</button>
       </div>
 
@@ -164,22 +165,24 @@
   const arena = $('arena'), prompt = $('prompt'), roundTag = $('roundTag'), feedback = $('feedback');
   const KEY = 'bigbrain_best';
 
-  // Definición de los 16 retos (4 seguidos de cada categoría)
+  // Definición de los 20 retos (4 seguidos de cada categoría)
   const PLAN = [
     'math','math','math','math',
     'memory','memory','memory','memory',
     'vision','vision','vision','vision',
     'logic','logic','logic','logic',
+    'weight','weight','weight','weight',
   ];
   const CAT = {
     math:   {tag:'🧮 Cálculo', color:'var(--cyan)'},
     memory: {tag:'🧠 Memoria', color:'var(--purple)'},
     vision: {tag:'👁️ Visión', color:'var(--green)'},
     logic:  {tag:'🧩 Lógica', color:'var(--gold)'},
+    weight: {tag:'⚖️ Peso', color:'var(--pink)'},
   };
 
   let round=0, total=PLAN.length, score=0, locked=false, timer=null, timeLeft=0, timeMax=0, perCat={};
-  const ROUND_MS = 15000; // 15 segundos por reto
+  const ROUND_MS = 20000; // 20 segundos por reto
 
   const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
   const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]);
@@ -228,7 +231,7 @@
     roundTag.style.color = CAT[curCat].color;
     feedback.textContent=''; feedback.className='feedback';
     arena.innerHTML=''; prompt.textContent='';
-    ({math:roundMath, memory:roundMemory, vision:roundVision, logic:roundLogic})[curCat]();
+    ({math:roundMath, memory:roundMemory, vision:roundVision, logic:roundLogic, weight:roundWeight})[curCat]();
   }
   function advance(){ setTimeout(nextRound, 850); }
 
@@ -349,6 +352,71 @@
     startTimer(ROUND_MS, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
   }
 
+  // ---------- RETO: PESO (¿qué pesa más?) ----------
+  const WEIGHT_ITEMS=[['🍎',1],['🧱',3],['🍉',5],['🐕',8],['🐒',12]];
+  let weightLevel=0;
+  function genSide(nTypes, maxC){
+    const pool=shuffle([...WEIGHT_ITEMS]).slice(0,nTypes);
+    let total=0; const parts=[];
+    pool.forEach(([e,w])=>{ const c=rnd(1,maxC); total+=c*w; parts.push([e,c]); });
+    return {parts, total};
+  }
+  function genEqual(T){
+    // un item grande + manzanas de relleno para empatar el total
+    const cands=shuffle(WEIGHT_ITEMS.filter(([e,w])=>w>1 && w<=T))
+      .map(([e,w])=>[e,w,Math.floor(T/w)])
+      .filter(([e,w,c])=>c<=8 && T-c*w<=6);
+    if(!cands.length) return null;
+    const [e,w,c]=cands[0], rest=T-c*w;
+    const parts=[[e,c]]; if(rest>0) parts.push(['🍎',rest]);
+    return {parts, total:T};
+  }
+  function roundWeight(){
+    weightLevel++;
+    const nTypes=[1,1,2,2][Math.min(weightLevel-1,3)];
+    const maxC  =[2,3,3,4][Math.min(weightLevel-1,3)];
+    const closeness=[999,8,6,4][Math.min(weightLevel-1,3)];
+    const left=genSide(nTypes,maxC);
+    let right=null;
+    if(weightLevel>1 && Math.random()<.25) right=genEqual(left.total);
+    if(!right){
+      for(let i=0;i<25;i++){
+        right=genSide(nTypes,maxC);
+        if(right.total!==left.total && Math.abs(right.total-left.total)<=closeness) break;
+      }
+    }
+    prompt.textContent='¿Qué pesa más?';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;align-items:stretch;gap:10px;width:100%;';
+    const mk=side=>{
+      const d=document.createElement('div');
+      d.style.cssText='flex:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;font-size:26px;line-height:1.3;padding:16px 8px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid rgba(127,166,200,.25);';
+      d.textContent=side.parts.map(([e,c])=>e.repeat(c)).join('');
+      return d;
+    };
+    const vs=document.createElement('div');
+    vs.textContent='VS'; vs.style.cssText='align-self:center;font-weight:900;color:var(--pink);letter-spacing:1px;';
+    wrap.appendChild(mk(left)); wrap.appendChild(vs); wrap.appendChild(mk(right));
+    arena.appendChild(wrap);
+    const used=[...new Set([...left.parts,...right.parts].map(p=>p[0]))];
+    const legend=document.createElement('div');
+    legend.style.cssText='font-size:13px;color:var(--muted);letter-spacing:.5px;';
+    legend.textContent=used.map(e=>e+' = '+WEIGHT_ITEMS.find(it=>it[0]===e)[1]+' kg').join('   ·   ');
+    arena.appendChild(legend);
+    const answer = left.total>right.total ? 0 : (left.total===right.total ? 1 : 2);
+    const opts=document.createElement('div'); opts.className='opts';
+    opts.style.gridTemplateColumns='repeat(3,1fr)';
+    ['⬅ IZQUIERDA','⚖️ IGUALES','DERECHA ➡'].forEach((label,i)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.style.fontSize='13px'; b.style.padding='16px 4px';
+      b.textContent=label;
+      b.onclick=()=>pick(b, i===answer, opts);
+      opts.appendChild(b);
+    });
+    arena.appendChild(opts);
+    startTimer(ROUND_MS, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+  }
+
   // pick para retos de opciones
   function pick(btn, correct, opts){
     if(locked) return; locked=true; stopTimer();
@@ -370,12 +438,12 @@
     $('game').classList.add('hidden');
     $('final').classList.remove('hidden');
     $('finalScore').textContent = score + ' g';
-    // rango por puntaje (máx ~3200)
+    // rango por puntaje (máx ~4000)
     let rank, emoji;
-    if(score>=2600){ rank='CEREBRO COLOSAL'; emoji='🧠⚡'; }
-    else if(score>=2000){ rank='MENTE BRILLANTE'; emoji='🧠✨'; }
-    else if(score>=1400){ rank='CEREBRO EN FORMA'; emoji='🧠'; }
-    else if(score>=800){ rank='CALENTANDO NEURONAS'; emoji='🔥'; }
+    if(score>=3200){ rank='CEREBRO COLOSAL'; emoji='🧠⚡'; }
+    else if(score>=2500){ rank='MENTE BRILLANTE'; emoji='🧠✨'; }
+    else if(score>=1750){ rank='CEREBRO EN FORMA'; emoji='🧠'; }
+    else if(score>=1000){ rank='CALENTANDO NEURONAS'; emoji='🔥'; }
     else { rank='CEREBRO EN PRÁCTICAS'; emoji='🌱'; }
     $('rank').textContent = emoji+'  '+rank;
 
@@ -399,7 +467,7 @@
 
   function startGame(){
     round=0; score=0; perCat={}; locked=false;
-    logicPool=shuffle([...INTRUDER_SETS]);
+    logicPool=shuffle([...INTRUDER_SETS]); weightLevel=0;
     $('intro').classList.add('hidden');
     $('final').classList.add('hidden');
     $('hud').classList.remove('hidden');
