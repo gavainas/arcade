@@ -131,9 +131,9 @@
           🧮 <b>Cálculo</b> — resolvé rápido<br>
           🧠 <b>Memoria</b> — repetí la secuencia<br>
           👁️ <b>Visión</b> — ¿cuántos puntos hay?<br>
-          🧩 <b>Lógica</b> — encontrá el patrón
+          🧩 <b>Lógica</b> — encontrá el intruso
         </div>
-        <div class="brainsize">8 retos · cuanto más rápido y certero, más grande tu cerebro.</div>
+        <div class="brainsize">16 retos · cuanto más rápido y certero, más grande tu cerebro.</div>
         <button class="btn" id="startBtn">EMPEZAR ▶</button>
       </div>
 
@@ -164,8 +164,13 @@
   const arena = $('arena'), prompt = $('prompt'), roundTag = $('roundTag'), feedback = $('feedback');
   const KEY = 'bigbrain_best';
 
-  // Definición de los 8 retos (mezcla de categorías)
-  const PLAN = ['math','memory','vision','logic','math','vision','memory','logic'];
+  // Definición de los 16 retos (4 seguidos de cada categoría)
+  const PLAN = [
+    'math','math','math','math',
+    'memory','memory','memory','memory',
+    'vision','vision','vision','vision',
+    'logic','logic','logic','logic',
+  ];
   const CAT = {
     math:   {tag:'🧮 Cálculo', color:'var(--cyan)'},
     memory: {tag:'🧠 Memoria', color:'var(--purple)'},
@@ -174,6 +179,7 @@
   };
 
   let round=0, total=PLAN.length, score=0, locked=false, timer=null, timeLeft=0, timeMax=0, perCat={};
+  const ROUND_MS = 15000; // 15 segundos por reto
 
   const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
   const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]);
@@ -245,7 +251,7 @@
       opts.appendChild(b2);
     });
     arena.appendChild(opts);
-    startTimer(7000, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+    startTimer(ROUND_MS, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
   }
 
   // ---------- RETO: MEMORIA (Simon) ----------
@@ -268,7 +274,7 @@
     let input=[];
     function acceptInput(){
       prompt.textContent='¡Tu turno! Repetí el orden.';
-      startTimer(6000, ()=>{ if(!locked){ locked=true; pads.forEach(p=>p.onclick=null); award(false,0); advance(); }});
+      startTimer(ROUND_MS, ()=>{ if(!locked){ locked=true; pads.forEach(p=>p.onclick=null); award(false,0); advance(); }});
       pads.forEach((p,idx)=>{
         p.onclick=()=>{
           if(locked) return;
@@ -313,50 +319,34 @@
       opts.appendChild(b);
     });
     arena.appendChild(opts);
-    startTimer(6500, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+    startTimer(ROUND_MS, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
   }
 
-  // ---------- RETO: LÓGICA (¿cuál sigue? / intruso) ----------
+  // ---------- RETO: LÓGICA (encontrá el intruso) ----------
+  // pares de emojis muy parecidos: el segundo es el intruso
+  const INTRUDER_SETS=[
+    ['🐪','🐫'],['✳️','✴️'],['⭕','🅾️'],['😀','😃'],['🌕','🌝'],['⭐','🌟'],
+    ['❌','❎'],['🍏','🍐'],['🐭','🐹'],['🌛','🌜'],['✋','🖐️'],['🕒','🕓'],
+    ['🚗','🚙'],['😺','😸'],['🔒','🔓'],
+  ];
+  let logicPool=[];
   function roundLogic(){
-    const mode=rnd(0,1);
-    if(mode===0){
-      // secuencia aritmética: ¿qué número sigue?
-      const start=rnd(2,9), step=rnd(2,9);
-      const seq=[start, start+step, start+2*step, start+3*step];
-      const ans=start+4*step;
-      prompt.textContent='¿Qué número sigue?';
-      const big=document.createElement('div'); big.className='bignum'; big.style.fontSize='clamp(28px,8vw,44px)';
-      big.textContent = seq.join('  ·  ')+'  ·  ?';
-      arena.appendChild(big);
-      buildChoices(ans, v=>v, 1, 40);
-    } else {
-      // intruso: 3 iguales + 1 distinto (emoji)
-      const sets=[['🔵','🟣'],['🟢','🟡'],['🔺','🔻'],['◆','◇'],['★','☆']];
-      const pair=sets[rnd(0,sets.length-1)];
-      prompt.textContent='Encontrá el que no encaja';
-      const opts=document.createElement('div'); opts.className='opts';
-      const oddIndex=rnd(0,3);
-      for(let i=0;i<4;i++){
-        const b=document.createElement('button'); b.className='opt'; b.style.fontSize='34px';
-        b.textContent = i===oddIndex ? pair[1] : pair[0];
-        b.onclick=()=>pick(b, i===oddIndex, opts);
-        opts.appendChild(b);
-      }
-      arena.appendChild(opts);
-      startTimer(6000, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
-    }
-  }
-  function buildChoices(ans, fmt, min, max){
+    if(!logicPool.length) logicPool=shuffle([...INTRUDER_SETS]);
+    let pair=logicPool.pop();
+    if(rnd(0,1)) pair=[pair[1],pair[0]];
+    prompt.textContent='Encontrá el que no encaja';
     const opts=document.createElement('div'); opts.className='opts';
-    const choices=new Set([ans]);
-    while(choices.size<4){ choices.add(Math.max(min, ans+rnd(-7,7))); }
-    shuffle([...choices]).forEach(v=>{
-      const b=document.createElement('button'); b.className='opt'; b.textContent=fmt(v);
-      b.onclick=()=>pick(b, v===ans, opts);
+    opts.style.gridTemplateColumns='repeat(3,1fr)';
+    const cells=9, oddIndex=rnd(0,cells-1);
+    for(let i=0;i<cells;i++){
+      const b=document.createElement('button'); b.className='opt';
+      b.style.fontSize='30px'; b.style.padding='14px 6px';
+      b.textContent = i===oddIndex ? pair[1] : pair[0];
+      b.onclick=()=>pick(b, i===oddIndex, opts);
       opts.appendChild(b);
-    });
+    }
     arena.appendChild(opts);
-    startTimer(7000, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
+    startTimer(ROUND_MS, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
   }
 
   // pick para retos de opciones
@@ -380,12 +370,12 @@
     $('game').classList.add('hidden');
     $('final').classList.remove('hidden');
     $('finalScore').textContent = score + ' g';
-    // rango por puntaje (máx ~1600)
+    // rango por puntaje (máx ~3200)
     let rank, emoji;
-    if(score>=1300){ rank='CEREBRO COLOSAL'; emoji='🧠⚡'; }
-    else if(score>=1000){ rank='MENTE BRILLANTE'; emoji='🧠✨'; }
-    else if(score>=700){ rank='CEREBRO EN FORMA'; emoji='🧠'; }
-    else if(score>=400){ rank='CALENTANDO NEURONAS'; emoji='🔥'; }
+    if(score>=2600){ rank='CEREBRO COLOSAL'; emoji='🧠⚡'; }
+    else if(score>=2000){ rank='MENTE BRILLANTE'; emoji='🧠✨'; }
+    else if(score>=1400){ rank='CEREBRO EN FORMA'; emoji='🧠'; }
+    else if(score>=800){ rank='CALENTANDO NEURONAS'; emoji='🔥'; }
     else { rank='CEREBRO EN PRÁCTICAS'; emoji='🌱'; }
     $('rank').textContent = emoji+'  '+rank;
 
@@ -409,6 +399,7 @@
 
   function startGame(){
     round=0; score=0; perCat={}; locked=false;
+    logicPool=shuffle([...INTRUDER_SETS]);
     $('intro').classList.add('hidden');
     $('final').classList.add('hidden');
     $('hud').classList.remove('hidden');
