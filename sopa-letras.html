@@ -105,6 +105,11 @@
   }
   .cell.sel{color:#fff; transform:scale(1.06);}
   .cell.found{color:#ffffff;}
+  .glyph{display:inline-block; pointer-events:none;}
+  /* Nivel Hiper: las letras giran como un reloj (horario). Al encontrarlas, se frenan derechas. */
+  .grid.spin .glyph{animation:spin var(--spin,7s) linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .grid.spin .cell.found .glyph{animation:none; transform:rotate(0deg);}
   @keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.32);}100%{transform:scale(1);}}
   .cell.pulse{animation:pop .5s ease;}
   .cell.hint{color:var(--gold); animation:pop .5s ease;}
@@ -239,6 +244,7 @@
     facil:  { name:'Fácil',   emoji:'🐣', size:8,  count:6,  dirs:[[0,1],[1,0]], star:[60,120] },
     medio:  { name:'Medio',   emoji:'🦊', size:10, count:8,  dirs:[[0,1],[1,0],[1,1],[-1,1]], star:[130,230] },
     dificil:{ name:'Difícil', emoji:'🦉', size:12, count:10, dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[220,360] },
+    hiper:  { name:'Hiper',   emoji:'🌀', size:8,  count:6,  dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[120,240], spin:true },
   };
 
   const INKS = ['#ff5fa8','#2ee6ff','#43e97b','#ffd23b','#a06bff','#ff8a3d','#4d8cff','#ff5470','#22d3a6','#f062ff'];
@@ -297,11 +303,15 @@
   // ============ Render ============
   function buildBoard(){
     const gridEl=$('grid'); gridEl.style.setProperty('--n', size); gridEl.innerHTML='';
+    const spin = !!DIFFS[diff].spin;
+    gridEl.classList.toggle('spin', spin);
     cellEl=Array.from({length:size},()=>Array(size));
     for(let r=0;r<size;r++) for(let c=0;c<size;c++){
       const d=document.createElement('div');
-      d.className='cell'; d.textContent=grid[r][c];
-      d.dataset.r=r; d.dataset.c=c;
+      d.className='cell'; d.dataset.r=r; d.dataset.c=c;
+      const g=document.createElement('span'); g.className='glyph'; g.textContent=grid[r][c];
+      if(spin) g.style.animationDelay = '-'+(Math.random()*7).toFixed(2)+'s'; // desfase: cada letra en un ángulo distinto
+      d.appendChild(g);
       gridEl.appendChild(d); cellEl[r][c]=d;
     }
     // lista de palabras
@@ -351,7 +361,8 @@
   // ============ Selección ============
   function cellFromPoint(x,y){
     const el=document.elementFromPoint(x,y);
-    if(el && el.classList.contains('cell')) return [+el.dataset.r, +el.dataset.c];
+    const cell = el && el.closest ? el.closest('.cell') : null;
+    if(cell && cell.dataset.r!==undefined) return [+cell.dataset.r, +cell.dataset.c];
     return null;
   }
   function pathBetween(a,b){
@@ -464,7 +475,7 @@
     $('wordhead').textContent='Palabras — '+th.emoji+' '+th.name;
     $('findNow').textContent='0'; $('findTot').textContent=placed.length;
     $('timeNow').textContent='0:00';
-    $('howto').textContent='Tocá la primera letra y arrastrá hasta la última.';
+    $('howto').textContent = DIFFS[diff].spin ? '¡Las letras giran como un reloj! 🌀 Buscalas igual; al encontrarlas se frenan.' : 'Tocá la primera letra y arrastrá hasta la última.';
     buildBoard();
     // exponer para pruebas
     window.__sopa={ words:placed.map(w=>({word:w.word, cells:w.cells})), size };
@@ -529,7 +540,8 @@
       const d=DIFFS[k];
       const el=document.createElement('div');
       el.className='diff'+(k==='facil'?' on':''); el.dataset.k=k;
-      el.innerHTML=`<span class="de">${d.emoji}</span><span class="dn">${d.name}</span><span class="dd">${d.size}×${d.size} · ${d.count} palabras</span>`;
+      const desc = d.spin ? `${d.size}×${d.size} · ¡giran! 🌀` : `${d.size}×${d.size} · ${d.count} palabras`;
+      el.innerHTML=`<span class="de">${d.emoji}</span><span class="dn">${d.name}</span><span class="dd">${desc}</span>`;
       el.onclick=()=>{ diff=k; [...dc.children].forEach(x=>x.classList.toggle('on', x===el)); };
       dc.appendChild(el);
     });
