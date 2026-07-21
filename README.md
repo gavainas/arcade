@@ -12,6 +12,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ♞ Knight Quest | [`knight-quest.html`](knight-quest.html) | Runner de ajedrez: saltá en L y esquivá a las piezas que te persiguen. |
 | 🧠 Big Brain | [`brain-test.html`](brain-test.html) | Desafíos rápidos de cálculo, memoria, visión y lógica. |
 | ⚽ Neon Heads | [`head-soccer.html`](head-soccer.html) | Fútbol cabezón para uno o dos jugadores. |
+| 🟨 FamiDash | [`famidash.html`](famidash.html) | Geometry Dash para NES (homebrew open source de TFD Soft), corriendo en un emulador integrado. |
 
 ## Vector Pilot
 
@@ -23,6 +24,18 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 - Sin dependencias ni recursos externos.
 
 El prompt maestro para continuar el desarrollo está en [`VECTOR_PILOT_PROMPT.md`](VECTOR_PILOT_PROMPT.md).
+
+## Sala retro: FamiDash
+
+`famidash.html` trae embebido un emulador de NES ([jsnes](https://github.com/bfirsh/jsnes),
+Apache-2.0) y corre [FamiDash](https://github.com/tfdsoft/famidash), un demake homebrew de
+Geometry Dash con licencia MIT hecho por TFD Soft.
+
+**La ROM no está incluida en el repo.** Para dejarla integrada: descargá el `.nes` oficial
+desde [itch.io](https://kandowontu.itch.io/famidash) o los
+[releases de GitHub](https://github.com/tfdsoft/famidash/releases) y guardalo como
+`famidash.nes` en la raíz del repo. Mientras falte, la página ofrece el link oficial y un
+botón para cargar la ROM a mano.
 
 ## Juego del día
 
