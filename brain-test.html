@@ -367,14 +367,15 @@
     prompt.textContent='Mirá las balanzas: ¿cuál pesa más?';
     const col=document.createElement('div');
     col.style.cssText='display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;';
-    shuffle(comps).forEach(([h,l])=>{
+    shuffle(comps).forEach(([h,l],idx)=>{
       const heavyLeft=rnd(0,1)===1;
       const leftE=heavyLeft?h:l, rightE=heavyLeft?l:h;
       const rot=heavyLeft?-7:7; // el lado pesado baja
       const s=document.createElement('div');
       s.style.cssText='display:flex;flex-direction:column;align-items:center;width:100%;';
       const plank=document.createElement('div');
-      plank.style.cssText='display:flex;align-items:center;justify-content:space-between;width:min(260px,80%);transform:rotate('+rot+'deg);';
+      // arranca en equilibrio y cae hacia el lado pesado con rebote
+      plank.style.cssText='display:flex;align-items:center;justify-content:space-between;width:min(260px,80%);transform:rotate(0deg);transition:transform 1s cubic-bezier(.34,1.56,.64,1);';
       const mkIt=e=>{const sp=document.createElement('span'); sp.style.fontSize='30px'; sp.textContent=e; return sp;};
       const bar=document.createElement('div');
       bar.style.cssText='flex:1;height:4px;background:rgba(127,166,200,.5);border-radius:2px;margin:0 6px;';
@@ -383,6 +384,7 @@
       pivot.style.cssText='width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:14px solid rgba(127,166,200,.5);margin-top:-4px;';
       s.appendChild(plank); s.appendChild(pivot);
       col.appendChild(s);
+      setTimeout(()=>{ plank.style.transform='rotate('+rot+'deg)'; }, 500+idx*350);
     });
     arena.appendChild(col);
     const opts=document.createElement('div'); opts.className='opts';
