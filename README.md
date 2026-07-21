@@ -19,8 +19,12 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 Pensado para los más chicos:
 
 - 6 temas de palabras: animales, frutas, colores, vehículos, cuerpo y naturaleza (o "sorpresa").
-- 3 niveles: Fácil (8×8), Medio (10×10, con diagonales) y Difícil (12×12, en cualquier dirección).
-- Selección deslizando el dedo o el mouse, con trazo resaltador para cada palabra.
+- 6 niveles:
+  - **Fácil** (8×8), **Medio** (10×10, con diagonales) y **Difícil** (12×12, en cualquier dirección).
+  - **Hiper** (🌀): cada letra gira sobre sí misma como un reloj; al encontrar la palabra se frenan.
+  - **Trompo** (🎡): gira toda la sopa en bloque, manteniendo el orden de las letras.
+  - **Ciclón** (🌪️): los dos efectos a la vez — gira todo el tablero y cada letra.
+- Selección deslizando el dedo o el mouse, con trazo resaltador para cada palabra (que sigue pegado a las letras aunque todo gire).
 - Botón de pista, sonido opcional, cronómetro y mejor tiempo por nivel en `localStorage`.
 - Palabras sin acentos ni Ñ para que sea fácil de leer. Sin dependencias.
 

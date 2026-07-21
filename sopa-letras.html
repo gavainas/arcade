@@ -253,6 +253,7 @@
     dificil:{ name:'Difícil', emoji:'🦉', size:12, count:10, dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[220,360] },
     hiper:  { name:'Hiper',   emoji:'🌀', size:8,  count:6,  dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[120,240], spin:true },
     trompo: { name:'Trompo',  emoji:'🎡', size:8,  count:6,  dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[160,320], top:true },
+    ciclon: { name:'Ciclón',  emoji:'🌪️', size:8,  count:6,  dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[200,380], top:true, spin:true },
   };
 
   const INKS = ['#ff5fa8','#2ee6ff','#43e97b','#ffd23b','#a06bff','#ff8a3d','#4d8cff','#ff5470','#22d3a6','#f062ff'];
@@ -481,7 +482,8 @@
     $('wordhead').textContent='Palabras — '+th.emoji+' '+th.name;
     $('findNow').textContent='0'; $('findTot').textContent=placed.length;
     $('timeNow').textContent='0:00';
-    $('howto').textContent = DIFFS[diff].top ? '¡Gira toda la sopa como un trompo! 🎡 Las palabras siguen ahí, seguilas con el dedo.'
+    $('howto').textContent = (DIFFS[diff].top && DIFFS[diff].spin) ? '¡Gira toda la sopa Y cada letra! 🌪️ Un lío total… pero las palabras siguen en su lugar.'
+      : DIFFS[diff].top ? '¡Gira toda la sopa como un trompo! 🎡 Las palabras siguen ahí, seguilas con el dedo.'
       : DIFFS[diff].spin ? '¡Las letras giran como un reloj! 🌀 Buscalas igual; al encontrarlas se frenan.'
       : 'Tocá la primera letra y arrastrá hasta la última.';
     buildBoard();
@@ -548,7 +550,10 @@
       const d=DIFFS[k];
       const el=document.createElement('div');
       el.className='diff'+(k==='facil'?' on':''); el.dataset.k=k;
-      const desc = d.top ? `${d.size}×${d.size} · ¡gira todo! 🎡` : d.spin ? `${d.size}×${d.size} · ¡giran! 🌀` : `${d.size}×${d.size} · ${d.count} palabras`;
+      const desc = (d.top && d.spin) ? `${d.size}×${d.size} · ¡todo gira! 🌪️`
+        : d.top ? `${d.size}×${d.size} · ¡gira todo! 🎡`
+        : d.spin ? `${d.size}×${d.size} · ¡giran! 🌀`
+        : `${d.size}×${d.size} · ${d.count} palabras`;
       el.innerHTML=`<span class="de">${d.emoji}</span><span class="dn">${d.name}</span><span class="dd">${desc}</span>`;
       el.onclick=()=>{ diff=k; [...dc.children].forEach(x=>x.classList.toggle('on', x===el)); };
       dc.appendChild(el);
