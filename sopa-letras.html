@@ -96,8 +96,13 @@
     border:1px solid rgba(138,75,255,.25); box-shadow:inset 0 0 34px rgba(0,0,0,.45);
     user-select:none; -webkit-user-select:none;
   }
-  .ink{position:absolute; inset:6px; z-index:1; pointer-events:none; width:calc(100% - 12px); height:calc(100% - 12px);}
+  .spinner{position:relative; z-index:0; width:100%; transform-origin:50% 50%;}
+  .ink{position:absolute; inset:0; z-index:1; pointer-events:none; width:100%; height:100%;}
   .grid{position:relative; z-index:2; display:grid; gap:3px; grid-template-columns:repeat(var(--n,8),1fr); touch-action:none;}
+  /* Nivel Trompo: gira TODA la sopa en bloque (las letras mantienen su orden).
+     Se escala a ~0.68 para que el disco entre girando sin recortarse. */
+  .board.trompo .spinner{animation:topspin var(--top,20s) linear infinite;}
+  @keyframes topspin{from{transform:scale(.68) rotate(0deg);} to{transform:scale(.68) rotate(360deg);}}
   .cell{
     aspect-ratio:1; display:flex; align-items:center; justify-content:center;
     font-weight:800; color:#cfe4f5; border-radius:9px; cursor:pointer; user-select:none;
@@ -188,8 +193,10 @@
         </div>
 
         <div class="board" id="board">
-          <svg class="ink" id="ink" xmlns="http://www.w3.org/2000/svg"></svg>
-          <div class="grid" id="grid"></div>
+          <div class="spinner" id="spinner">
+            <svg class="ink" id="ink" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div class="grid" id="grid"></div>
+          </div>
         </div>
 
         <div class="wordbox">
@@ -245,6 +252,7 @@
     medio:  { name:'Medio',   emoji:'🦊', size:10, count:8,  dirs:[[0,1],[1,0],[1,1],[-1,1]], star:[130,230] },
     dificil:{ name:'Difícil', emoji:'🦉', size:12, count:10, dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[220,360] },
     hiper:  { name:'Hiper',   emoji:'🌀', size:8,  count:6,  dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[120,240], spin:true },
+    trompo: { name:'Trompo',  emoji:'🎡', size:8,  count:6,  dirs:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]], star:[160,320], top:true },
   };
 
   const INKS = ['#ff5fa8','#2ee6ff','#43e97b','#ffd23b','#a06bff','#ff8a3d','#4d8cff','#ff5470','#22d3a6','#f062ff'];
@@ -305,6 +313,7 @@
     const gridEl=$('grid'); gridEl.style.setProperty('--n', size); gridEl.innerHTML='';
     const spin = !!DIFFS[diff].spin;
     gridEl.classList.toggle('spin', spin);
+    $('board').classList.toggle('trompo', !!DIFFS[diff].top); // gira toda la sopa en bloque
     cellEl=Array.from({length:size},()=>Array(size));
     for(let r=0;r<size;r++) for(let c=0;c<size;c++){
       const d=document.createElement('div');
@@ -325,28 +334,25 @@
   }
 
   function fitFont(){
-    const cell=$('grid').querySelector('.cell'); if(!cell) return;
-    const s=cell.getBoundingClientRect().width;
-    $('grid').style.fontSize=Math.max(12,Math.round(s*0.46))+'px';
+    const cell=cellEl[0] && cellEl[0][0]; if(!cell) return;
+    $('grid').style.fontSize=Math.max(12,Math.round(cell.offsetWidth*0.46))+'px';
     drawInk();
   }
 
-  function center(r,c,br){
-    const cr=cellEl[r][c].getBoundingClientRect();
-    return { x:cr.left+cr.width/2-br.left, y:cr.top+cr.height/2-br.top };
+  // Coordenadas en el espacio de layout de la grilla (NO dependen de transform):
+  // así los trazos quedan pegados a las letras aunque toda la sopa gire y se escale.
+  function center(r,c){
+    const el=cellEl[r][c];
+    return { x: el.offsetLeft + el.offsetWidth/2, y: el.offsetTop + el.offsetHeight/2 };
   }
   function drawInk(){
-    const board=$('board'), ink=$('ink');
-    const br=board.getBoundingClientRect();
-    const inkRect=ink.getBoundingClientRect();
-    ink.setAttribute('viewBox',`0 0 ${inkRect.width} ${inkRect.height}`);
+    const gridEl=$('grid'), ink=$('ink');
+    if(!cellEl[0] || !cellEl[0][0]) return;
+    ink.setAttribute('viewBox',`0 0 ${gridEl.offsetWidth} ${gridEl.offsetHeight}`);
     ink.innerHTML='';
-    const cell=$('grid').querySelector('.cell'); if(!cell) return;
-    const cw=cell.getBoundingClientRect().width;
-    const sw=Math.max(10, cw*0.72);
-    const base=ink.getBoundingClientRect();
+    const sw=Math.max(10, cellEl[0][0].offsetWidth*0.72);
     const line=(a,b,color,alpha)=>{
-      const A=center(a[0],a[1],base), B=center(b[0],b[1],base);
+      const A=center(a[0],a[1]), B=center(b[0],b[1]);
       const l=document.createElementNS(NS,'line');
       l.setAttribute('x1',A.x); l.setAttribute('y1',A.y);
       l.setAttribute('x2',B.x); l.setAttribute('y2',B.y);
@@ -475,7 +481,9 @@
     $('wordhead').textContent='Palabras — '+th.emoji+' '+th.name;
     $('findNow').textContent='0'; $('findTot').textContent=placed.length;
     $('timeNow').textContent='0:00';
-    $('howto').textContent = DIFFS[diff].spin ? '¡Las letras giran como un reloj! 🌀 Buscalas igual; al encontrarlas se frenan.' : 'Tocá la primera letra y arrastrá hasta la última.';
+    $('howto').textContent = DIFFS[diff].top ? '¡Gira toda la sopa como un trompo! 🎡 Las palabras siguen ahí, seguilas con el dedo.'
+      : DIFFS[diff].spin ? '¡Las letras giran como un reloj! 🌀 Buscalas igual; al encontrarlas se frenan.'
+      : 'Tocá la primera letra y arrastrá hasta la última.';
     buildBoard();
     // exponer para pruebas
     window.__sopa={ words:placed.map(w=>({word:w.word, cells:w.cells})), size };
@@ -540,7 +548,7 @@
       const d=DIFFS[k];
       const el=document.createElement('div');
       el.className='diff'+(k==='facil'?' on':''); el.dataset.k=k;
-      const desc = d.spin ? `${d.size}×${d.size} · ¡giran! 🌀` : `${d.size}×${d.size} · ${d.count} palabras`;
+      const desc = d.top ? `${d.size}×${d.size} · ¡gira todo! 🎡` : d.spin ? `${d.size}×${d.size} · ¡giran! 🌀` : `${d.size}×${d.size} · ${d.count} palabras`;
       el.innerHTML=`<span class="de">${d.emoji}</span><span class="dn">${d.name}</span><span class="dd">${desc}</span>`;
       el.onclick=()=>{ diff=k; [...dc.children].forEach(x=>x.classList.toggle('on', x===el)); };
       dc.appendChild(el);
