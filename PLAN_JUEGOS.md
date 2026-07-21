@@ -5,6 +5,9 @@ Este archivo es el **panel de control** de la rutina diaria: cada día, Claude t
 arcade (archivo nuevo + tarjeta en `index.html` + fila en el README). Al publicarlo,
 marca la fila como ✅ con la fecha.
 
+> ⚠️ **La rutina NO termina hasta que el juego quede live en
+> <https://gavainas.github.io/arcade/>.** Ver "Publicación obligatoria" abajo.
+
 **Para planificar vos:** editá esta tabla como quieras — reordená filas, cambiá nombres,
 mecánicas o emojis, borrá lo que no te guste o agregá ideas nuevas al final. La rutina
 siempre respeta lo que diga acá. Si la tabla se queda sin pendientes, Claude vuelve a
@@ -65,3 +68,21 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 - Pantalla de inicio, game over, puntaje y récord guardado en `localStorage`.
 - Estética neón del arcade (`#27e8ff`, `#ff2bd6`, `#8a4bff` sobre fondo oscuro) y textos en español rioplatense.
 - Pulido y divertido: no un prototipo.
+
+## Publicación obligatoria (definición de "terminado")
+
+GitHub Pages sirve este arcade desde la rama **`main`** (modo *Deploy from a branch*,
+`main` / root). Un juego que sólo vive en la rama de trabajo **NO cuenta como publicado**.
+
+La corrida de la rutina **no finaliza** hasta cumplir TODO esto:
+
+1. Commitear el juego nuevo + `index.html` + `README.md` + este `PLAN_JUEGOS.md` (fila ✅).
+2. Pushear a la rama de trabajo designada.
+3. **Llevar los cambios a `main`** (fast-forward/merge) y pushear `main`, para que el
+   deploy de GitHub Pages los tome. Este paso es el que hace que el juego quede live.
+4. Confirmar que el juego aparece en <https://gavainas.github.io/arcade/> — probando la
+   URL del portal y la del juego (ej. `.../serpiente-neon.html`). Si el entorno bloquea
+   `github.io`, al menos verificar que `main` ya contiene el archivo y su tarjeta en
+   `index.html`, y avisar en la notificación que quedó pusheado a `main` para el deploy.
+
+Recién con el juego live en esa URL se considera cerrada la corrida del día.
