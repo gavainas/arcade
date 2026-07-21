@@ -352,65 +352,46 @@
     startTimer(ROUND_MS, ()=>{ if(!locked){ locked=true; disableOpts(opts); award(false,0); advance(); }});
   }
 
-  // ---------- RETO: PESO (¿qué pesa más?) ----------
-  const WEIGHT_ITEMS=[['🍎',1],['🧱',3],['🍉',5],['🐕',8],['🐒',12]];
+  // ---------- RETO: PESO (balanzas, estilo Big Brain Academy) ----------
+  // El orden de peso es oculto y aleatorio: se deduce mirando las balanzas.
+  const WEIGHT_EMOJIS=['🍍','🧁','🍔','🍇','🥥','🎃','🍉','🧀','🥕','🍩'];
   let weightLevel=0;
-  function genSide(nTypes, maxC){
-    const pool=shuffle([...WEIGHT_ITEMS]).slice(0,nTypes);
-    let total=0; const parts=[];
-    pool.forEach(([e,w])=>{ const c=rnd(1,maxC); total+=c*w; parts.push([e,c]); });
-    return {parts, total};
-  }
-  function genEqual(T){
-    // un item grande + manzanas de relleno para empatar el total
-    const cands=shuffle(WEIGHT_ITEMS.filter(([e,w])=>w>1 && w<=T))
-      .map(([e,w])=>[e,w,Math.floor(T/w)])
-      .filter(([e,w,c])=>c<=8 && T-c*w<=6);
-    if(!cands.length) return null;
-    const [e,w,c]=cands[0], rest=T-c*w;
-    const parts=[[e,c]]; if(rest>0) parts.push(['🍎',rest]);
-    return {parts, total:T};
-  }
   function roundWeight(){
     weightLevel++;
-    const nTypes=[1,1,2,2][Math.min(weightLevel-1,3)];
-    const maxC  =[2,3,3,4][Math.min(weightLevel-1,3)];
-    const closeness=[999,8,6,4][Math.min(weightLevel-1,3)];
-    const left=genSide(nTypes,maxC);
-    let right=null;
-    if(weightLevel>1 && Math.random()<.25) right=genEqual(left.total);
-    if(!right){
-      for(let i=0;i<25;i++){
-        right=genSide(nTypes,maxC);
-        if(right.total!==left.total && Math.abs(right.total-left.total)<=closeness) break;
-      }
-    }
-    prompt.textContent='¿Qué pesa más?';
-    const wrap=document.createElement('div');
-    wrap.style.cssText='display:flex;align-items:stretch;gap:10px;width:100%;';
-    const mk=side=>{
-      const d=document.createElement('div');
-      d.style.cssText='flex:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;font-size:26px;line-height:1.3;padding:16px 8px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid rgba(127,166,200,.25);';
-      d.textContent=side.parts.map(([e,c])=>e.repeat(c)).join('');
-      return d;
-    };
-    const vs=document.createElement('div');
-    vs.textContent='VS'; vs.style.cssText='align-self:center;font-weight:900;color:var(--pink);letter-spacing:1px;';
-    wrap.appendChild(mk(left)); wrap.appendChild(vs); wrap.appendChild(mk(right));
-    arena.appendChild(wrap);
-    const used=[...new Set([...left.parts,...right.parts].map(p=>p[0]))];
-    const legend=document.createElement('div');
-    legend.style.cssText='font-size:13px;color:var(--muted);letter-spacing:.5px;';
-    legend.textContent=used.map(e=>e+' = '+WEIGHT_ITEMS.find(it=>it[0]===e)[1]+' kg').join('   ·   ');
-    arena.appendChild(legend);
-    const answer = left.total>right.total ? 0 : (left.total===right.total ? 1 : 2);
+    const nItems = weightLevel<3 ? 3 : 4;
+    // order[0] es el más pesado; el orden es secreto
+    const order=shuffle([...WEIGHT_EMOJIS]).slice(0,nItems);
+    const comps=[];
+    for(let i=0;i<order.length-1;i++) comps.push([order[i],order[i+1]]); // [pesado, liviano]
+    if(weightLevel>=4) comps.push([order[1],order[3]]); // balanza extra de distracción
+    prompt.textContent='Mirá las balanzas: ¿cuál pesa más?';
+    const col=document.createElement('div');
+    col.style.cssText='display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;';
+    shuffle(comps).forEach(([h,l])=>{
+      const heavyLeft=rnd(0,1)===1;
+      const leftE=heavyLeft?h:l, rightE=heavyLeft?l:h;
+      const rot=heavyLeft?-7:7; // el lado pesado baja
+      const s=document.createElement('div');
+      s.style.cssText='display:flex;flex-direction:column;align-items:center;width:100%;';
+      const plank=document.createElement('div');
+      plank.style.cssText='display:flex;align-items:center;justify-content:space-between;width:min(260px,80%);transform:rotate('+rot+'deg);';
+      const mkIt=e=>{const sp=document.createElement('span'); sp.style.fontSize='30px'; sp.textContent=e; return sp;};
+      const bar=document.createElement('div');
+      bar.style.cssText='flex:1;height:4px;background:rgba(127,166,200,.5);border-radius:2px;margin:0 6px;';
+      plank.appendChild(mkIt(leftE)); plank.appendChild(bar); plank.appendChild(mkIt(rightE));
+      const pivot=document.createElement('div');
+      pivot.style.cssText='width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:14px solid rgba(127,166,200,.5);margin-top:-4px;';
+      s.appendChild(plank); s.appendChild(pivot);
+      col.appendChild(s);
+    });
+    arena.appendChild(col);
     const opts=document.createElement('div'); opts.className='opts';
-    opts.style.gridTemplateColumns='repeat(3,1fr)';
-    ['⬅ IZQUIERDA','⚖️ IGUALES','DERECHA ➡'].forEach((label,i)=>{
+    if(nItems===3) opts.style.gridTemplateColumns='repeat(3,1fr)';
+    shuffle([...order]).forEach(e=>{
       const b=document.createElement('button'); b.className='opt';
-      b.style.fontSize='13px'; b.style.padding='16px 4px';
-      b.textContent=label;
-      b.onclick=()=>pick(b, i===answer, opts);
+      b.style.fontSize='30px'; b.style.padding='14px 6px';
+      b.textContent=e;
+      b.onclick=()=>pick(b, e===order[0], opts);
       opts.appendChild(b);
     });
     arena.appendChild(opts);
