@@ -8,10 +8,21 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 
 | Juego | Archivo | Descripción |
 |-------|---------|-------------|
+| 🔤 Sopa de Letras | [`sopa-letras.html`](sopa-letras.html) | Sopa de letras para niños: temas (animales, frutas, colores…), 3 niveles, pistas y sonido. |
 | 🚀 Vector Pilot | [`vector-pilot.html`](vector-pilot.html) | Puzzle mobile-first de física vectorial: aplicá impulsos, dominá la gravedad y llegá al portal. |
 | ♞ Knight Quest | [`knight-quest.html`](knight-quest.html) | Runner de ajedrez: saltá en L y esquivá a las piezas que te persiguen. |
 | 🧠 Big Brain | [`brain-test.html`](brain-test.html) | Desafíos rápidos de cálculo, memoria, visión y lógica. |
 | ⚽ Neon Heads | [`head-soccer.html`](head-soccer.html) | Fútbol cabezón para uno o dos jugadores. |
+
+## Sopa de Letras
+
+Pensado para los más chicos:
+
+- 6 temas de palabras: animales, frutas, colores, vehículos, cuerpo y naturaleza (o "sorpresa").
+- 3 niveles: Fácil (8×8), Medio (10×10, con diagonales) y Difícil (12×12, en cualquier dirección).
+- Selección deslizando el dedo o el mouse, con trazo resaltador para cada palabra.
+- Botón de pista, sonido opcional, cronómetro y mejor tiempo por nivel en `localStorage`.
+- Palabras sin acentos ni Ñ para que sea fácil de leer. Sin dependencias.
 
 ## Vector Pilot
 
