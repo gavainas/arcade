@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SERPIENTE NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(30px,7.5vw,52px); font-weight:900; letter-spacing:3px; line-height:1;
+    background:linear-gradient(90deg,var(--green),var(--cyan),var(--purple),var(--green));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(57,255,158,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:10px; margin:4px 2px 10px; font-size:12px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:20px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.spd b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(57,255,158,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.86); backdrop-filter:blur(3px); gap:14px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(24px,6vw,34px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--green),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(57,255,158,.4));}
+  .overlay p{font-size:14px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; font-size:12.5px; color:var(--ink); text-align:left; max-width:360px;}
+  .legend span{display:flex; align-items:center; gap:7px;}
+  .dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--green),var(--cyan)); box-shadow:0 8px 24px rgba(57,255,158,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(57,255,158,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">SERPIENTE NEÓN</div>
+      <div class="sub">S N A K E &nbsp; · &nbsp; P O R T A L E S</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">PUNTOS<b id="score">0</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+      <div class="box spd">VELOCIDAD<b id="speed">1</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="440"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">SERPIENTE NEÓN</h2>
+        <p id="ovText">Comé frutas y crecé. Los bordes son portales: salí por un lado y aparecés en el otro.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--green);background:var(--green)"></i> Fruta normal · +1</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Dorada · +3 y turbo</span>
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Hielo · frena la cola</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Corte · achica la cola</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Flechas / WASD · o deslizá el dedo en la pantalla.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Flechas o <b>WASD</b> · deslizá para girar · <b>P</b> pausa.</div>
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+
+    <footer>NEON ARCADE · Serpiente Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const GRID=22;                       // celdas por lado
+  const CELL=canvas.width/GRID;        // px por celda
+  const scoreEl=document.getElementById('score');
+  const bestEl=document.getElementById('best');
+  const speedEl=document.getElementById('speed');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+
+  const BEST_KEY='neon-serpiente-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  const COLORS={
+    bg:'#05070f', grid:'rgba(57,255,158,.05)',
+    normal:'#39ff9e', gold:'#ffd23b', ice:'#27e8ff', cut:'#ff2bd6',
+    head:'#aaffdd', body1:'#39ff9e', body2:'#1fb673'
+  };
+
+  // Tipos de fruta con su peso de aparición
+  const FRUITS=[
+    {type:'normal', color:COLORS.normal, weight:70},
+    {type:'gold',   color:COLORS.gold,   weight:12},
+    {type:'ice',    color:COLORS.ice,    weight:10},
+    {type:'cut',    color:COLORS.cut,    weight:8},
+  ];
+
+  let snake, dir, nextDir, food, score, alive, running, paused, started;
+  let baseInterval, interval, acc, last, turbo, speedLevel, particles, flash;
+
+  function reset(){
+    const c=Math.floor(GRID/2);
+    snake=[{x:c-1,y:c},{x:c-2,y:c},{x:c-3,y:c}];
+    dir={x:1,y:0}; nextDir={x:1,y:0};
+    score=0; alive=true; paused=false;
+    baseInterval=130; interval=baseInterval; turbo=0; speedLevel=1;
+    acc=0; last=performance.now(); particles=[]; flash=0;
+    food=spawnFood();
+    scoreEl.textContent=0; speedEl.textContent=1;
+  }
+
+  function cellFree(x,y){
+    return !snake.some(s=>s.x===x&&s.y===y);
+  }
+  function pickType(){
+    const total=FRUITS.reduce((a,f)=>a+f.weight,0);
+    let r=Math.random()*total;
+    for(const f of FRUITS){ if((r-=f.weight)<0) return f; }
+    return FRUITS[0];
+  }
+  function spawnFood(){
+    let x,y,guard=0;
+    do{ x=Math.floor(Math.random()*GRID); y=Math.floor(Math.random()*GRID); guard++; }
+    while(!cellFree(x,y) && guard<500);
+    const f=pickType();
+    return {x,y,type:f.type,color:f.color,born:performance.now()};
+  }
+
+  function setSpeedLabel(){
+    speedLevel=Math.min(9, 1+Math.floor((baseInterval>130?0:(130-baseInterval)/12)));
+    speedEl.textContent=speedLevel;
+  }
+
+  function start(){
+    reset();
+    started=true; running=true;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function gameOver(){
+    alive=false; running=false;
+    const isRec = score>0 && score>=best;
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    ovTitle.textContent='GAME OVER';
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Flechas / WASD · o deslizá el dedo.';
+    overlay.classList.remove('hidden');
+  }
+
+  function eat(f){
+    if(f.type==='normal'){
+      score+=1; grow=1; addBurst(f,COLORS.normal,10);
+    }else if(f.type==='gold'){
+      score+=3; grow=1; turbo=1400; addBurst(f,COLORS.gold,18); flash=Math.max(flash,10);
+    }else if(f.type==='ice'){
+      score+=1; grow=1; baseInterval=Math.min(150, baseInterval+16); addBurst(f,COLORS.ice,14);
+    }else if(f.type==='cut'){
+      score+=2; grow=1;
+      const cut=Math.min(3, snake.length-3);
+      for(let i=0;i<cut;i++) snake.pop();
+      addBurst(f,COLORS.cut,16);
+    }
+    // acelera de a poco con el puntaje
+    baseInterval=Math.max(62, baseInterval-1.4);
+    scoreEl.textContent=score;
+    setSpeedLabel();
+    food=spawnFood();
+  }
+
+  let grow=0;
+  function step(){
+    dir=nextDir;
+    let hx=snake[0].x+dir.x;
+    let hy=snake[0].y+dir.y;
+    // portales en los bordes
+    if(hx<0) hx=GRID-1; else if(hx>=GRID) hx=0;
+    if(hy<0) hy=GRID-1; else if(hy>=GRID) hy=0;
+
+    // choque con el cuerpo (ignoramos la cola si se va a mover)
+    const willGrow=grow>0;
+    for(let i=0;i<snake.length-(willGrow?0:1);i++){
+      if(snake[i].x===hx && snake[i].y===hy){ gameOver(); return; }
+    }
+
+    snake.unshift({x:hx,y:hy});
+    if(food.x===hx && food.y===hy){ eat(food); }
+    if(grow>0){ grow--; } else { snake.pop(); }
+  }
+
+  // ---- Partículas ----
+  function addBurst(f,color,n){
+    const cx=(f.x+.5)*CELL, cy=(f.y+.5)*CELL;
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=1+Math.random()*3;
+      particles.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color});
+    }
+  }
+  function updateParticles(dt){
+    for(const p of particles){ p.x+=p.vx; p.y+=p.vy; p.vx*=.92; p.vy*=.92; p.life-=dt*2.6; }
+    particles=particles.filter(p=>p.life>0);
+  }
+
+  // ---- Render ----
+  function draw(t){
+    ctx.fillStyle=COLORS.bg;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // grilla
+    ctx.strokeStyle=COLORS.grid; ctx.lineWidth=1;
+    for(let i=1;i<GRID;i++){
+      ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,canvas.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(canvas.width,i*CELL); ctx.stroke();
+    }
+    // marco portal (borde brillante)
+    const glow=.4+.25*Math.sin(t/300);
+    ctx.strokeStyle=`rgba(138,75,255,${glow})`; ctx.lineWidth=3;
+    ctx.strokeRect(1.5,1.5,canvas.width-3,canvas.height-3);
+
+    // comida
+    drawFood(t);
+
+    // serpiente
+    for(let i=snake.length-1;i>=0;i--){
+      const s=snake[i];
+      const px=s.x*CELL, py=s.y*CELL;
+      const head=i===0;
+      ctx.save();
+      ctx.shadowBlur=head?18:10;
+      ctx.shadowColor=head?COLORS.head:COLORS.body1;
+      ctx.fillStyle=head?COLORS.head:(i%2?COLORS.body2:COLORS.body1);
+      roundRect(px+1.5,py+1.5,CELL-3,CELL-3,head?7:5);
+      ctx.fill();
+      ctx.restore();
+    }
+    // ojos en la cabeza
+    drawEyes();
+
+    // partículas
+    for(const p of particles){
+      ctx.save(); ctx.globalAlpha=Math.max(0,p.life);
+      ctx.fillStyle=p.color; ctx.shadowBlur=8; ctx.shadowColor=p.color;
+      ctx.beginPath(); ctx.arc(p.x,p.y,2.2,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
+
+    if(turbo>0){
+      ctx.save(); ctx.globalAlpha=.10+.05*Math.sin(t/60);
+      ctx.fillStyle=COLORS.gold; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore();
+    }
+    if(flash>0){
+      ctx.save(); ctx.globalAlpha=flash/22; ctx.fillStyle='#fff';
+      ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore();
+    }
+  }
+
+  function drawFood(t){
+    const f=food;
+    const cx=(f.x+.5)*CELL, cy=(f.y+.5)*CELL;
+    const pulse=1+.14*Math.sin(t/160 + f.born);
+    ctx.save();
+    ctx.shadowBlur=16; ctx.shadowColor=f.color; ctx.fillStyle=f.color;
+    if(f.type==='cut'){
+      // rombo
+      const r=CELL*.42*pulse;
+      ctx.translate(cx,cy); ctx.rotate(t/500);
+      ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(r,0); ctx.lineTo(0,r); ctx.lineTo(-r,0); ctx.closePath(); ctx.fill();
+    }else if(f.type==='ice'){
+      // estrella de 6 puntas (copo)
+      ctx.translate(cx,cy); ctx.rotate(t/700);
+      ctx.lineWidth=2.4; ctx.strokeStyle=f.color;
+      for(let i=0;i<6;i++){ ctx.rotate(Math.PI/3); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-CELL*.42*pulse); ctx.stroke(); }
+    }else{
+      const r=CELL*.38*pulse;
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+      if(f.type==='gold'){
+        ctx.globalAlpha=.9; ctx.strokeStyle='#fff7d0'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(cx,cy,r+3,0,Math.PI*2); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawEyes(){
+    const s=snake[0]; const px=s.x*CELL, py=s.y*CELL;
+    const cx=px+CELL/2, cy=py+CELL/2;
+    const off=CELL*0.20;
+    // posición según dirección
+    const perpx=dir.y!==0?off:0, perpy=dir.x!==0?off:0;
+    const fx=dir.x*off*0.6, fy=dir.y*off*0.6;
+    ctx.fillStyle='#04120c';
+    for(const s2 of [1,-1]){
+      const ex=cx+fx + perpx*s2, ey=cy+fy + perpy*s2;
+      ctx.beginPath(); ctx.arc(ex,ey,CELL*0.10,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  // ---- Loop ----
+  function loop(t){
+    if(!running){ draw(t); return; }
+    const dt=Math.min(0.05,(t-last)/1000); last=t;
+    if(!paused){
+      // intervalo efectivo (turbo acelera)
+      interval = turbo>0 ? Math.max(45, baseInterval*0.6) : baseInterval;
+      if(turbo>0) turbo-=dt*1000;
+      acc+=dt*1000;
+      while(acc>=interval && alive){ acc-=interval; step(); if(!alive) break; }
+      updateParticles(dt);
+      if(flash>0) flash-=dt*30;
+    }
+    draw(t);
+    if(paused) drawPause();
+    if(running) requestAnimationFrame(loop);
+  }
+
+  function drawPause(){
+    ctx.save();
+    ctx.fillStyle='rgba(5,7,15,.6)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#27e8ff';
+    ctx.font='900 30px "Segoe UI",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowBlur=16; ctx.shadowColor='#27e8ff';
+    ctx.fillText('PAUSA', canvas.width/2, canvas.height/2);
+    ctx.restore();
+  }
+
+  // ---- Controles ----
+  function turn(nx,ny){
+    if(!running||paused||!alive) return;
+    // no permitir 180°
+    if(nx===-dir.x && ny===-dir.y) return;
+    // evitar doble giro dentro del mismo tick
+    if(nx===dir.x && ny===dir.y) return;
+    nextDir={x:nx,y:ny};
+  }
+  function togglePause(){
+    if(!running||!alive) return;
+    paused=!paused; pauseBtn.textContent=paused?'Seguir':'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+
+  window.addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
+    if(!started){ if(k===' '||k==='enter') start(); return; }
+    if(k==='arrowup'||k==='w') turn(0,-1);
+    else if(k==='arrowdown'||k==='s') turn(0,1);
+    else if(k==='arrowleft'||k==='a') turn(-1,0);
+    else if(k==='arrowright'||k==='d') turn(1,0);
+    else if(k==='p') togglePause();
+    else if(k==='enter' && !alive) start();
+  });
+
+  // Táctil: swipe
+  let tsx=0,tsy=0,tActive=false;
+  canvas.addEventListener('touchstart',e=>{ const t=e.touches[0]; tsx=t.clientX; tsy=t.clientY; tActive=true; },{passive:true});
+  canvas.addEventListener('touchmove',e=>{
+    if(!tActive) return;
+    const t=e.touches[0]; const dx=t.clientX-tsx, dy=t.clientY-tsy;
+    if(Math.hypot(dx,dy)<24) return;
+    if(Math.abs(dx)>Math.abs(dy)) turn(dx>0?1:-1,0); else turn(0,dy>0?1:-1);
+    tsx=t.clientX; tsy=t.clientY;
+  },{passive:true});
+  canvas.addEventListener('touchend',()=>{ tActive=false; },{passive:true});
+
+  startBtn.addEventListener('click',start);
+  pauseBtn.addEventListener('click',togglePause);
+
+  // dibujo inicial
+  reset(); started=false; running=false;
+  draw(performance.now());
+})();
+</script>
+</body>
+</html>
