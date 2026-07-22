@@ -61,6 +61,12 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | 27 | 🛡️ | Defensa Neón | `defensa-neon.html` | Tower defense | Colocá torretas para frenar oleadas de invasores en un camino serpenteante. | ⏳ Pendiente |
 | 28 | 🎯 | Rebote Estelar | `rebote-estelar.html` | Física | Estilo Peggle: dispará la bola y encadená rebotes para limpiar las clavijas. | ⏳ Pendiente |
 
+## Extras · A pedido
+
+| # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
+|---|-------|-------|---------|--------|--------------------|--------|
+| E1 | 🌀 | Cambio de Color | `cambio-color.html` | Reflejos | Un botón: saltá y cruzá aros que giran pasando sólo por el color de tu bolita; estrellas que cambian tu color. | ✅ 2026-07-22 |
+
 ## Reglas para el juego del día
 
 - Un solo archivo `.html` auto-contenido (HTML + CSS + JS inline, canvas, sin dependencias).

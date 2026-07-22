@@ -10,6 +10,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 |-------|---------|-------------|
 | 🐍 Serpiente Neón | [`serpiente-neon.html`](serpiente-neon.html) | Snake con portales en los bordes y frutas especiales (dorada con turbo, hielo que frena, corte que achica la cola). |
 | 🧱 Rompebloques | [`rompebloques.html`](rompebloques.html) | Breakout con power-ups: multi-bola, paleta gigante y bola de fuego. |
+| 🌀 Cambio de Color | [`cambio-color.html`](cambio-color.html) | Un botón: saltá y cruzá los aros que giran pasando sólo por el color de tu bolita. |
 | 🔤 Sopa de Letras | [`sopa-letras.html`](sopa-letras.html) | Sopa de letras para niños: temas (animales, frutas, colores…), 3 niveles, pistas y sonido. |
 | 🚀 Vector Pilot | [`vector-pilot.html`](vector-pilot.html) | Puzzle mobile-first de física vectorial: aplicá impulsos, dominá la gravedad y llegá al portal. |
 | ♞ Knight Quest | [`knight-quest.html`](knight-quest.html) | Runner de ajedrez: saltá en L y esquivá a las piezas que te persiguen. |

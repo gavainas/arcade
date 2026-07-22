@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CAMBIO DE COLOR · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:420px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(26px,6.6vw,46px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--green),var(--purple),var(--cyan));
+    background-size:400% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:400% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:20px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.col{flex:0 0 74px;}
+  .hud .box.col .swatch{display:inline-block; width:22px; height:22px; border-radius:50%; margin-top:4px; box-shadow:0 0 12px currentColor; background:currentColor;}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(138,75,255,.07); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:22px;
+    background:rgba(5,7,15,.88); backdrop-filter:blur(3px); gap:13px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,32px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:320px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--pink)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; text-align:center;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  footer{margin-top:18px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">CAMBIO DE COLOR</div>
+      <div class="sub">U N &nbsp; T O Q U E &nbsp; · &nbsp; R E F L E J O S</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">PUNTOS<b id="score">0</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+      <div class="box col">COLOR<span class="swatch" id="swatch" style="color:#27e8ff"></span></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="400" height="600"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">CAMBIO DE COLOR</h2>
+        <p id="ovText">Tocá para saltar. Cruzá cada aro que gira pasando <b>sólo por el color de tu bolita</b>. Las estrellas de colores te cambian el color.</p>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Tocá la pantalla, hacé clic o apretá ESPACIO para saltar.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Un solo botón: <b>toque</b> / <b>clic</b> / <b>ESPACIO</b> para saltar · <b>P</b> pausa.</div>
+    </div>
+
+    <footer>NEON ARCADE · Cambio de Color</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const scoreEl=document.getElementById('score');
+  const bestEl=document.getElementById('best');
+  const swatchEl=document.getElementById('swatch');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const startBtn=document.getElementById('startBtn');
+
+  const BEST_KEY='neon-cambio-color-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  const PALETTE=['#27e8ff','#ff2bd6','#39ff9e','#ffd23b']; // cian, rosa, verde, dorado
+
+  // Física
+  const G=0.42;            // gravedad por frame
+  const HOP=-7.8;          // impulso al tocar
+  const MAXFALL=11;
+  const BALL_R=10;
+  const ANCHOR=H*0.62;     // posición fija de la bolita en pantalla (px desde arriba)
+  const GAP=250;           // distancia vertical entre aros (world px)
+  const RING_R=88;         // radio del aro
+  const RING_LW=15;        // grosor de la banda
+
+  let ball, camY, obstacles, switchers, particles, trail;
+  let score, running, paused, started, shake, nextObstacleY, flash;
+
+  function shuffle(a){
+    a=a.slice();
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+
+  function reset(){
+    ball={y:0, vy:HOP, color:PALETTE[0]};
+    camY=ball.y-ANCHOR;
+    obstacles=[]; switchers=[]; particles=[]; trail=[];
+    score=0; paused=false; shake=0; flash=0;
+    nextObstacleY=-GAP;
+    for(let i=0;i<4;i++) addObstacle();
+    scoreEl.textContent=0;
+    updateSwatch();
+  }
+
+  function addObstacle(){
+    const y=nextObstacleY;
+    const spin=(0.018+Math.random()*0.026)*(Math.random()<0.5?1:-1);
+    obstacles.push({
+      y, x:W/2, rot:Math.random()*Math.PI*2, spin,
+      colors:shuffle(PALETTE), passed:false, alive:true
+    });
+    // estrella cambia-color justo arriba del aro
+    switchers.push({ y:y-(RING_R+46), x:W/2, taken:false, rot:0 });
+    nextObstacleY-=GAP;
+  }
+
+  function updateSwatch(){ swatchEl.style.color=ball.color; }
+
+  function start(){
+    reset();
+    started=true; running=true;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function hop(){
+    if(!started||!running||paused) return;
+    ball.vy=HOP;
+    addBurst(W/2, ANCHOR+BALL_R, ball.color, 6, 1.6);
+  }
+
+  function gameOver(reason){
+    running=false; started=false;
+    shake=14;
+    const isRec = score>0 && score>=best;
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    ovTitle.textContent='GAME OVER';
+    ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Cruzá el aro por el color que coincide con tu bolita.';
+    overlay.classList.remove('hidden');
+  }
+
+  function addBurst(x,y,color,n,spread){
+    spread=spread||3;
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=1+Math.random()*spread;
+      particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color});
+    }
+  }
+
+  // Color del segmento del aro en el punto donde está la bolita
+  function segColorAt(ob, wx, wy){
+    const ang=Math.atan2(wy-ob.y, wx-ob.x)-ob.rot;
+    let a=ang%(Math.PI*2); if(a<0) a+=Math.PI*2;
+    const seg=Math.floor(a/(Math.PI/2))%4;
+    return ob.colors[seg];
+  }
+
+  let last=0;
+  function update(dt){
+    // dt en "frames" (~1 a 60fps)
+    ball.vy=Math.min(ball.vy+G*dt, MAXFALL);
+    ball.y+=ball.vy*dt;
+
+    // cámara sólo sube (sigue el punto más alto)
+    camY=Math.min(camY, ball.y-ANCHOR);
+
+    // trail
+    trail.push({y:ball.y, color:ball.color});
+    if(trail.length>14) trail.shift();
+
+    // caída: si la bolita sale por abajo de la pantalla
+    if(ball.y-camY > H+BALL_R){ gameOver('fall'); return; }
+
+    // generar más aros a medida que subimos
+    while(nextObstacleY > ball.y-GAP*4) addObstacle();
+
+    // limpiar los que quedaron muy abajo
+    obstacles=obstacles.filter(o=> o.y-camY < H+RING_R+60);
+    switchers=switchers.filter(s=> s.y-camY < H+60);
+
+    // aros: rotación + colisión + puntaje
+    for(const ob of obstacles){
+      ob.rot+=ob.spin*dt;
+      if(!ob.alive) continue;
+      const dist=Math.abs(ball.y-ob.y); // bolita y aro comparten x
+      if(dist < RING_R+RING_LW/2+BALL_R && dist > RING_R-RING_LW/2-BALL_R){
+        // la bolita está tocando la banda del aro
+        const c=segColorAt(ob, W/2, ball.y);
+        if(c!==ball.color){ addBurst(W/2, ob.y, ball.color, 22, 4); gameOver('color'); return; }
+      }
+      if(!ob.passed && ball.y < ob.y-RING_R){
+        ob.passed=true; score++; scoreEl.textContent=score; flash=8;
+        addBurst(W/2, ob.y-RING_R, ball.color, 10, 2.2);
+      }
+    }
+
+    // estrellas cambia-color
+    for(const s of switchers){
+      s.rot+=0.05*dt;
+      if(s.taken) continue;
+      if(Math.abs(ball.y-s.y)<BALL_R+13){
+        s.taken=true;
+        const opts=PALETTE.filter(c=>c!==ball.color);
+        ball.color=opts[Math.floor(Math.random()*opts.length)];
+        updateSwatch();
+        addBurst(W/2, s.y, ball.color, 16, 3);
+      }
+    }
+
+    // partículas
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.06; p.life-=0.035;
+      if(p.life<=0) particles.splice(i,1);
+    }
+
+    if(shake>0) shake*=0.9;
+    if(flash>0) flash*=0.85;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    if(shake>0.4){
+      ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
+    }
+
+    const off=camY;
+
+    // estrellas cambia-color
+    for(const s of switchers){
+      const sy=s.y-off;
+      if(sy<-40||sy>H+40) continue;
+      ctx.save();
+      ctx.translate(W/2, sy);
+      ctx.rotate(s.rot);
+      if(s.taken){
+        ctx.globalAlpha=0.18;
+        ctx.strokeStyle='#3a4666'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(0,0,11,0,Math.PI*2); ctx.stroke();
+      }else{
+        // torta de 4 colores
+        for(let i=0;i<4;i++){
+          ctx.beginPath();
+          ctx.moveTo(0,0);
+          ctx.arc(0,0,12, i*Math.PI/2, (i+1)*Math.PI/2);
+          ctx.closePath();
+          ctx.fillStyle=PALETTE[i];
+          ctx.shadowColor=PALETTE[i]; ctx.shadowBlur=10;
+          ctx.fill();
+        }
+        ctx.shadowBlur=0;
+        ctx.fillStyle='#05070f';
+        ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+      ctx.globalAlpha=1;
+    }
+
+    // aros
+    for(const ob of obstacles){
+      const cy=ob.y-off;
+      if(cy<-RING_R-40||cy>H+RING_R+40) continue;
+      ctx.lineWidth=RING_LW;
+      for(let i=0;i<4;i++){
+        const a0=ob.rot+i*Math.PI/2, a1=ob.rot+(i+1)*Math.PI/2;
+        ctx.beginPath();
+        ctx.strokeStyle=ob.colors[i];
+        ctx.shadowColor=ob.colors[i]; ctx.shadowBlur=14;
+        ctx.arc(W/2, cy, RING_R, a0, a1);
+        ctx.stroke();
+      }
+      ctx.shadowBlur=0;
+    }
+
+    // trail
+    for(let i=0;i<trail.length;i++){
+      const t=trail[i];
+      const ty=t.y-off;
+      const a=(i/trail.length)*0.5;
+      ctx.globalAlpha=a;
+      ctx.fillStyle=t.color;
+      ctx.beginPath(); ctx.arc(W/2, ty, BALL_R*(0.4+0.6*i/trail.length), 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    // bolita
+    const by=ball.y-off;
+    ctx.fillStyle=ball.color; ctx.shadowColor=ball.color; ctx.shadowBlur=20;
+    ctx.beginPath(); ctx.arc(W/2, by, BALL_R, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,.85)';
+    ctx.beginPath(); ctx.arc(W/2-3, by-3, BALL_R*0.32, 0, Math.PI*2); ctx.fill();
+
+    // partículas
+    for(const p of particles){
+      const py=p.y-off;
+      ctx.globalAlpha=Math.max(p.life,0);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(p.x-2, py-2, 4, 4);
+    }
+    ctx.globalAlpha=1;
+
+    ctx.restore();
+
+    if(flash>0.5){
+      ctx.fillStyle=`rgba(255,255,255,${flash*0.03})`;
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!paused){
+      const dt=Math.min(2.2,(ts-last)/16.6);
+      last=ts;
+      update(dt);
+      if(running) draw();
+    }else{
+      last=ts;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function togglePause(){
+    if(!started||!running) return;
+    paused=!paused;
+    if(!paused){ last=performance.now(); }
+  }
+
+  // controles
+  window.addEventListener('keydown',e=>{
+    if(e.key===' '){ e.preventDefault(); hop(); }
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+  canvas.addEventListener('mousedown',e=>{ e.preventDefault(); hop(); });
+  canvas.addEventListener('touchstart',e=>{ e.preventDefault(); hop(); },{passive:false});
+  startBtn.addEventListener('click',start);
+
+  // dibujo estático inicial
+  ball={y:0, vy:0, color:PALETTE[0]}; camY=ball.y-ANCHOR;
+  obstacles=[]; switchers=[]; particles=[]; trail=[]; shake=0; flash=0;
+  nextObstacleY=-GAP; for(let i=0;i<4;i++) addObstacle();
+  draw();
+})();
+</script>
+</body>
+</html>
