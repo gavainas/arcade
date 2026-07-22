@@ -18,7 +18,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
 |---|-------|-------|---------|--------|--------------------|--------|
 | 1 | 🐍 | Serpiente Neón | `serpiente-neon.html` | Arcade clásico | Snake con portales en los bordes y frutas especiales que aceleran o acortan la cola. | ✅ 2026-07-21 |
-| 2 | 🧱 | Rompebloques | `rompebloques.html` | Arcade clásico | Breakout con power-ups: multi-bola, paleta gigante, bola de fuego. | ⏳ Pendiente |
+| 2 | 🧱 | Rompebloques | `rompebloques.html` | Arcade clásico | Breakout con power-ups: multi-bola, paleta gigante, bola de fuego. | ✅ 2026-07-22 |
 | 3 | 👾 | Invasión Neón | `invasion-neon.html` | Shooter | Space invaders con oleadas progresivas y un jefe cada 3 oleadas. | ⏳ Pendiente |
 | 4 | 🏓 | Pong Turbo | `pong-turbo.html` | Deportivo | Pong vs CPU o de a 2, con power-ups que agrandan/achican paletas y curvan la bola. | ⏳ Pendiente |
 | 5 | ☄️ | Asteroides | `asteroides.html` | Shooter | Nave con inercia y rotación; las rocas se parten en pedazos más chicos. | ⏳ Pendiente |
