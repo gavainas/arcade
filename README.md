@@ -16,6 +16,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ♞ Knight Quest | [`knight-quest.html`](knight-quest.html) | Runner de ajedrez: saltá en L y esquivá a las piezas que te persiguen. |
 | 🧠 Big Brain | [`brain-test.html`](brain-test.html) | Desafíos rápidos de cálculo, memoria, visión y lógica. |
 | ⚽ Neon Heads | [`head-soccer.html`](head-soccer.html) | Fútbol cabezón para uno o dos jugadores. |
+| 👾 Invasión Neón | [`invasion-neon.html`](invasion-neon.html) | Space invaders con oleadas progresivas y un jefe con barra de vida cada 3 oleadas. |
 
 ## Sopa de Letras
 
