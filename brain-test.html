@@ -92,6 +92,18 @@
   .btn:hover{filter:brightness(1.1); transform:translateY(-2px);}
   .btn.ghost{background:transparent; color:var(--cyan); border:1px solid rgba(39,232,255,.4); box-shadow:none;}
 
+  /* Selector de minijuego */
+  .minis{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; width:100%;}
+  .mini{
+    display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
+    padding:10px 2px; border-radius:12px; font-size:24px; transition:.12s;
+    background:linear-gradient(180deg, rgba(138,75,255,.12), rgba(138,75,255,.03));
+    border:1px solid rgba(138,75,255,.35); color:var(--ink);
+  }
+  .mini:hover{border-color:var(--purple); transform:translateY(-2px); box-shadow:0 8px 20px rgba(138,75,255,.25);}
+  .mini span{font-size:10px; font-weight:800; letter-spacing:.5px; color:var(--muted); text-transform:uppercase;}
+  @media (max-width:420px){ .minis{grid-template-columns:repeat(3,1fr);} }
+
   /* Pantallas intro / final */
   .center{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px;}
   .intro-list{text-align:left; color:var(--muted); font-size:14px; line-height:1.9; margin:6px auto;}
@@ -136,6 +148,14 @@
         </div>
         <div class="brainsize">20 retos · cuanto más rápido y certero, más grande tu cerebro.</div>
         <button class="btn" id="startBtn">EMPEZAR ▶</button>
+        <div style="color:var(--muted);font-size:11px;letter-spacing:2px;margin-top:4px">— O PRACTICÁ UNO SOLO (10 RETOS) —</div>
+        <div class="minis">
+          <button class="mini" data-cat="math">🧮<span>Cálculo</span></button>
+          <button class="mini" data-cat="memory">🧠<span>Memoria</span></button>
+          <button class="mini" data-cat="vision">👁️<span>Visión</span></button>
+          <button class="mini" data-cat="logic">🧩<span>Lógica</span></button>
+          <button class="mini" data-cat="weight">⚖️<span>Peso</span></button>
+        </div>
       </div>
 
       <!-- JUEGO -->
@@ -154,6 +174,7 @@
         <div class="best" id="best"></div>
         <div class="breakdown" id="breakdown"></div>
         <button class="btn" id="againBtn">JUGAR DE NUEVO ↻</button>
+        <button class="btn ghost" id="pickBtn">ELEGIR MINIJUEGO</button>
         <a class="btn ghost" href="index.html" style="text-decoration:none">VOLVER AL ARCADE</a>
       </div>
     </div>
@@ -163,16 +184,17 @@
 (function(){
   const $ = id => document.getElementById(id);
   const arena = $('arena'), prompt = $('prompt'), roundTag = $('roundTag'), feedback = $('feedback');
-  const KEY = 'bigbrain_best';
-
-  // Definición de los 20 retos (4 seguidos de cada categoría)
-  const PLAN = [
+  // Partida completa: 20 retos (4 seguidos de cada categoría)
+  const FULL_PLAN = [
     'math','math','math','math',
     'memory','memory','memory','memory',
     'vision','vision','vision','vision',
     'logic','logic','logic','logic',
     'weight','weight','weight','weight',
   ];
+  const PRACTICE_ROUNDS = 10; // modo práctica: 10 retos del mismo minijuego
+  let mode='full', plan=FULL_PLAN;
+  const keyFor = m => 'bigbrain_best' + (m==='full' ? '' : '_'+m);
   const CAT = {
     math:   {tag:'🧮 Cálculo', color:'var(--cyan)'},
     memory: {tag:'🧠 Memoria', color:'var(--purple)'},
@@ -181,7 +203,7 @@
     weight: {tag:'⚖️ Peso', color:'var(--pink)'},
   };
 
-  let round=0, total=PLAN.length, score=0, locked=false, timer=null, timeLeft=0, timeMax=0, perCat={};
+  let round=0, total=plan.length, score=0, locked=false, timer=null, timeLeft=0, timeMax=0, perCat={};
   const ROUND_MS = 20000; // 20 segundos por reto
 
   const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
@@ -223,7 +245,7 @@
   let curCat='';
   function nextRound(){
     if(round>=total){ return finish(); }
-    curCat = PLAN[round];
+    curCat = plan[round];
     round++;
     locked=false;
     $('roundNum').textContent = round;
@@ -421,34 +443,39 @@
     $('game').classList.add('hidden');
     $('final').classList.remove('hidden');
     $('finalScore').textContent = score + ' g';
-    // rango por puntaje (máx ~4000)
+    // rango proporcional al máximo posible (200 por reto)
+    const p = score/(total*200);
     let rank, emoji;
-    if(score>=3200){ rank='CEREBRO COLOSAL'; emoji='🧠⚡'; }
-    else if(score>=2500){ rank='MENTE BRILLANTE'; emoji='🧠✨'; }
-    else if(score>=1750){ rank='CEREBRO EN FORMA'; emoji='🧠'; }
-    else if(score>=1000){ rank='CALENTANDO NEURONAS'; emoji='🔥'; }
+    if(p>=.8){ rank='CEREBRO COLOSAL'; emoji='🧠⚡'; }
+    else if(p>=.62){ rank='MENTE BRILLANTE'; emoji='🧠✨'; }
+    else if(p>=.44){ rank='CEREBRO EN FORMA'; emoji='🧠'; }
+    else if(p>=.25){ rank='CALENTANDO NEURONAS'; emoji='🔥'; }
     else { rank='CEREBRO EN PRÁCTICAS'; emoji='🌱'; }
     $('rank').textContent = emoji+'  '+rank;
 
-    // desglose por categoría
+    // desglose solo de las categorías jugadas
     const bd=$('breakdown'); bd.innerHTML='';
-    Object.keys(CAT).forEach(c=>{
+    [...new Set(plan)].forEach(c=>{
       const line=document.createElement('div'); line.className='line';
       line.innerHTML='<span>'+CAT[c].tag+'</span><span>'+(perCat[c]||0)+' g</span>';
       bd.appendChild(line);
     });
 
-    // récord
-    const best = +(localStorage.getItem(KEY)||0);
+    // récord (separado por minijuego)
+    const key=keyFor(mode);
+    const best = +(localStorage.getItem(key)||0);
     if(score>best){
-      localStorage.setItem(KEY, score);
+      localStorage.setItem(key, score);
       $('best').textContent='🏆 ¡NUEVO RÉCORD!';
     } else {
       $('best').textContent='Tu récord: '+best+' g';
     }
   }
 
-  function startGame(){
+  function startGame(m){
+    mode = m||'full';
+    plan = mode==='full' ? FULL_PLAN : Array(PRACTICE_ROUNDS).fill(mode);
+    total = plan.length;
     round=0; score=0; perCat={}; locked=false;
     logicPool=shuffle([...INTRUDER_SETS]); weightLevel=0;
     $('intro').classList.add('hidden');
@@ -459,8 +486,15 @@
     nextRound();
   }
 
-  $('startBtn').onclick=startGame;
-  $('againBtn').onclick=startGame;
+  $('startBtn').onclick=()=>startGame('full');
+  $('againBtn').onclick=()=>startGame(mode);
+  document.querySelectorAll('.mini').forEach(b=>{ b.onclick=()=>startGame(b.dataset.cat); });
+  $('pickBtn').onclick=()=>{
+    $('final').classList.add('hidden');
+    $('hud').classList.add('hidden');
+    $('game').classList.add('hidden');
+    $('intro').classList.remove('hidden');
+  };
 })();
 </script>
 </body>
