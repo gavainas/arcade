@@ -18,6 +18,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ⚽ Neon Heads | [`head-soccer.html`](head-soccer.html) | Fútbol cabezón para uno o dos jugadores. |
 | 👾 Invasión Neón | [`invasion-neon.html`](invasion-neon.html) | Space invaders con oleadas progresivas y un jefe con barra de vida cada 3 oleadas. |
 | 🏓 Pong Turbo | [`pong-turbo.html`](pong-turbo.html) | Pong vs CPU o de a 2, con power-ups que agrandan/achican paletas y curvan la pelota. |
+| ☄️ Asteroides | [`asteroides.html`](asteroides.html) | Nave con inercia y rotación; las rocas se parten en pedazos más chicos al dispararles. |
 
 ## Sopa de Letras
 

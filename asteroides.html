@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ASTEROIDES · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(26px,7vw,44px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.lvl b{color:var(--purple);}
+  .hud .box.liv b{color:var(--red);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.88); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,32px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--purple)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:7px; font-size:12.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor; display:inline-flex; align-items:center; justify-content:center; font-size:10px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+
+  .pad{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:14px; user-select:none;}
+  .pbtn{
+    width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:24px; color:var(--ink); background:linear-gradient(180deg, rgba(20,28,58,.85), rgba(10,14,30,.85));
+    border:1px solid rgba(138,75,255,.4); box-shadow:0 6px 18px rgba(0,0,0,.4); touch-action:none;
+    transition:border-color .1s ease, color .1s ease, transform .08s ease;
+  }
+  .pbtn:active, .pbtn.on{border-color:var(--cyan); color:var(--cyan); transform:scale(.94); box-shadow:0 0 18px rgba(39,232,255,.35);}
+  .pbtn.fire{background:linear-gradient(180deg, rgba(255,43,214,.18), rgba(20,28,58,.85)); border-color:rgba(255,43,214,.4);}
+  .pbtn.fire:active, .pbtn.fire.on{border-color:var(--pink); color:var(--pink); box-shadow:0 0 18px rgba(255,43,214,.4);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">ASTEROIDES</div>
+      <div class="sub">I N E R C I A &nbsp; · &nbsp; R O C A S</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">PUNTOS<b id="score">0</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+      <div class="box lvl">NIVEL<b id="level">1</b></div>
+      <div class="box liv">VIDAS<b id="lives">3</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="560"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">ASTEROIDES</h2>
+        <p id="ovText">Pilotá tu nave con inercia real por el espacio y volá las rocas antes de que te choquen. Cada roca grande se parte en pedazos más chicos y rápidos.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)">●</i> La nave conserva el impulso: girá y acelerá con cuidado</span>
+          <span><i class="dot" style="color:var(--purple);background:var(--purple)">●</i> Las rocas grandes se parten en medianas y luego en chicas</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)">●</i> Salís por un borde y aparecés por el opuesto</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Flechas / A-D giran, ↑/W acelera, ESPACIO dispara · en mobile usá los botones de abajo.</p>
+      </div>
+    </div>
+
+    <div class="pad" id="pad">
+      <div class="pbtn" id="btnLeft" title="Girar izquierda">◄</div>
+      <div class="pbtn" id="btnThrust" title="Acelerar">▲</div>
+      <div class="pbtn" id="btnRight" title="Girar derecha">►</div>
+      <div class="pbtn fire" id="btnFire" title="Disparar">●</div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Flechas/<b>A-D</b> giran · <b>↑/W</b> acelera · <b>ESPACIO</b> dispara · <b>P</b> pausa.</div>
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+
+    <footer>NEON ARCADE · Asteroides</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const scoreEl=document.getElementById('score');
+  const bestEl=document.getElementById('best');
+  const levelEl=document.getElementById('level');
+  const livesEl=document.getElementById('lives');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+
+  const BEST_KEY='neon-asteroides-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  const SHIP_R=13, ROTATE_SPEED=0.0048, THRUST_ACCEL=0.0014, MAX_SPEED=6.2, FRICTION=0.988;
+  const BULLET_SPEED=7.6, BULLET_LIFE=850, FIRE_COOLDOWN=230, MAX_BULLETS=6;
+  const SIZE_R={2:36,1:21,0:11};
+  const SIZE_POINTS={2:20,1:50,0:100};
+  const SIZE_SPEED={2:0.55,1:1.0,0:1.7};
+
+  let ship, bullets, asteroids, particles;
+  let score, level, lives, running, paused, started, invuln;
+  let keyLeft, keyRight, keyThrust, keyFire, fireTimer;
+  let padLeft, padRight, padThrust, padFire;
+  let msg='', msgTimer=0, levelDelay=0;
+  let last=0;
+
+  function flashMsg(t){ msg=t; msgTimer=1500; }
+
+  function wrap(o){
+    if(o.x<-o.r) o.x=W+o.r; else if(o.x>W+o.r) o.x=-o.r;
+    if(o.y<-o.r) o.y=H+o.r; else if(o.y>H+o.r) o.y=-o.r;
+  }
+
+  function makeShape(r){
+    const n=9+Math.floor(Math.random()*4);
+    const pts=[];
+    for(let i=0;i<n;i++){
+      const a=(i/n)*Math.PI*2;
+      const rr=r*(0.72+Math.random()*0.42);
+      pts.push({x:Math.cos(a)*rr, y:Math.sin(a)*rr});
+    }
+    return pts;
+  }
+
+  function spawnAsteroid(size, x, y, vx, vy){
+    const r=SIZE_R[size];
+    asteroids.push({
+      x, y, r, size,
+      vx: vx!=null ? vx : (Math.random()*2-1)*SIZE_SPEED[size]*(1+level*0.08),
+      vy: vy!=null ? vy : (Math.random()*2-1)*SIZE_SPEED[size]*(1+level*0.08),
+      angle:Math.random()*Math.PI*2,
+      rotSpeed:(Math.random()*2-1)*0.03,
+      shape:makeShape(r)
+    });
+  }
+
+  function spawnLevel(){
+    asteroids=[];
+    const count=Math.min(3+level,9);
+    for(let i=0;i<count;i++){
+      let x,y;
+      do{
+        x=Math.random()*W; y=Math.random()*H;
+      }while(Math.hypot(x-ship.x,y-ship.y)<130);
+      spawnAsteroid(2, x, y);
+    }
+  }
+
+  function reset(){
+    score=0; level=1; lives=3; invuln=2000;
+    scoreEl.textContent=0; levelEl.textContent=1; livesEl.textContent=3;
+    ship={x:W/2, y:H/2, angle:-Math.PI/2, vx:0, vy:0, thrusting:false};
+    bullets=[]; particles=[]; fireTimer=0; levelDelay=0;
+    spawnLevel();
+  }
+
+  function start(){
+    reset();
+    started=true; running=true;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function nextLevel(){
+    level++;
+    levelEl.textContent=level;
+    score+=50;
+    scoreEl.textContent=score;
+    flashMsg('¡NIVEL '+level+'!');
+    levelDelay=900;
+  }
+
+  function loseLife(){
+    if(invuln>0) return;
+    lives--;
+    livesEl.textContent=Math.max(lives,0);
+    addBurst(ship.x,ship.y,'#27e8ff',22);
+    if(lives<=0){ gameOver(); return; }
+    ship.x=W/2; ship.y=H/2; ship.vx=0; ship.vy=0; ship.angle=-Math.PI/2;
+    invuln=2000;
+    flashMsg('¡CUIDADO!');
+  }
+
+  function gameOver(){
+    running=false; started=false;
+    const isRec = score>0 && score>=best;
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    ovTitle.textContent='GAME OVER';
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Flechas/A-D giran · ↑/W acelera · ESPACIO dispara · en mobile usá los botones.';
+    overlay.classList.remove('hidden');
+  }
+
+  function addBurst(x,y,color,n){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=0.6+Math.random()*3.2;
+      particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color});
+    }
+  }
+
+  function splitAsteroid(a){
+    score+=SIZE_POINTS[a.size];
+    scoreEl.textContent=score;
+    addBurst(a.x,a.y,'#8a4bff',14);
+    if(a.size>0){
+      for(let i=0;i<2;i++){
+        const a2=Math.random()*Math.PI*2;
+        const sp=SIZE_SPEED[a.size-1]*(1+level*0.08);
+        spawnAsteroid(a.size-1, a.x, a.y, a.vx+Math.cos(a2)*sp, a.vy+Math.sin(a2)*sp);
+      }
+    }
+  }
+
+  function tryFire(){
+    if(fireTimer>0 || bullets.length>=MAX_BULLETS) return;
+    fireTimer=FIRE_COOLDOWN;
+    const dx=Math.cos(ship.angle), dy=Math.sin(ship.angle);
+    bullets.push({
+      x:ship.x+dx*SHIP_R, y:ship.y+dy*SHIP_R,
+      vx:dx*BULLET_SPEED+ship.vx*0.4, vy:dy*BULLET_SPEED+ship.vy*0.4,
+      life:BULLET_LIFE
+    });
+  }
+
+  function update(dt){
+    const k=dt/16.67;
+    if(msgTimer>0) msgTimer-=dt;
+    if(invuln>0) invuln-=dt;
+    if(fireTimer>0) fireTimer-=dt;
+
+    if(levelDelay>0){
+      levelDelay-=dt;
+      if(levelDelay<=0) spawnLevel();
+    }
+
+    const turnL=keyLeft||padLeft, turnR=keyRight||padRight;
+    const thrusting=keyThrust||padThrust;
+    if(turnL) ship.angle-=ROTATE_SPEED*dt;
+    if(turnR) ship.angle+=ROTATE_SPEED*dt;
+    ship.thrusting=!!thrusting;
+    if(thrusting){
+      ship.vx+=Math.cos(ship.angle)*THRUST_ACCEL*dt;
+      ship.vy+=Math.sin(ship.angle)*THRUST_ACCEL*dt;
+      const sp=Math.hypot(ship.vx,ship.vy);
+      if(sp>MAX_SPEED){ ship.vx=ship.vx/sp*MAX_SPEED; ship.vy=ship.vy/sp*MAX_SPEED; }
+    }
+    ship.vx*=Math.pow(FRICTION,k);
+    ship.vy*=Math.pow(FRICTION,k);
+    ship.x+=ship.vx*k; ship.y+=ship.vy*k;
+    ship.r=SHIP_R;
+    wrap(ship);
+
+    if(keyFire||padFire) tryFire();
+
+    for(let i=bullets.length-1;i>=0;i--){
+      const b=bullets[i];
+      b.x+=b.vx*k; b.y+=b.vy*k;
+      b.life-=dt;
+      if(b.life<=0){ bullets.splice(i,1); continue; }
+      if(b.x<0) b.x+=W; else if(b.x>W) b.x-=W;
+      if(b.y<0) b.y+=H; else if(b.y>H) b.y-=H;
+    }
+
+    for(let i=asteroids.length-1;i>=0;i--){
+      const a=asteroids[i];
+      a.x+=a.vx*k; a.y+=a.vy*k;
+      a.angle+=a.rotSpeed*k;
+      wrap(a);
+    }
+
+    // bullets vs asteroids
+    for(let i=bullets.length-1;i>=0;i--){
+      const b=bullets[i];
+      let hit=false;
+      for(let j=asteroids.length-1;j>=0;j--){
+        const a=asteroids[j];
+        if(Math.hypot(b.x-a.x,b.y-a.y)<a.r*0.92){
+          bullets.splice(i,1);
+          asteroids.splice(j,1);
+          splitAsteroid(a);
+          hit=true;
+          break;
+        }
+      }
+      if(hit) continue;
+    }
+
+    // ship vs asteroids
+    if(invuln<=0){
+      for(const a of asteroids){
+        if(Math.hypot(ship.x-a.x,ship.y-a.y)<a.r*0.9+SHIP_R*0.7){
+          loseLife();
+          break;
+        }
+      }
+    }
+
+    if(asteroids.length===0 && levelDelay<=0 && running){
+      nextLevel();
+    }
+
+    for(let i=particles.length-1;i>=0;i--){
+      const pt=particles[i];
+      pt.x+=pt.vx*k; pt.y+=pt.vy*k; pt.life-=0.03*k;
+      if(pt.life<=0) particles.splice(i,1);
+    }
+  }
+
+  function drawShip(){
+    const flashOn = invuln>0 && Math.floor(invuln/120)%2===0;
+    if(flashOn) return;
+    ctx.save();
+    ctx.translate(ship.x, ship.y);
+    ctx.rotate(ship.angle);
+    ctx.strokeStyle='#27e8ff'; ctx.fillStyle='rgba(39,232,255,.12)';
+    ctx.lineWidth=2; ctx.shadowColor='#27e8ff'; ctx.shadowBlur=14;
+    ctx.beginPath();
+    ctx.moveTo(SHIP_R*1.4,0);
+    ctx.lineTo(-SHIP_R*0.9,SHIP_R*0.85);
+    ctx.lineTo(-SHIP_R*0.45,0);
+    ctx.lineTo(-SHIP_R*0.9,-SHIP_R*0.85);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    if(ship.thrusting){
+      ctx.strokeStyle='#ffd23b'; ctx.shadowColor='#ffd23b';
+      const flick=6+Math.random()*8;
+      ctx.beginPath();
+      ctx.moveTo(-SHIP_R*0.45,0);
+      ctx.lineTo(-SHIP_R*0.45-flick,SHIP_R*0.32);
+      ctx.moveTo(-SHIP_R*0.45,0);
+      ctx.lineTo(-SHIP_R*0.45-flick,-SHIP_R*0.32);
+      ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    ctx.strokeStyle='#8a4bff'; ctx.lineWidth=2; ctx.shadowColor='#8a4bff'; ctx.shadowBlur=8;
+    for(const a of asteroids){
+      ctx.save();
+      ctx.translate(a.x,a.y);
+      ctx.rotate(a.angle);
+      ctx.beginPath();
+      a.shape.forEach((p,i)=>{ i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y); });
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.shadowBlur=0;
+
+    ctx.fillStyle='#e8f6ff'; ctx.shadowColor='#e8f6ff'; ctx.shadowBlur=10;
+    for(const b of bullets){ ctx.beginPath(); ctx.arc(b.x,b.y,2.6,0,Math.PI*2); ctx.fill(); }
+    ctx.shadowBlur=0;
+
+    for(const pt of particles){
+      ctx.globalAlpha=Math.max(pt.life,0);
+      ctx.fillStyle=pt.color;
+      ctx.fillRect(pt.x-2,pt.y-2,4,4);
+      ctx.globalAlpha=1;
+    }
+
+    if(ship) drawShip();
+
+    if(msgTimer>0){
+      ctx.globalAlpha=Math.min(1,msgTimer/300);
+      ctx.fillStyle='#ffd23b';
+      ctx.font='900 22px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=16;
+      ctx.fillText(msg,W/2,H/2);
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+  }
+
+  function loop(ts){
+    if(!running){ return; }
+    if(!paused){
+      const dt=Math.min(40,ts-last);
+      last=ts;
+      update(dt);
+      draw();
+    }else{
+      last=ts;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // keyboard
+  keyLeft=keyRight=keyThrust=keyFire=false;
+  padLeft=padRight=padThrust=padFire=false;
+  window.addEventListener('keydown',e=>{
+    if(['ArrowLeft','a','A'].includes(e.key)) keyLeft=true;
+    if(['ArrowRight','d','D'].includes(e.key)) keyRight=true;
+    if(['ArrowUp','w','W'].includes(e.key)) keyThrust=true;
+    if(e.key===' '){ e.preventDefault(); keyFire=true; }
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+  window.addEventListener('keyup',e=>{
+    if(['ArrowLeft','a','A'].includes(e.key)) keyLeft=false;
+    if(['ArrowRight','d','D'].includes(e.key)) keyRight=false;
+    if(['ArrowUp','w','W'].includes(e.key)) keyThrust=false;
+    if(e.key===' ') keyFire=false;
+  });
+
+  // touch/mouse pad
+  function bindPad(el, on, off){
+    const set=v=>{ on(v); el.classList.toggle('on',v); };
+    el.addEventListener('touchstart',e=>{ e.preventDefault(); set(true); },{passive:false});
+    el.addEventListener('touchend',e=>{ e.preventDefault(); set(false); },{passive:false});
+    el.addEventListener('touchcancel',()=>set(false));
+    el.addEventListener('mousedown',e=>{ e.preventDefault(); set(true); });
+    el.addEventListener('mouseup',()=>set(false));
+    el.addEventListener('mouseleave',()=>set(false));
+  }
+  bindPad(document.getElementById('btnLeft'), v=>padLeft=v);
+  bindPad(document.getElementById('btnRight'), v=>padRight=v);
+  bindPad(document.getElementById('btnThrust'), v=>padThrust=v);
+  bindPad(document.getElementById('btnFire'), v=>padFire=v);
+
+  function togglePause(){
+    if(!started||!running) return;
+    paused=!paused;
+    pauseBtn.textContent = paused ? 'Seguir' : 'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+  pauseBtn.addEventListener('click',togglePause);
+  startBtn.addEventListener('click',start);
+
+  best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+})();
+</script>
+</body>
+</html>
