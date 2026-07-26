@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CRUZÁ LA AVENIDA · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:440px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(22px,6.6vw,38px); font-weight:900; letter-spacing:1px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.lvl b{color:var(--purple);}
+  .hud .box.liv b{color:var(--pink);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,30px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--purple)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:7px; font-size:12.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor; display:inline-flex; align-items:center; justify-content:center; font-size:10px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+
+  .pad{margin-top:14px; display:grid; grid-template-columns:60px 60px 60px; grid-template-rows:56px 56px; gap:8px; justify-content:center; user-select:none;}
+  .pbtn{
+    width:60px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+    font-size:22px; color:var(--ink); background:linear-gradient(180deg, rgba(20,28,58,.85), rgba(10,14,30,.85));
+    border:1px solid rgba(138,75,255,.4); box-shadow:0 6px 18px rgba(0,0,0,.4); touch-action:none;
+    transition:border-color .1s ease, color .1s ease, transform .08s ease;
+  }
+  .pbtn:active, .pbtn.on{border-color:var(--cyan); color:var(--cyan); transform:scale(.94); box-shadow:0 0 18px rgba(39,232,255,.35);}
+  #btnUp{grid-column:2; grid-row:1;}
+  #btnLeft{grid-column:1; grid-row:2;}
+  #btnDown{grid-column:2; grid-row:2;}
+  #btnRight{grid-column:3; grid-row:2;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">CRUZÁ LA AVENIDA</div>
+      <div class="sub">T R Á F I C O &nbsp; N E Ó N</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">PUNTOS<b id="score">0</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+      <div class="box lvl">NIVEL<b id="level">1</b></div>
+      <div class="box liv">VIDAS<b id="lives">3</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="420" height="550"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">CRUZÁ LA AVENIDA</h2>
+        <p id="ovText">Guiá a tu sapito neón por carriles de tráfico cada vez más rápidos. Llegá arriba para sumar puntos y subir de nivel.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--green);background:var(--green)">●</i> Movete una casilla por vez: arriba, abajo, izquierda o derecha</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)">●</i> Esquivá los autos: si te tocan, perdés una vida</span>
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)">●</i> Cada vez que llegás arriba, el tráfico se pone más veloz</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Flechas / WASD mueven de a una casilla · en mobile usá los botones o deslizá el dedo.</p>
+      </div>
+    </div>
+
+    <div class="pad" id="pad">
+      <div class="pbtn" id="btnUp" title="Arriba">▲</div>
+      <div class="pbtn" id="btnLeft" title="Izquierda">◄</div>
+      <div class="pbtn" id="btnDown" title="Abajo">▼</div>
+      <div class="pbtn" id="btnRight" title="Derecha">►</div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Flechas/<b>WASD</b> mueven · <b>P</b> pausa · deslizá el dedo en el tablero.</div>
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+
+    <footer>NEON ARCADE · Cruzá la Avenida</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const scoreEl=document.getElementById('score');
+  const bestEl=document.getElementById('best');
+  const levelEl=document.getElementById('level');
+  const livesEl=document.getElementById('lives');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+
+  const BEST_KEY='neon-cruza-avenida-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  const COLS=7, ROWS=11;
+  const CELL_W=W/COLS, CELL_H=H/ROWS;
+  const GOAL_ROW=0, START_ROW=ROWS-1, MEDIAN_ROW=5;
+  const TRAFFIC_ROWS=[1,2,3,4,6,7,8,9];
+  const LANE_COLORS={1:'#27e8ff',2:'#ff2bd6',3:'#8a4bff',4:'#ffd23b',6:'#39ff9e',7:'#27e8ff',8:'#ff2bd6',9:'#8a4bff'};
+  const MOVE_MS=110;
+
+  let player, lanes, score, level, lives, running, paused, started, invuln;
+  let maxRowReached;
+  let msg='', msgTimer=0;
+  let last=0;
+
+  function flashMsg(t){ msg=t; msgTimer=1300; }
+
+  function laneDir(row){ return (row%2===0) ? 1 : -1; }
+
+  function makeLane(row){
+    const dir=laneDir(row);
+    const speedBase=(0.045+level*0.011)*(1+Math.random()*0.35);
+    const speed=speedBase*dir;
+    const count=level<3?3:(level<6?4:5);
+    const spacing=W/count;
+    const carW=spacing*0.5;
+    const cars=[];
+    for(let i=0;i<count;i++){
+      cars.push({ x:i*spacing+Math.random()*(spacing*0.3), w:carW });
+    }
+    return {row, speed, cars, color:LANE_COLORS[row]||'#27e8ff'};
+  }
+
+  function setupLanes(){
+    lanes=TRAFFIC_ROWS.map(r=>makeLane(r));
+  }
+
+  function resetPlayer(){
+    player={col:Math.floor(COLS/2), row:START_ROW, px:0, py:0, fromCol:Math.floor(COLS/2), fromRow:START_ROW, moveT:1};
+    maxRowReached=START_ROW;
+    updatePlayerPixels();
+  }
+
+  function updatePlayerPixels(){
+    const t=Math.min(1,player.moveT);
+    const ease=t<1 ? 1-Math.pow(1-t,3) : 1;
+    const col=player.fromCol+(player.col-player.fromCol)*ease;
+    const row=player.fromRow+(player.row-player.fromRow)*ease;
+    player.px=(col+0.5)*CELL_W;
+    player.py=(row+0.5)*CELL_H;
+  }
+
+  function reset(){
+    score=0; level=1; lives=3; invuln=1200;
+    scoreEl.textContent=0; levelEl.textContent=1; livesEl.textContent=3;
+    setupLanes();
+    resetPlayer();
+  }
+
+  function start(){
+    reset();
+    started=true; running=true; paused=false;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function gameOver(){
+    running=false; started=false;
+    const isRec = score>0 && score>=best;
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    ovTitle.textContent='GAME OVER';
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Flechas/WASD mueven de a una casilla · en mobile usá los botones o deslizá.';
+    overlay.classList.remove('hidden');
+  }
+
+  function tryMove(dc,dr){
+    if(!running || paused) return;
+    if(player.moveT<1) return;
+    const nc=player.col+dc, nr=player.row+dr;
+    if(nc<0||nc>=COLS||nr<GOAL_ROW||nr>START_ROW) return;
+    player.fromCol=player.col; player.fromRow=player.row;
+    player.col=nc; player.row=nr;
+    player.moveT=0;
+    if(nr<maxRowReached){
+      score+=10;
+      scoreEl.textContent=score;
+      maxRowReached=nr;
+    }
+    if(nr===GOAL_ROW){
+      score+=50;
+      scoreEl.textContent=score;
+      level++;
+      levelEl.textContent=level;
+      flashMsg('¡NIVEL '+level+'!');
+      setupLanes();
+      player.col=Math.floor(COLS/2); player.row=START_ROW;
+      player.fromCol=player.col; player.fromRow=player.row; player.moveT=1;
+      maxRowReached=START_ROW;
+      invuln=800;
+    }
+  }
+
+  function loseLife(){
+    if(invuln>0) return;
+    lives--;
+    livesEl.textContent=Math.max(lives,0);
+    if(lives<=0){ gameOver(); return; }
+    flashMsg('¡CUIDADO!');
+    resetPlayer();
+    invuln=1400;
+  }
+
+  function update(dt){
+    if(msgTimer>0) msgTimer-=dt;
+    if(invuln>0) invuln-=dt;
+
+    if(player.moveT<1){
+      player.moveT=Math.min(1,player.moveT+dt/MOVE_MS);
+      updatePlayerPixels();
+    }
+
+    for(const lane of lanes){
+      for(const car of lane.cars){
+        car.x+=lane.speed*dt;
+        if(lane.speed>0 && car.x>W+car.w) car.x=-car.w;
+        if(lane.speed<0 && car.x<-car.w) car.x=W+car.w;
+      }
+    }
+
+    if(invuln<=0 && TRAFFIC_ROWS.includes(player.row)){
+      const lane=lanes.find(l=>l.row===player.row);
+      if(lane){
+        const pLeft=player.px-CELL_W*0.32, pRight=player.px+CELL_W*0.32;
+        for(const car of lane.cars){
+          const cLeft=car.x, cRight=car.x+car.w;
+          if(pRight>cLeft && pLeft<cRight){ loseLife(); break; }
+        }
+      }
+    }
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawBackground(){
+    ctx.clearRect(0,0,W,H);
+    for(let r=0;r<ROWS;r++){
+      const y=r*CELL_H;
+      let base;
+      if(r===GOAL_ROW) base='rgba(57,255,158,.14)';
+      else if(r===START_ROW) base='rgba(39,232,255,.10)';
+      else if(r===MEDIAN_ROW) base='rgba(255,210,59,.08)';
+      else base = (r%2===0) ? 'rgba(20,28,58,.55)' : 'rgba(10,14,30,.55)';
+      ctx.fillStyle=base;
+      ctx.fillRect(0,y,W,CELL_H);
+    }
+    ctx.strokeStyle='rgba(57,255,158,.4)'; ctx.lineWidth=2; ctx.shadowColor='#39ff9e'; ctx.shadowBlur=10;
+    ctx.strokeRect(1,GOAL_ROW*CELL_H+1,W-2,CELL_H-2);
+    ctx.shadowBlur=0;
+  }
+
+  function drawLanes(){
+    for(const lane of lanes){
+      const y=lane.row*CELL_H;
+      ctx.strokeStyle='rgba(255,255,255,.05)';
+      ctx.setLineDash([10,8]);
+      ctx.beginPath(); ctx.moveTo(0,y+CELL_H/2); ctx.lineTo(W,y+CELL_H/2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle=lane.color; ctx.shadowColor=lane.color; ctx.shadowBlur=12;
+      for(const car of lane.cars){
+        const cy=y+CELL_H*0.18, ch=CELL_H*0.64;
+        roundRect(car.x,cy,car.w,ch,7);
+        ctx.globalAlpha=.22; ctx.fill(); ctx.globalAlpha=1;
+        ctx.lineWidth=2; ctx.stroke();
+        const dir=lane.speed>0?1:-1;
+        const lx = dir>0 ? car.x+car.w-6 : car.x+6;
+        ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.arc(lx,cy+ch/2,2.4,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle=lane.color;
+      }
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function drawPlayer(){
+    const flashOn = invuln>0 && Math.floor(invuln/110)%2===0;
+    if(flashOn) return;
+    const x=player.px, y=player.py;
+    const s=Math.min(CELL_W,CELL_H)*0.36;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.fillStyle='#39ff9e'; ctx.strokeStyle='#39ff9e'; ctx.shadowColor='#39ff9e'; ctx.shadowBlur=16;
+    roundRect(-s,-s*0.8,s*2,s*1.7,s*0.6);
+    ctx.globalAlpha=.85; ctx.fill(); ctx.globalAlpha=1; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#07130d';
+    ctx.beginPath(); ctx.arc(-s*0.42,-s*0.35,s*0.22,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s*0.42,-s*0.35,s*0.22,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+
+  function draw(){
+    drawBackground();
+    drawLanes();
+    if(player) drawPlayer();
+
+    if(msgTimer>0){
+      ctx.globalAlpha=Math.min(1,msgTimer/300);
+      ctx.fillStyle='#ffd23b';
+      ctx.font='900 22px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=16;
+      ctx.fillText(msg,W/2,H/2);
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+  }
+
+  function loop(ts){
+    if(!running){ return; }
+    if(!paused){
+      const dt=Math.min(40,ts-last);
+      last=ts;
+      update(dt);
+      draw();
+    }else{
+      last=ts;
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('keydown',e=>{
+    if(['ArrowUp','w','W'].includes(e.key)){ e.preventDefault(); tryMove(0,-1); }
+    else if(['ArrowDown','s','S'].includes(e.key)){ e.preventDefault(); tryMove(0,1); }
+    else if(['ArrowLeft','a','A'].includes(e.key)){ e.preventDefault(); tryMove(-1,0); }
+    else if(['ArrowRight','d','D'].includes(e.key)){ e.preventDefault(); tryMove(1,0); }
+    else if(e.key==='p'||e.key==='P') togglePause();
+  });
+
+  function bindPad(el, fn){
+    let fired=false;
+    const go=e=>{ e.preventDefault(); if(fired) return; fired=true; fn(); el.classList.add('on'); setTimeout(()=>{el.classList.remove('on'); fired=false;},120); };
+    el.addEventListener('touchstart',go,{passive:false});
+    el.addEventListener('mousedown',go);
+  }
+  bindPad(document.getElementById('btnUp'), ()=>tryMove(0,-1));
+  bindPad(document.getElementById('btnDown'), ()=>tryMove(0,1));
+  bindPad(document.getElementById('btnLeft'), ()=>tryMove(-1,0));
+  bindPad(document.getElementById('btnRight'), ()=>tryMove(1,0));
+
+  let touchStartX=0, touchStartY=0, touchActive=false;
+  canvas.addEventListener('touchstart',e=>{
+    touchActive=true;
+    touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY;
+  },{passive:true});
+  canvas.addEventListener('touchend',e=>{
+    if(!touchActive) return;
+    touchActive=false;
+    const dx=e.changedTouches[0].clientX-touchStartX;
+    const dy=e.changedTouches[0].clientY-touchStartY;
+    if(Math.hypot(dx,dy)<24) return;
+    if(Math.abs(dx)>Math.abs(dy)) tryMove(dx>0?1:-1,0);
+    else tryMove(0,dy>0?1:-1);
+  },{passive:true});
+
+  function togglePause(){
+    if(!started||!running) return;
+    paused=!paused;
+    pauseBtn.textContent = paused ? 'Seguir' : 'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+  pauseBtn.addEventListener('click',togglePause);
+  startBtn.addEventListener('click',start);
+
+  drawBackground();
+  best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+})();
+</script>
+</body>
+</html>

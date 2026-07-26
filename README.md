@@ -19,6 +19,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 👾 Invasión Neón | [`invasion-neon.html`](invasion-neon.html) | Space invaders con oleadas progresivas y un jefe con barra de vida cada 3 oleadas. |
 | 🏓 Pong Turbo | [`pong-turbo.html`](pong-turbo.html) | Pong vs CPU o de a 2, con power-ups que agrandan/achican paletas y curvan la pelota. |
 | ☄️ Asteroides | [`asteroides.html`](asteroides.html) | Nave con inercia y rotación; las rocas se parten en pedazos más chicos al dispararles. |
+| 🐸 Cruzá la Avenida | [`cruza-la-avenida.html`](cruza-la-avenida.html) | Estilo Frogger: cruzá carriles de tráfico neón cada vez más rápidos. |
 
 ## Sopa de Letras
 
