@@ -131,12 +131,12 @@
   const MAXFALL=11;
   const BALL_R=10;
   const ANCHOR=H*0.62;     // posición fija de la bolita en pantalla (px desde arriba)
-  const GAP=250;           // distancia vertical entre aros (world px)
+  const GAP=300;           // distancia vertical entre aros (world px)
   const RING_R=88;         // radio del aro
   const RING_LW=15;        // grosor de la banda
 
   let ball, camY, obstacles, switchers, particles, trail;
-  let score, running, paused, started, shake, nextObstacleY, flash;
+  let score, running, paused, started, shake, nextObstacleY, flash, ringsMade;
 
   function shuffle(a){
     a=a.slice();
@@ -149,7 +149,7 @@
     camY=ball.y-ANCHOR;
     obstacles=[]; switchers=[]; particles=[]; trail=[];
     score=0; paused=false; shake=0; flash=0;
-    nextObstacleY=-GAP;
+    nextObstacleY=-GAP; ringsMade=0;
     for(let i=0;i<4;i++) addObstacle();
     scoreEl.textContent=0;
     updateSwatch();
@@ -157,14 +157,17 @@
 
   function addObstacle(){
     const y=nextObstacleY;
-    const spin=(0.018+Math.random()*0.026)*(Math.random()<0.5?1:-1);
+    // los primeros aros giran lento y van acelerando de a poco
+    const ramp=1+Math.min(ringsMade,30)*0.022;
+    const spin=(0.011+Math.random()*0.010)*ramp*(Math.random()<0.5?1:-1);
     obstacles.push({
       y, x:W/2, rot:Math.random()*Math.PI*2, spin,
-      colors:shuffle(PALETTE), passed:false, alive:true
+      colors:shuffle(PALETTE), passed:false, alive:true, entered:false
     });
-    // estrella cambia-color justo arriba del aro
-    switchers.push({ y:y-(RING_R+46), x:W/2, taken:false, rot:0 });
+    // estrella cambia-color apenas arriba del aro: deja pista libre hasta el siguiente
+    switchers.push({ y:y-(RING_R+26), x:W/2, taken:false, rot:0 });
     nextObstacleY-=GAP;
+    ringsMade++;
   }
 
   function updateSwatch(){ swatchEl.style.color=ball.color; }
@@ -240,10 +243,17 @@
       ob.rot+=ob.spin*dt;
       if(!ob.alive) continue;
       const dist=Math.abs(ball.y-ob.y); // bolita y aro comparten x
-      if(dist < RING_R+RING_LW/2+BALL_R && dist > RING_R-RING_LW/2-BALL_R){
-        // la bolita está tocando la banda del aro
-        const c=segColorAt(ob, W/2, ball.y);
-        if(c!==ball.color){ addBurst(W/2, ob.y, ball.color, 22, 4); gameOver('color'); return; }
+      const outer=RING_R+RING_LW/2+BALL_R, inner=RING_R-RING_LW/2-BALL_R;
+      if(dist<inner){
+        // ya entró al aro: la banda de arriba (siempre del color opuesto) no la mata
+        ob.entered=true;
+      }else if(dist<outer){
+        if(!ob.entered){
+          const c=segColorAt(ob, W/2, ball.y);
+          if(c!==ball.color){ addBurst(W/2, ob.y, ball.color, 22, 4); gameOver('color'); return; }
+        }
+      }else if(ball.y>ob.y){
+        ob.entered=false; // se cayó por debajo: el aro vuelve a contar
       }
       if(!ob.passed && ball.y < ob.y-RING_R){
         ob.passed=true; score++; scoreEl.textContent=score; flash=8;
@@ -284,6 +294,12 @@
 
     const off=camY;
 
+    // guía: la bolita siempre sube por el centro, así que cruza por abajo del aro
+    ctx.strokeStyle='rgba(232,246,255,.07)'; ctx.lineWidth=1;
+    ctx.setLineDash([5,9]);
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+    ctx.setLineDash([]);
+
     // estrellas cambia-color
     for(const s of switchers){
       const sy=s.y-off;
@@ -318,16 +334,18 @@
     for(const ob of obstacles){
       const cy=ob.y-off;
       if(cy<-RING_R-40||cy>H+RING_R+40) continue;
-      ctx.lineWidth=RING_LW;
       for(let i=0;i<4;i++){
         const a0=ob.rot+i*Math.PI/2, a1=ob.rot+(i+1)*Math.PI/2;
+        const match=ob.colors[i]===ball.color;
         ctx.beginPath();
+        ctx.lineWidth=match?RING_LW+5:RING_LW;
+        ctx.globalAlpha=match?1:0.62;
         ctx.strokeStyle=ob.colors[i];
-        ctx.shadowColor=ob.colors[i]; ctx.shadowBlur=14;
+        ctx.shadowColor=ob.colors[i]; ctx.shadowBlur=match?26:10;
         ctx.arc(W/2, cy, RING_R, a0, a1);
         ctx.stroke();
       }
-      ctx.shadowBlur=0;
+      ctx.shadowBlur=0; ctx.globalAlpha=1;
     }
 
     // trail
@@ -397,7 +415,7 @@
   // dibujo estático inicial
   ball={y:0, vy:0, color:PALETTE[0]}; camY=ball.y-ANCHOR;
   obstacles=[]; switchers=[]; particles=[]; trail=[]; shake=0; flash=0;
-  nextObstacleY=-GAP; for(let i=0;i<4;i++) addObstacle();
+  nextObstacleY=-GAP; ringsMade=0; for(let i=0;i<4;i++) addObstacle();
   draw();
 })();
 </script>
