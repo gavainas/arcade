@@ -23,7 +23,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | 4 | 🏓 | Pong Turbo | `pong-turbo.html` | Deportivo | Pong vs CPU o de a 2, con power-ups que agrandan/achican paletas y curvan la bola. | ✅ 2026-07-24 |
 | 5 | ☄️ | Asteroides | `asteroides.html` | Shooter | Nave con inercia y rotación; las rocas se parten en pedazos más chicos. | ✅ 2026-07-25 |
 | 6 | 🐸 | Cruzá la Avenida | `cruza-la-avenida.html` | Reflejos | Estilo Frogger: cruzá carriles de tráfico neón cada vez más rápidos. | ✅ 2026-07-27 |
-| 7 | 🟣 | Bloques Neón | `bloques-neon.html` | Puzzle de caída | Piezas que caen estilo tetromino: armá líneas completas antes de llegar al tope. | ⏳ Pendiente |
+| 7 | 🟣 | Bloques Neón | `bloques-neon.html` | Puzzle de caída | Piezas que caen estilo tetromino: armá líneas completas antes de llegar al tope. | ✅ 2026-07-28 |
 
 ## Semana 2 · Puzzle y lógica
 
