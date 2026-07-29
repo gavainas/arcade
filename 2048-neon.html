@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>2048 NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --blue:#4b8bff;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:420px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(26px,7vw,44px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:center; align-items:center; gap:10px; margin:4px 2px 14px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; max-width:150px; text-align:center; position:relative; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px; overflow:visible;}
+  .hud .box b{display:block; font-size:20px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .popup{position:absolute; top:-4px; left:50%; transform:translateX(-50%); color:var(--green); font-weight:900; font-size:14px; pointer-events:none; animation:floatUp 700ms ease-out forwards;}
+  @keyframes floatUp{0%{opacity:1; transform:translate(-50%,0);}100%{opacity:0; transform:translate(-50%,-26px);}}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  .board{position:relative; width:100%; aspect-ratio:1/1; border-radius:14px; background:#05070f; box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none; overflow:hidden;}
+  .bg-cell{position:absolute; border-radius:10px; background:rgba(138,75,255,.08); border:1px solid rgba(138,75,255,.14);}
+  .tile{position:absolute; top:0; left:0; display:flex; align-items:center; justify-content:center;
+    border-radius:10px; font-weight:900; color:var(--ink); transition:transform 120ms ease-in-out;
+    box-shadow:0 4px 14px rgba(0,0,0,.35);}
+  .tile.pop, .tile.merge-pop{transition:transform 160ms ease;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px; gap:12px;
+    background:rgba(5,7,15,.92); backdrop-filter:blur(3px); z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,30px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.5; max-width:300px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:6px; font-size:12px; color:var(--ink); text-align:left; max-width:280px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:12px; height:12px; border-radius:3px; flex:none; box-shadow:0 0 8px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--pink)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); box-shadow:none; border:1px solid rgba(138,75,255,.4); padding:10px 26px; font-size:13px;}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .row2{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .controls{margin-top:14px; text-align:center;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">2048 NEÓN</div>
+      <div class="sub">F U S I O N Á &nbsp; · &nbsp; N E Ó N</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">PUNTOS<b id="score">0</b><span id="scorePopupHost"></span></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="board" id="board">
+        <div class="overlay" id="overlay">
+          <h2 id="ovTitle">2048 NEÓN</h2>
+          <p id="ovText">Deslizá las fichas con flechas o el dedo. Cuando dos fichas iguales chocan, se fusionan en una del doble de valor. Llegá a 2048.</p>
+          <div class="legend" id="legend">
+            <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Movés todas las fichas del tablero a la vez</span>
+            <span><i class="dot" style="color:var(--green);background:var(--green)"></i> Dos fichas iguales que chocan se fusionan</span>
+            <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Sin espacio ni fusiones posibles: game over</span>
+          </div>
+          <button class="btn" id="startBtn">JUGAR ▶</button>
+          <p class="hint" id="ovHint">Flechas para mover · o deslizá el dedo sobre el tablero.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">◄►▲▼ para mover · fusioná fichas iguales · llegá a 2048.</div>
+    </div>
+
+    <footer>NEON ARCADE · 2048 Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const board=document.getElementById('board');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const scoreEl=document.getElementById('score');
+  const bestEl=document.getElementById('best');
+  const scorePopupHost=document.getElementById('scorePopupHost');
+
+  const BEST_KEY='neon-2048-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  const SIZE=4, GAP=10;
+  const TILE_STYLE={
+    2:{bg:'#1c2740', color:'#e8f6ff'},
+    4:{bg:'#233a5a', color:'#e8f6ff'},
+    8:{bg:'#1c5a66', color:'#0b1220', glow:'#27e8ff'},
+    16:{bg:'#3a2a70', color:'#f2ecff', glow:'#8a4bff'},
+    32:{bg:'#6a1f5e', color:'#ffe6fa', glow:'#ff2bd6'},
+    64:{bg:'#7a2138', color:'#ffe9ee', glow:'#ff5470'},
+    128:{bg:'#8a6a12', color:'#0b1220', glow:'#ffd23b'},
+    256:{bg:'#166a4a', color:'#e9fff4', glow:'#39ff9e'},
+    512:{bg:'#1f4d8a', color:'#eaf3ff', glow:'#4b8bff'},
+    1024:{bg:'#9c1f86', color:'#fff0fb', glow:'#ff2bd6'},
+    2048:{bg:'#a88413', color:'#0b1220', glow:'#ffd23b'}
+  };
+  function styleFor(value){
+    return TILE_STYLE[value] || {bg:'#111a33', color:'#e8f6ff', glow:'#27e8ff'};
+  }
+  function fontSizeFor(value){
+    const len=String(value).length;
+    if(len<=2) return 'clamp(26px,8vw,32px)';
+    if(len===3) return 'clamp(22px,7vw,28px)';
+    return 'clamp(17px,5.6vw,22px)';
+  }
+
+  let grid, score, best2, running, started, gameOverFlag, won, keepPlaying, idCounter;
+  let tileEls;
+
+  function emptyGrid(){
+    const g=[];
+    for(let x=0;x<SIZE;x++) g.push(new Array(SIZE).fill(null));
+    return g;
+  }
+  function withinBounds(c){ return c.x>=0&&c.x<SIZE&&c.y>=0&&c.y<SIZE; }
+  function cellContent(c){ return withinBounds(c) ? grid[c.x][c.y] : null; }
+  function insertTile(t){ grid[t.x][t.y]=t; }
+  function removeTile(t){ if(grid[t.x][t.y]===t) grid[t.x][t.y]=null; }
+  function cellAvailable(c){ return withinBounds(c) && !cellContent(c); }
+  function availableCells(){
+    const cells=[];
+    for(let x=0;x<SIZE;x++) for(let y=0;y<SIZE;y++) if(!grid[x][y]) cells.push({x,y});
+    return cells;
+  }
+  function forEachTile(fn){
+    for(let x=0;x<SIZE;x++) for(let y=0;y<SIZE;y++) if(grid[x][y]) fn(grid[x][y]);
+  }
+  function nextId(){ return ++idCounter; }
+
+  function getVector(dir){
+    return {up:{x:0,y:-1}, right:{x:1,y:0}, down:{x:0,y:1}, left:{x:-1,y:0}}[dir];
+  }
+  function buildTraversals(vector){
+    const t={x:[],y:[]};
+    for(let i=0;i<SIZE;i++){ t.x.push(i); t.y.push(i); }
+    if(vector.x===1) t.x=t.x.reverse();
+    if(vector.y===1) t.y=t.y.reverse();
+    return t;
+  }
+  function findFarthestPosition(cell,vector){
+    let previous;
+    do{
+      previous=cell;
+      cell={x:previous.x+vector.x, y:previous.y+vector.y};
+    } while(withinBounds(cell) && cellAvailable(cell));
+    return {farthest:previous, next:cell};
+  }
+  function moveTileTo(tile,cell){
+    removeTile(tile);
+    tile.x=cell.x; tile.y=cell.y;
+    insertTile(tile);
+  }
+
+  function addRandomTile(){
+    const cells=availableCells();
+    if(cells.length===0) return null;
+    const cell=cells[Math.floor(Math.random()*cells.length)];
+    const value=Math.random()<0.9?2:4;
+    const tile={x:cell.x, y:cell.y, value, id:nextId(), mergedFlag:false};
+    insertTile(tile);
+    return tile;
+  }
+
+  function movesAvailable(){
+    if(availableCells().length>0) return true;
+    for(let x=0;x<SIZE;x++){
+      for(let y=0;y<SIZE;y++){
+        const tile=grid[x][y];
+        if(!tile) continue;
+        for(const dir of ['up','right','down','left']){
+          const v=getVector(dir);
+          const other=cellContent({x:x+v.x,y:y+v.y});
+          if(other && other.value===tile.value) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function cellSize(){
+    const inner=board.clientWidth - GAP*(SIZE+1);
+    return inner/SIZE;
+  }
+  function pxPos(gx,gy){
+    const cs=cellSize();
+    return {left: GAP + gx*(cs+GAP), top: GAP + gy*(cs+GAP), size:cs};
+  }
+
+  function buildBackground(){
+    board.querySelectorAll('.bg-cell').forEach(el=>el.remove());
+    for(let x=0;x<SIZE;x++){
+      for(let y=0;y<SIZE;y++){
+        const el=document.createElement('div');
+        el.className='bg-cell';
+        board.insertBefore(el, overlay);
+        placeStatic(el, x, y);
+      }
+    }
+  }
+  function placeStatic(el,gx,gy){
+    const p=pxPos(gx,gy);
+    el.style.width=p.size+'px';
+    el.style.height=p.size+'px';
+    el.style.transform=`translate(${p.left}px,${p.top}px)`;
+  }
+
+  function reset(){
+    grid=emptyGrid();
+    score=0; running=true; started=true; gameOverFlag=false; won=false; keepPlaying=false; idCounter=0;
+    tileEls={};
+    board.querySelectorAll('.tile').forEach(el=>el.remove());
+    scoreEl.textContent='0';
+    buildBackground();
+    addRandomTile();
+    addRandomTile();
+    forEachTile(t=>createTileEl(t,true));
+  }
+
+  function createTileEl(tile, instant){
+    const el=document.createElement('div');
+    el.className='tile';
+    const st=styleFor(tile.value);
+    el.style.background=st.bg;
+    el.style.color=st.color;
+    el.style.fontSize=fontSizeFor(tile.value);
+    if(st.glow){ el.style.boxShadow=`0 4px 14px rgba(0,0,0,.35), 0 0 16px ${st.glow}66`; }
+    el.textContent=tile.value;
+    const p=pxPos(tile.x,tile.y);
+    el.style.width=p.size+'px';
+    el.style.height=p.size+'px';
+    if(instant){
+      el.style.transition='none';
+      el.style.transform=`translate(${p.left}px,${p.top}px) scale(1)`;
+      board.insertBefore(el, overlay);
+    }else{
+      el.style.transition='none';
+      el.style.transform=`translate(${p.left}px,${p.top}px) scale(0)`;
+      board.insertBefore(el, overlay);
+      // force reflow then animate pop-in
+      void el.offsetWidth;
+      el.style.transition='transform 160ms ease';
+      requestAnimationFrame(()=>{
+        el.style.transform=`translate(${p.left}px,${p.top}px) scale(1)`;
+      });
+    }
+    tileEls[tile.id]=el;
+    return el;
+  }
+
+  function repositionInstant(){
+    forEachTile(t=>{
+      const el=tileEls[t.id];
+      if(!el) return;
+      const p=pxPos(t.x,t.y);
+      el.style.width=p.size+'px';
+      el.style.height=p.size+'px';
+      const wasTransition=el.style.transition;
+      el.style.transition='none';
+      el.style.transform=`translate(${p.left}px,${p.top}px) scale(1)`;
+      void el.offsetWidth;
+      el.style.transition=wasTransition||'transform 120ms ease-in-out';
+    });
+    buildBackground();
+  }
+
+  function showScorePopup(amount){
+    const el=document.createElement('span');
+    el.className='popup';
+    el.textContent='+'+amount;
+    scorePopupHost.appendChild(el);
+    setTimeout(()=>el.remove(),700);
+  }
+
+  function move(direction){
+    if(!started || !running || gameOverFlag) return;
+    const vector=getVector(direction);
+    const traversals=buildTraversals(vector);
+    const originalPos={};
+    forEachTile(t=>{ originalPos[t.id]={x:t.x,y:t.y}; });
+
+    let moved=false, scoreGain=0, reached2048=false;
+    const dyingIds=[];
+    const mergeSpawns=[];
+
+    traversals.x.forEach(x=>{
+      traversals.y.forEach(y=>{
+        const cell={x,y};
+        const tile=cellContent(cell);
+        if(!tile) return;
+        const positions=findFarthestPosition(cell,vector);
+        const nextTile=cellContent(positions.next);
+        if(nextTile && nextTile.value===tile.value && !nextTile.mergedFlag){
+          removeTile(tile);
+          removeTile(nextTile);
+          const mergedValue=tile.value*2;
+          const mergedId=nextId();
+          const mergedTile={x:positions.next.x, y:positions.next.y, value:mergedValue, id:mergedId, mergedFlag:true};
+          insertTile(mergedTile);
+          scoreGain+=mergedValue;
+          moved=true;
+          if(mergedValue>=2048) reached2048=true;
+          // slide both source tiles into the merge cell, then remove them
+          slideTileEl(tile.id, positions.next);
+          slideTileEl(nextTile.id, positions.next);
+          dyingIds.push(tile.id, nextTile.id);
+          mergeSpawns.push(mergedTile);
+        }else if(positions.farthest.x!==cell.x || positions.farthest.y!==cell.y){
+          moveTileTo(tile, positions.farthest);
+          slideTileEl(tile.id, positions.farthest);
+          moved=true;
+        }
+      });
+    });
+
+    if(!moved) return;
+
+    forEachTile(t=>{ t.mergedFlag=false; });
+
+    score+=scoreGain;
+    scoreEl.textContent=score;
+    if(scoreGain>0) showScorePopup(scoreGain);
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+
+    const spawn=addRandomTile();
+
+    setTimeout(()=>{
+      dyingIds.forEach(id=>{
+        const el=tileEls[id];
+        if(el){ el.remove(); delete tileEls[id]; }
+      });
+      mergeSpawns.forEach(t=>createTileEl(t,false));
+      if(spawn) createTileEl(spawn,false);
+
+      if(reached2048 && !won && !keepPlaying){
+        won=true;
+        setTimeout(showWin,180);
+      }else if(!movesAvailable()){
+        setTimeout(gameOver,180);
+      }
+    },120);
+  }
+
+  function slideTileEl(id, toCell){
+    const el=tileEls[id];
+    if(!el) return;
+    const p=pxPos(toCell.x, toCell.y);
+    el.style.transition='transform 120ms ease-in-out';
+    el.style.transform=`translate(${p.left}px,${p.top}px) scale(1)`;
+  }
+
+  function start(){
+    reset();
+    overlay.classList.add('hidden');
+    running=true; started=true;
+  }
+
+  function showWin(){
+    running=false;
+    ovTitle.textContent='¡LLEGASTE A 2048!';
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`;
+    overlay.innerHTML='';
+    const h2=document.createElement('h2'); h2.textContent='¡LLEGASTE A 2048!';
+    const p=document.createElement('p'); p.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`;
+    const rowWrap=document.createElement('div'); rowWrap.className='row2';
+    const contBtn=document.createElement('button'); contBtn.className='btn'; contBtn.textContent='SEGUIR JUGANDO ▶';
+    const restartBtn=document.createElement('button'); restartBtn.className='btn ghost'; restartBtn.textContent='NUEVA PARTIDA';
+    contBtn.addEventListener('click',()=>{ keepPlaying=true; running=true; overlay.classList.add('hidden'); });
+    restartBtn.addEventListener('click', start);
+    rowWrap.appendChild(contBtn); rowWrap.appendChild(restartBtn);
+    overlay.appendChild(h2); overlay.appendChild(p); overlay.appendChild(rowWrap);
+    overlay.classList.remove('hidden');
+  }
+
+  function gameOver(){
+    running=false; started=false; gameOverFlag=true;
+    const isRec = score>0 && score>=best;
+    overlay.innerHTML='';
+    const h2=document.createElement('h2'); h2.textContent='GAME OVER';
+    const p=document.createElement('p');
+    p.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    const btn=document.createElement('button'); btn.className='btn'; btn.textContent='JUGAR DE NUEVO';
+    btn.addEventListener('click', start);
+    const hint=document.createElement('p'); hint.className='hint'; hint.textContent='Flechas para mover · o deslizá el dedo.';
+    overlay.appendChild(h2); overlay.appendChild(p); overlay.appendChild(btn); overlay.appendChild(hint);
+    overlay.classList.remove('hidden');
+  }
+
+  // keyboard
+  window.addEventListener('keydown', e=>{
+    const map={ArrowUp:'up', ArrowRight:'right', ArrowDown:'down', ArrowLeft:'left'};
+    if(map[e.key]){
+      e.preventDefault();
+      move(map[e.key]);
+    }
+  });
+
+  // touch swipe
+  let touchX=null, touchY=null;
+  board.addEventListener('touchstart', e=>{
+    const t=e.touches[0]; touchX=t.clientX; touchY=t.clientY;
+  }, {passive:true});
+  board.addEventListener('touchend', e=>{
+    if(touchX===null || !started || !running) { touchX=null; touchY=null; return; }
+    const t=e.changedTouches[0];
+    const dx=t.clientX-touchX, dy=t.clientY-touchY;
+    const absX=Math.abs(dx), absY=Math.abs(dy);
+    if(Math.max(absX,absY) > 18){
+      if(absX>absY) move(dx>0?'right':'left');
+      else move(dy>0?'down':'up');
+    }
+    touchX=null; touchY=null;
+  }, {passive:true});
+
+  startBtn.addEventListener('click', start);
+
+  window.addEventListener('resize', ()=>{
+    if(started) repositionInstant();
+    else buildBackground();
+  });
+
+  // static preview background before first game
+  grid=emptyGrid();
+  buildBackground();
+  best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+})();
+</script>
+</body>
+</html>

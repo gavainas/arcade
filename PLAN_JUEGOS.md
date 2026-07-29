@@ -29,7 +29,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 
 | # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
 |---|-------|-------|---------|--------|--------------------|--------|
-| 8 | 🔢 | 2048 Neón | `2048-neon.html` | Puzzle numérico | Deslizá y fusioná fichas iguales hasta llegar a 2048 (swipe y flechas). | ⏳ Pendiente |
+| 8 | 🔢 | 2048 Neón | `2048-neon.html` | Puzzle numérico | Deslizá y fusioná fichas iguales hasta llegar a 2048 (swipe y flechas). | ✅ 2026-07-29 |
 | 9 | 💣 | Buscaminas | `buscaminas.html` | Lógica | Buscaminas con 3 dificultades y banderitas con toque largo en mobile. | ⏳ Pendiente |
 | 10 | 🃏 | Memoria Neón | `memoria.html` | Memoria | Encontrá las parejas de cartas; niveles con más cartas y menos tiempo. | ⏳ Pendiente |
 | 11 | 🌀 | Laberinto | `laberinto.html` | Puzzle | Laberintos generados al azar, con linterna de visión limitada y contra reloj. | ⏳ Pendiente |

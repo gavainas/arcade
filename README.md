@@ -21,6 +21,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ☄️ Asteroides | [`asteroides.html`](asteroides.html) | Nave con inercia y rotación; las rocas se parten en pedazos más chicos al dispararles. |
 | 🐸 Cruzá la Avenida | [`cruza-la-avenida.html`](cruza-la-avenida.html) | Estilo Frogger: cruzá carriles de tráfico neón cada vez más rápido y llegá a la meta. |
 | 🟣 Bloques Neón | [`bloques-neon.html`](bloques-neon.html) | Piezas que caen estilo tetromino: armá líneas completas antes de que lleguen al tope. |
+| 🔢 2048 Neón | [`2048-neon.html`](2048-neon.html) | Deslizá y fusioná fichas iguales hasta llegar a 2048, con teclado o swipe. |
 
 ## Sopa de Letras
 
