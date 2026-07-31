@@ -23,6 +23,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🟣 Bloques Neón | [`bloques-neon.html`](bloques-neon.html) | Piezas que caen estilo tetromino: armá líneas completas antes de que lleguen al tope. |
 | 🔢 2048 Neón | [`2048-neon.html`](2048-neon.html) | Deslizá y fusioná fichas iguales hasta llegar a 2048, con teclado o swipe. |
 | 💣 Buscaminas | [`buscaminas.html`](buscaminas.html) | Buscaminas clásico con 3 dificultades, primer click siempre seguro y banderitas con toque largo en mobile o click derecho. |
+| 🃏 Memoria Neón | [`memoria.html`](memoria.html) | Memotest contra reloj: encontrá las parejas de cartas antes de que se acabe el tiempo; cada nivel trae más cartas y menos segundos. |
 
 ## Sopa de Letras
 

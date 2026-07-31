@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MEMORIA NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,7vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 2px 14px; flex-wrap:wrap;}
+  .hud .box{flex:1; min-width:64px; max-width:120px; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px; font-size:10px; letter-spacing:1px; color:var(--muted);}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.time b{color:var(--pink); transition:color .2s;}
+  .hud .box.time.low b{color:var(--red); animation:pulse .6s ease-in-out infinite;}
+  .hud .box.score b{color:var(--gold);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  .panel{
+    position:relative; border-radius:20px; padding:12px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    min-height:300px;
+  }
+  .board{position:relative; display:grid; width:100%; gap:8px;}
+
+  .card{
+    position:relative; aspect-ratio:3/4; perspective:600px; background:none; border:none; padding:0;
+    cursor:pointer; border-radius:10px; -webkit-tap-highlight-color:transparent;
+  }
+  .card:focus-visible{ outline:2px solid var(--cyan); outline-offset:3px; }
+  .card-inner{
+    position:absolute; inset:0; border-radius:10px; transform-style:preserve-3d;
+    transition:transform .4s cubic-bezier(.2,.7,.3,1);
+  }
+  .card.flipped .card-inner{ transform:rotateY(180deg); }
+  .card-face{
+    position:absolute; inset:0; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    backface-visibility:hidden; font-size:clamp(18px,6vw,30px);
+  }
+  .card-face.back{
+    background:linear-gradient(145deg,#1c2745,#101733); border:1px solid rgba(138,75,255,.35);
+    box-shadow:0 2px 0 rgba(0,0,0,.3), inset 0 0 12px rgba(138,75,255,.15);
+    color:var(--purple); font-weight:900; font-size:clamp(16px,5vw,22px);
+  }
+  .card-face.front{
+    background:#0a0f22; border:1px solid rgba(39,232,255,.3); transform:rotateY(180deg);
+    box-shadow:inset 0 0 10px rgba(0,0,0,.5);
+  }
+  .card.matched .card-face.front{
+    border-color:var(--green); box-shadow:0 0 14px rgba(57,255,158,.5), inset 0 0 10px rgba(0,0,0,.4);
+  }
+  .card.matched{ cursor:default; }
+  .card.wrong .card-face.front{ border-color:var(--red); box-shadow:0 0 14px rgba(255,84,112,.5); }
+
+  .overlay{position:absolute; inset:0; border-radius:16px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px; gap:12px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.6; max-width:320px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--pink)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:24px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  .levelup{font-size:clamp(22px,7vw,32px); font-weight:900; color:var(--green); text-shadow:0 0 18px rgba(57,255,158,.6);}
+
+  .controls{margin-top:14px; text-align:center;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">MEMORIA NEÓN</div>
+      <div class="sub">M E M O R I A &nbsp; · &nbsp; N E Ó N</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">NIVEL<b id="levelEl">1</b></div>
+      <div class="box time" id="timeBox">TIEMPO<b id="timeEl">60</b></div>
+      <div class="box">PARES<b id="pairsEl">0/6</b></div>
+      <div class="box score">PUNTOS<b id="scoreEl">0</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="board" id="board">
+        <div class="overlay" id="overlay">
+          <h2 id="ovTitle">MEMORIA NEÓN</h2>
+          <p id="ovText">Encontrá las parejas de cartas antes de que se acabe el tiempo. Cada nivel trae más cartas... y menos segundos.</p>
+          <p id="ovRecord" style="font-size:12px;"></p>
+          <button class="btn" id="startBtn">JUGAR</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Tocá o hacé click en dos cartas para revelarlas · flechas + Enter con teclado</div>
+    </div>
+
+    <footer>NEON ARCADE · Memoria Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const board=document.getElementById('board');
+  const overlay=document.getElementById('overlay');
+  const levelEl=document.getElementById('levelEl');
+  const timeEl=document.getElementById('timeEl');
+  const timeBox=document.getElementById('timeBox');
+  const pairsEl=document.getElementById('pairsEl');
+  const scoreEl=document.getElementById('scoreEl');
+  const startBtn=document.getElementById('startBtn');
+  const ovRecord=document.getElementById('ovRecord');
+
+  const SYMBOLS=['👾','🚀','⚡','🔥','💎','🌟','🎯','🛸','🪐','☄️','🔮','🎮','🧿','💠','🔷','🔶','✨','🎆'];
+  const BEST_LEVEL_KEY='neon-memoria-best-level';
+  const BEST_SCORE_KEY='neon-memoria-best-score';
+
+  let level=1, score=0, running=false;
+  let cardEls=[], cols=4, matchedCount=0, totalPairs=6;
+  let firstCard=null, secondCard=null, lock=false;
+  let timeLeft=0, timerHandle=null;
+
+  function loadBestLevel(){ return parseInt(localStorage.getItem(BEST_LEVEL_KEY)||'0',10); }
+  function loadBestScore(){ return parseInt(localStorage.getItem(BEST_SCORE_KEY)||'0',10); }
+
+  function levelConfig(lv){
+    const pairs=Math.min(5+lv, 18);
+    const time=Math.max(60-(lv-1)*4, 15);
+    return {pairs, time};
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function buildBoard(pairs){
+    board.innerHTML='';
+    board.appendChild(overlay);
+    const pool=shuffle(SYMBOLS.slice()).slice(0,pairs);
+    const deck=shuffle(pool.concat(pool));
+    cols=Math.min(6, Math.ceil(Math.sqrt(deck.length)));
+    board.style.gridTemplateColumns=`repeat(${cols}, 1fr)`;
+    cardEls=[];
+    deck.forEach((sym,idx)=>{
+      const btn=document.createElement('button');
+      btn.className='card';
+      btn.type='button';
+      btn.dataset.idx=idx;
+      btn.dataset.sym=sym;
+      btn.innerHTML=`<div class="card-inner">
+        <div class="card-face back">?</div>
+        <div class="card-face front">${sym}</div>
+      </div>`;
+      btn.addEventListener('click', ()=>onCardClick(btn));
+      board.appendChild(btn);
+      cardEls.push(btn);
+    });
+  }
+
+  function onCardClick(btn){
+    if(!running || lock) return;
+    if(btn.classList.contains('flipped') || btn.classList.contains('matched')) return;
+    btn.classList.add('flipped');
+    if(!firstCard){ firstCard=btn; return; }
+    secondCard=btn;
+    lock=true;
+    if(firstCard.dataset.sym===secondCard.dataset.sym){
+      firstCard.classList.add('matched');
+      secondCard.classList.add('matched');
+      matchedCount++;
+      pairsEl.textContent=`${matchedCount}/${totalPairs}`;
+      firstCard=null; secondCard=null; lock=false;
+      if(matchedCount>=totalPairs) onLevelClear();
+    }else{
+      firstCard.classList.add('wrong');
+      secondCard.classList.add('wrong');
+      setTimeout(()=>{
+        firstCard.classList.remove('flipped','wrong');
+        secondCard.classList.remove('flipped','wrong');
+        firstCard=null; secondCard=null; lock=false;
+      }, 650);
+    }
+  }
+
+  function startTimer(){
+    clearInterval(timerHandle);
+    timeEl.textContent=timeLeft;
+    timeBox.classList.toggle('low', timeLeft<=10);
+    timerHandle=setInterval(()=>{
+      timeLeft--;
+      timeEl.textContent=Math.max(timeLeft,0);
+      timeBox.classList.toggle('low', timeLeft<=10);
+      if(timeLeft<=0){ clearInterval(timerHandle); endGame(); }
+    }, 1000);
+  }
+  function stopTimer(){ clearInterval(timerHandle); timerHandle=null; }
+
+  function onLevelClear(){
+    stopTimer();
+    running=false;
+    const bonus=totalPairs*15+timeLeft*3;
+    score+=bonus;
+    scoreEl.textContent=score;
+    overlay.innerHTML=`<h2 class="levelup">¡NIVEL ${level} SUPERADO!</h2><p>+${bonus} puntos</p>`;
+    overlay.classList.remove('hidden');
+    setTimeout(()=>{
+      level++;
+      startLevel();
+    }, 1300);
+  }
+
+  function startLevel(){
+    const cfg=levelConfig(level);
+    totalPairs=cfg.pairs;
+    timeLeft=cfg.time;
+    matchedCount=0;
+    firstCard=null; secondCard=null; lock=false;
+    levelEl.textContent=level;
+    pairsEl.textContent=`0/${totalPairs}`;
+    scoreEl.textContent=score;
+    buildBoard(totalPairs);
+    overlay.classList.add('hidden');
+    running=true;
+    startTimer();
+  }
+
+  function endGame(){
+    running=false;
+    stopTimer();
+    const bestLevel=loadBestLevel();
+    const bestScore=loadBestScore();
+    let newRecord=false;
+    if(level>bestLevel){ localStorage.setItem(BEST_LEVEL_KEY, level); newRecord=true; }
+    if(score>bestScore){ localStorage.setItem(BEST_SCORE_KEY, score); newRecord=true; }
+    overlay.innerHTML='';
+    const h2=document.createElement('h2'); h2.textContent='¡SE ACABÓ EL TIEMPO!';
+    const p=document.createElement('p');
+    p.innerHTML=`<span class="final">Nivel <b>${level}</b> · Puntaje <b>${score}</b></span>`+
+      (newRecord?`<br><span class="newrec">¡NUEVO RÉCORD!</span>`:`<br>Récord: nivel ${Math.max(bestLevel,level)} · ${Math.max(bestScore,score)} pts`);
+    const btn=document.createElement('button'); btn.className='btn'; btn.textContent='JUGAR DE NUEVO';
+    btn.addEventListener('click', ()=>{ level=1; score=0; startLevel(); });
+    overlay.appendChild(h2); overlay.appendChild(p); overlay.appendChild(btn);
+    overlay.classList.remove('hidden');
+  }
+
+  board.addEventListener('keydown', e=>{
+    const el=document.activeElement;
+    if(!el || !el.classList || !el.classList.contains('card')) return;
+    const idx=parseInt(el.dataset.idx,10);
+    let next=null;
+    if(e.key==='ArrowRight') next=idx+1;
+    else if(e.key==='ArrowLeft') next=idx-1;
+    else if(e.key==='ArrowDown') next=idx+cols;
+    else if(e.key==='ArrowUp') next=idx-cols;
+    if(next!==null && next>=0 && next<cardEls.length){
+      e.preventDefault();
+      cardEls[next].focus();
+    }
+  });
+
+  startBtn.addEventListener('click', ()=>{
+    level=1; score=0; startLevel();
+  });
+
+  const bl=loadBestLevel(), bs=loadBestScore();
+  if(bl>0 || bs>0){ ovRecord.textContent=`Récord: nivel ${bl} · ${bs} pts`; }
+})();
+</script>
+</body>
+</html>
