@@ -31,7 +31,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 |---|-------|-------|---------|--------|--------------------|--------|
 | 8 | 🔢 | 2048 Neón | `2048-neon.html` | Puzzle numérico | Deslizá y fusioná fichas iguales hasta llegar a 2048 (swipe y flechas). | ✅ 2026-07-29 |
 | 9 | 💣 | Buscaminas | `buscaminas.html` | Lógica | Buscaminas con 3 dificultades y banderitas con toque largo en mobile. | ✅ 2026-07-30 |
-| 10 | 🃏 | Memoria Neón | `memoria.html` | Memoria | Encontrá las parejas de cartas; niveles con más cartas y menos tiempo. | ⏳ Pendiente |
+| 10 | 🃏 | Memoria Neón | `memoria.html` | Memoria | Encontrá las parejas de cartas; niveles con más cartas y menos tiempo. | ✅ 2026-07-31 |
 | 11 | 🌀 | Laberinto | `laberinto.html` | Puzzle | Laberintos generados al azar, con linterna de visión limitada y contra reloj. | ⏳ Pendiente |
 | 12 | 🎨 | Nonograma | `nonograma.html` | Lógica | Picross: pintá celdas según las pistas numéricas y revelá el dibujo oculto. | ⏳ Pendiente |
 | 13 | 🗼 | Torre | `torre.html` | Timing | Apilá bloques que se mueven en péndulo; lo que sobresale se corta. | ⏳ Pendiente |
