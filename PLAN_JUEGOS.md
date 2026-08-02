@@ -33,7 +33,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | 9 | 💣 | Buscaminas | `buscaminas.html` | Lógica | Buscaminas con 3 dificultades y banderitas con toque largo en mobile. | ✅ 2026-07-30 |
 | 10 | 🃏 | Memoria Neón | `memoria.html` | Memoria | Encontrá las parejas de cartas; niveles con más cartas y menos tiempo. | ✅ 2026-07-31 |
 | 11 | 🌀 | Laberinto | `laberinto.html` | Puzzle | Laberintos generados al azar, con linterna de visión limitada y contra reloj. | ✅ 2026-08-01 |
-| 12 | 🎨 | Nonograma | `nonograma.html` | Lógica | Picross: pintá celdas según las pistas numéricas y revelá el dibujo oculto. | ⏳ Pendiente |
+| 12 | 🎨 | Nonograma | `nonograma.html` | Lógica | Picross: pintá celdas según las pistas numéricas y revelá el dibujo oculto. | ✅ 2026-08-02 |
 | 13 | 🗼 | Torre | `torre.html` | Timing | Apilá bloques que se mueven en péndulo; lo que sobresale se corta. | ⏳ Pendiente |
 | 14 | 🔴 | 4 en Línea | `4-en-linea.html` | Estrategia | Cuatro en línea contra una CPU con niveles de dificultad, o de a 2. | ⏳ Pendiente |
 
