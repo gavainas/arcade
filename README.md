@@ -26,6 +26,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🃏 Memoria Neón | [`memoria.html`](memoria.html) | Memotest contra reloj: encontrá las parejas de cartas antes de que se acabe el tiempo; cada nivel trae más cartas y menos segundos. |
 | 🌀 Laberinto | [`laberinto.html`](laberinto.html) | Laberintos generados al azar con una linterna de visión limitada, contra reloj; el laberinto crece y el tiempo aprieta en cada nivel. |
 | 🎨 Nonograma | [`nonograma.html`](nonograma.html) | Picross: pintá las celdas según las pistas numéricas y revelá el dibujo oculto. 8 niveles de 5×5 a 12×12, con vidas, tiempo y mejores marcas. |
+| 🗼 Torre | [`torre.html`](torre.html) | Apilá bloques que se mueven como un péndulo; lo que sobresale se corta. Alineá bloques perfectos para encadenar combos y no perder ancho. |
 
 ## Sopa de Letras
 
