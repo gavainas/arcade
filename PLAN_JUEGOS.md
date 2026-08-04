@@ -35,7 +35,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | 11 | 🌀 | Laberinto | `laberinto.html` | Puzzle | Laberintos generados al azar, con linterna de visión limitada y contra reloj. | ✅ 2026-08-01 |
 | 12 | 🎨 | Nonograma | `nonograma.html` | Lógica | Picross: pintá celdas según las pistas numéricas y revelá el dibujo oculto. | ✅ 2026-08-02 |
 | 13 | 🗼 | Torre | `torre.html` | Timing | Apilá bloques que se mueven en péndulo; lo que sobresale se corta. | ✅ 2026-08-03 |
-| 14 | 🔴 | 4 en Línea | `4-en-linea.html` | Estrategia | Cuatro en línea contra una CPU con niveles de dificultad, o de a 2. | ⏳ Pendiente |
+| 14 | 🔴 | 4 en Línea | `4-en-linea.html` | Estrategia | Cuatro en línea contra una CPU con niveles de dificultad, o de a 2. | ✅ 2026-08-04 |
 
 ## Semana 3 · Palabras y cerebro
 

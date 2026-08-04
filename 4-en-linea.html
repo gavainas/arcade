@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>4 EN LÍNEA · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --blue:#4b8bff;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:420px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(26px,7vw,42px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--red),var(--cyan),var(--pink),var(--red));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,84,112,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; letter-spacing:1px; margin-top:2px;}
+  .hud .box.p1 b{color:var(--cyan);}
+  .hud .box.p2 b{color:var(--pink);}
+  .hud .box.tie b{color:var(--gold);}
+
+  .turn{text-align:center; margin:2px 0 10px; font-size:14px; font-weight:800; letter-spacing:1px; min-height:20px;}
+  .turn.p1{color:var(--cyan);}
+  .turn.p2{color:var(--pink);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  canvas{display:block; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none; width:100%; height:auto; max-width:340px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px 16px; gap:10px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:2; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(19px,5.6vw,27px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--red),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,84,112,.35));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.5; max-width:290px;}
+  .modes{display:flex; flex-direction:column; gap:8px; width:100%; max-width:270px; margin-top:4px;}
+  .modelbl{font-size:11px; letter-spacing:1.5px; color:var(--muted); margin-top:6px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--red),var(--cyan)); box-shadow:0 8px 24px rgba(255,84,112,.3);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,84,112,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none;}
+  .btn.ghost.active{border-color:var(--cyan); color:var(--cyan);}
+  .diffrow{display:flex; gap:8px;}
+  .diffrow .btn{flex:1; padding:10px 6px; font-size:12px;}
+  .final{font-size:14px; color:var(--ink);}
+  .final b{font-size:18px;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">4 EN LÍNEA</div>
+      <div class="sub">C O N E C T Á &nbsp; · &nbsp; N E Ó N</div>
+    </header>
+
+    <div class="hud">
+      <div class="box p1">VOS<b id="p1wins">0</b></div>
+      <div class="box tie">EMPATES<b id="ties">0</b></div>
+      <div class="box p2">RIVAL<b id="p2wins">0</b></div>
+    </div>
+    <div class="turn" id="turnText">&nbsp;</div>
+
+    <div class="panel">
+      <canvas id="game" width="336" height="288"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">4 EN LÍNEA</h2>
+        <p id="ovText">Dejá caer tus fichas y armá una línea de 4 (horizontal, vertical o diagonal) antes que tu rival. Elegí modo de juego:</p>
+        <div class="modes" id="modeButtons">
+          <div class="modelbl">VS COMPUTADORA</div>
+          <div class="diffrow">
+            <button class="btn ghost" data-mode="cpu" data-diff="facil">FÁCIL</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="medio">MEDIO</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="dificil">DIFÍCIL</button>
+          </div>
+          <div class="modelbl">O DE A DOS</div>
+          <button class="btn ghost" data-mode="2p">2 JUGADORES</button>
+        </div>
+        <button class="btn hidden" id="startBtn">JUGAR ▶</button>
+      </div>
+    </div>
+
+    <footer>NEON ARCADE · 4 en Línea</footer>
+  </div>
+
+<script>
+(()=>{
+  const ROWS=6, COLS=7;
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const CELL=W/COLS;
+  const R=CELL*0.42;
+
+  const p1winsEl=document.getElementById('p1wins');
+  const p2winsEl=document.getElementById('p2wins');
+  const tiesEl=document.getElementById('ties');
+  const turnText=document.getElementById('turnText');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const modeButtons=document.getElementById('modeButtons');
+  const startBtn=document.getElementById('startBtn');
+
+  const COLORS={1:'#27e8ff', 2:'#ff2bd6'};
+
+  const STATS_KEY='neon-4enlinea-stats';
+  function loadStats(){
+    try{ return JSON.parse(localStorage.getItem(STATS_KEY))||{p1:0,p2:0,ties:0}; }
+    catch(e){ return {p1:0,p2:0,ties:0}; }
+  }
+  let stats=loadStats();
+  function saveStats(){ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
+  function renderStats(){
+    p1winsEl.textContent=stats.p1;
+    p2winsEl.textContent=stats.p2;
+    tiesEl.textContent=stats.ties;
+  }
+  renderStats();
+
+  let mode=null;       // 'cpu' | '2p'
+  let difficulty=null; // 'facil' | 'medio' | 'dificil'
+  let board, current, running, locked, falling, winCells, winPulse;
+
+  function emptyBoard(){
+    const b=[];
+    for(let r=0;r<ROWS;r++){ b.push(new Array(COLS).fill(0)); }
+    return b;
+  }
+
+  function reset(){
+    board=emptyBoard();
+    current=1;
+    running=true;
+    locked=false;
+    falling=null;
+    winCells=null;
+    winPulse=0;
+    updateTurnText();
+  }
+
+  function updateTurnText(){
+    if(!running){ return; }
+    if(mode==='cpu'){
+      turnText.textContent = current===1 ? 'TU TURNO' : 'PENSANDO…';
+      turnText.className='turn '+(current===1?'p1':'p2');
+    }else{
+      turnText.textContent = current===1 ? 'TURNO JUGADOR 1' : 'TURNO JUGADOR 2';
+      turnText.className='turn '+(current===1?'p1':'p2');
+    }
+  }
+
+  function getOpenRow(b,col){
+    for(let r=0;r<ROWS;r++){ if(b[r][col]===0) return r; }
+    return -1;
+  }
+
+  function validCols(b){
+    const list=[];
+    for(let c=0;c<COLS;c++){ if(getOpenRow(b,c)!==-1) list.push(c); }
+    return list;
+  }
+
+  function checkWinner(b,piece){
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        if(c+3<COLS && b[r][c]===piece && b[r][c+1]===piece && b[r][c+2]===piece && b[r][c+3]===piece)
+          return [[r,c],[r,c+1],[r,c+2],[r,c+3]];
+        if(r+3<ROWS && b[r][c]===piece && b[r+1][c]===piece && b[r+2][c]===piece && b[r+3][c]===piece)
+          return [[r,c],[r+1,c],[r+2,c],[r+3,c]];
+        if(r+3<ROWS && c+3<COLS && b[r][c]===piece && b[r+1][c+1]===piece && b[r+2][c+2]===piece && b[r+3][c+3]===piece)
+          return [[r,c],[r+1,c+1],[r+2,c+2],[r+3,c+3]];
+        if(r-3>=0 && c+3<COLS && b[r][c]===piece && b[r-1][c+1]===piece && b[r-2][c+2]===piece && b[r-3][c+3]===piece)
+          return [[r,c],[r-1,c+1],[r-2,c+2],[r-3,c+3]];
+      }
+    }
+    return null;
+  }
+
+  function isDraw(b){
+    return validCols(b).length===0;
+  }
+
+  function evaluateWindow(cells,piece){
+    const opp = piece===1?2:1;
+    let score=0;
+    const countP=cells.filter(v=>v===piece).length;
+    const countO=cells.filter(v=>v===opp).length;
+    const countE=cells.filter(v=>v===0).length;
+    if(countP===4) score+=1000;
+    else if(countP===3 && countE===1) score+=30;
+    else if(countP===2 && countE===2) score+=6;
+    if(countO===3 && countE===1) score-=80;
+    else if(countO===2 && countE===2) score-=4;
+    return score;
+  }
+
+  function scoreBoard(b,piece){
+    let score=0;
+    for(let r=0;r<ROWS;r++) if(b[r][Math.floor(COLS/2)]===piece) score+=4;
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS-3;c++) score+=evaluateWindow([b[r][c],b[r][c+1],b[r][c+2],b[r][c+3]],piece);
+    }
+    for(let c=0;c<COLS;c++){
+      for(let r=0;r<ROWS-3;r++) score+=evaluateWindow([b[r][c],b[r+1][c],b[r+2][c],b[r+3][c]],piece);
+    }
+    for(let r=0;r<ROWS-3;r++){
+      for(let c=0;c<COLS-3;c++) score+=evaluateWindow([b[r][c],b[r+1][c+1],b[r+2][c+2],b[r+3][c+3]],piece);
+    }
+    for(let r=3;r<ROWS;r++){
+      for(let c=0;c<COLS-3;c++) score+=evaluateWindow([b[r][c],b[r-1][c+1],b[r-2][c+2],b[r-3][c+3]],piece);
+    }
+    return score;
+  }
+
+  function dropSim(b,col,piece){
+    const nb=b.map(row=>row.slice());
+    const r=getOpenRow(nb,col);
+    if(r===-1) return null;
+    nb[r][col]=piece;
+    return nb;
+  }
+
+  function minimax(b,depth,alpha,beta,maximizing,aiPiece){
+    const oppPiece = aiPiece===1?2:1;
+    const cols=validCols(b);
+    const winAI=checkWinner(b,aiPiece);
+    const winOpp=checkWinner(b,oppPiece);
+    if(winAI) return [null,10000000+depth];
+    if(winOpp) return [null,-10000000-depth];
+    if(cols.length===0) return [null,0];
+    if(depth===0) return [null,scoreBoard(b,aiPiece)];
+
+    if(maximizing){
+      let value=-Infinity, bestCol=cols[Math.floor(Math.random()*cols.length)];
+      for(const c of cols){
+        const nb=dropSim(b,c,aiPiece);
+        const [,ns]=minimax(nb,depth-1,alpha,beta,false,aiPiece);
+        if(ns>value){ value=ns; bestCol=c; }
+        alpha=Math.max(alpha,value);
+        if(alpha>=beta) break;
+      }
+      return [bestCol,value];
+    }else{
+      let value=Infinity, bestCol=cols[Math.floor(Math.random()*cols.length)];
+      for(const c of cols){
+        const nb=dropSim(b,c,oppPiece);
+        const [,ns]=minimax(nb,depth-1,alpha,beta,true,aiPiece);
+        if(ns<value){ value=ns; bestCol=c; }
+        beta=Math.min(beta,value);
+        if(alpha>=beta) break;
+      }
+      return [bestCol,value];
+    }
+  }
+
+  function cpuChooseCol(){
+    const cols=validCols(board);
+    if(cols.length===0) return -1;
+
+    if(difficulty==='facil'){
+      // block obvious win, else mostly random
+      for(const c of cols){
+        const nb=dropSim(board,c,2);
+        if(checkWinner(nb,2)) return c;
+      }
+      if(Math.random()<0.75) return cols[Math.floor(Math.random()*cols.length)];
+      const [col]=minimax(board,2,-Infinity,Infinity,true,2);
+      return col!=null?col:cols[Math.floor(Math.random()*cols.length)];
+    }
+    if(difficulty==='medio'){
+      const [col]=minimax(board,4,-Infinity,Infinity,true,2);
+      return col!=null?col:cols[Math.floor(Math.random()*cols.length)];
+    }
+    // dificil
+    const [col]=minimax(board,5,-Infinity,Infinity,true,2);
+    return col!=null?col:cols[Math.floor(Math.random()*cols.length)];
+  }
+
+  function colFromX(x){
+    const c=Math.floor(x/CELL);
+    return Math.max(0,Math.min(COLS-1,c));
+  }
+
+  function startFall(col,piece){
+    const row=getOpenRow(board,col);
+    if(row===-1) return false;
+    locked=true;
+    falling={
+      col, row, piece,
+      x: col*CELL+CELL/2,
+      y: -R-4,
+      targetY: (ROWS-1-row)*CELL+CELL/2,
+      vy: 0
+    };
+    return true;
+  }
+
+  function finalizeFall(){
+    const {col,row,piece}=falling;
+    board[row][col]=piece;
+    falling=null;
+    const win=checkWinner(board,piece);
+    if(win){
+      winCells=win;
+      running=false;
+      locked=false;
+      const won = mode==='cpu' ? (piece===1) : null;
+      if(mode==='cpu'){
+        if(piece===1){ stats.p1++; } else { stats.p2++; }
+      }else{
+        if(piece===1){ stats.p1++; } else { stats.p2++; }
+      }
+      saveStats(); renderStats();
+      endGame(piece);
+      return;
+    }
+    if(isDraw(board)){
+      running=false; locked=false;
+      stats.ties++; saveStats(); renderStats();
+      endGame(0);
+      return;
+    }
+    current = current===1?2:1;
+    updateTurnText();
+    locked=false;
+    if(mode==='cpu' && current===2){
+      locked=true;
+      setTimeout(()=>{
+        const col=cpuChooseCol();
+        if(col!==-1) startFall(col,2);
+        else locked=false;
+      }, 420);
+    }
+  }
+
+  function endGame(winnerPiece){
+    ovTitle.textContent = winnerPiece===0 ? 'EMPATE' : (
+      mode==='cpu' ? (winnerPiece===1?'¡GANASTE!':'GANÓ LA CPU') : ('¡GANÓ EL JUGADOR '+winnerPiece+'!')
+    );
+    const label = mode==='cpu' ? 'VOS' : 'JUGADOR 1';
+    const label2 = mode==='cpu' ? 'CPU' : 'JUGADOR 2';
+    ovText.innerHTML = '<span class="final">'+label+' <b style="color:var(--cyan)">'+stats.p1+'</b> &nbsp;·&nbsp; '+
+      label2+' <b style="color:var(--pink)">'+stats.p2+'</b> &nbsp;·&nbsp; Empates <b style="color:var(--gold)">'+stats.ties+'</b></span>';
+    modeButtons.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+    startBtn.textContent='REVANCHA ▶';
+    startBtn.onclick=()=>{ overlay.classList.add('hidden'); reset(); };
+    overlay.classList.remove('hidden');
+  }
+
+  function showModeSelect(){
+    running=false;
+    ovTitle.textContent='4 EN LÍNEA';
+    ovText.textContent='Dejá caer tus fichas y armá una línea de 4 (horizontal, vertical o diagonal) antes que tu rival. Elegí modo de juego:';
+    modeButtons.classList.remove('hidden');
+    startBtn.classList.add('hidden');
+    overlay.classList.remove('hidden');
+  }
+
+  modeButtons.addEventListener('click',(e)=>{
+    const btn=e.target.closest('button');
+    if(!btn) return;
+    const m=btn.dataset.mode;
+    if(m==='cpu'){
+      mode='cpu'; difficulty=btn.dataset.diff;
+    }else{
+      mode='2p'; difficulty=null;
+    }
+    overlay.classList.add('hidden');
+    reset();
+  });
+
+  function pointerCol(e){
+    const rect=canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const x=(clientX-rect.left)*(W/rect.width);
+    return colFromX(x);
+  }
+
+  canvas.addEventListener('pointerdown',(e)=>{
+    if(!running||locked||falling) return;
+    if(mode==='cpu' && current!==1) return;
+    const col=pointerCol(e);
+    if(getOpenRow(board,col)===-1) return;
+    startFall(col,current);
+  });
+
+  function roundedCircleHole(cx,cy,r){
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    ctx.fillStyle='rgba(138,75,255,.14)';
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+
+    // pieces already placed
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const piece=board[r][c];
+        const cx=c*CELL+CELL/2;
+        const cy=(ROWS-1-r)*CELL+CELL/2;
+        if(piece===0){
+          ctx.save();
+          ctx.fillStyle='rgba(5,7,15,.85)';
+          ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+          ctx.strokeStyle='rgba(138,75,255,.25)'; ctx.lineWidth=1.5; ctx.stroke();
+          ctx.restore();
+        }else{
+          drawPiece(cx,cy,COLORS[piece],false);
+        }
+      }
+    }
+
+    // falling piece
+    if(falling){
+      drawPiece(falling.x,falling.y,COLORS[falling.piece],true);
+    }
+
+    // win highlight
+    if(winCells){
+      winPulse+=0.08;
+      const glow=0.6+0.4*Math.sin(winPulse*4);
+      ctx.save();
+      ctx.strokeStyle='rgba(255,210,59,'+glow+')';
+      ctx.lineWidth=5;
+      const [a,,,d]=winCells;
+      const ax=a[1]*CELL+CELL/2, ay=(ROWS-1-a[0])*CELL+CELL/2;
+      const dx=d[1]*CELL+CELL/2, dy=(ROWS-1-d[0])*CELL+CELL/2;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(dx,dy); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawPiece(cx,cy,color,glow){
+    ctx.save();
+    ctx.shadowColor=color; ctx.shadowBlur=glow?20:10;
+    ctx.fillStyle=color;
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.restore();
+  }
+
+  let lastTime=null;
+  function update(dt){
+    if(falling){
+      falling.vy+=1400*dt;
+      falling.y+=falling.vy*dt;
+      if(falling.y>=falling.targetY){
+        falling.y=falling.targetY;
+        finalizeFall();
+      }
+    }
+  }
+
+  function loop(t){
+    if(lastTime===null) lastTime=t;
+    let dt=(t-lastTime)/1000;
+    lastTime=t;
+    dt=Math.min(dt,0.05);
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  board=emptyBoard();
+  running=false;
+  showModeSelect();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
