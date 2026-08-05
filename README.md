@@ -28,6 +28,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🎨 Nonograma | [`nonograma.html`](nonograma.html) | Picross: pintá las celdas según las pistas numéricas y revelá el dibujo oculto. 8 niveles de 5×5 a 12×12, con vidas, tiempo y mejores marcas. |
 | 🗼 Torre | [`torre.html`](torre.html) | Apilá bloques que se mueven como un péndulo; lo que sobresale se corta. Alineá bloques perfectos para encadenar combos y no perder ancho. |
 | 🔴 4 en Línea | [`4-en-linea.html`](4-en-linea.html) | Cuatro en línea contra una CPU con 3 niveles de dificultad (minimax con poda alfa-beta), o de a dos jugadores en el mismo dispositivo. |
+| 📗 Palabra Secreta | [`palabra-secreta.html`](palabra-secreta.html) | Estilo Wordle en español: adiviná la palabra de 5 letras en 6 intentos, con teclado en pantalla y físico. Modo infinito con racha y mejor racha en `localStorage`. |
 
 ## Sopa de Letras
 
