@@ -29,6 +29,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🗼 Torre | [`torre.html`](torre.html) | Apilá bloques que se mueven como un péndulo; lo que sobresale se corta. Alineá bloques perfectos para encadenar combos y no perder ancho. |
 | 🔴 4 en Línea | [`4-en-linea.html`](4-en-linea.html) | Cuatro en línea contra una CPU con 3 niveles de dificultad (minimax con poda alfa-beta), o de a dos jugadores en el mismo dispositivo. |
 | 📗 Palabra Secreta | [`palabra-secreta.html`](palabra-secreta.html) | Estilo Wordle en español: adiviná la palabra de 5 letras en 6 intentos, con teclado en pantalla y físico. Modo infinito con racha y mejor racha en `localStorage`. |
+| 🪢 Ahorcado Neón | [`ahorcado.html`](ahorcado.html) | Ahorcado con categorías (animales, países, comida): adiviná la palabra letra por letra antes de que el muñeco de neón se complete, con 6 errores permitidos. |
 
 ## Sopa de Letras
 

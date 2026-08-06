@@ -42,7 +42,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
 |---|-------|-------|---------|--------|--------------------|--------|
 | 15 | 📗 | Palabra Secreta | `palabra-secreta.html` | Palabras | Estilo Wordle en español: adiviná la palabra de 5 letras en 6 intentos, modo infinito. | ✅ 2026-08-05 |
-| 16 | 🪢 | Ahorcado Neón | `ahorcado.html` | Palabras | Ahorcado con categorías (animales, países, comida) y dibujo neón animado. | ⏳ Pendiente |
+| 16 | 🪢 | Ahorcado Neón | `ahorcado.html` | Palabras | Ahorcado con categorías (animales, países, comida) y dibujo neón animado. | ✅ 2026-08-06 |
 | 17 | 🔤 | Sopa de Letras | `sopa-de-letras.html` | Palabras | Sopas generadas al azar; arrastrá para marcar las palabras escondidas. | ⏳ Pendiente |
 | 18 | ⌨️ | Tipeo Turbo | `tipeo-turbo.html` | Habilidad | Palabras que caen del cielo: escribilas antes de que toquen el piso. | ⏳ Pendiente |
 | 19 | 🔀 | Anagramas | `anagramas.html` | Palabras | Letras desordenadas contra reloj: armá la palabra antes de que se acabe el tiempo. | ⏳ Pendiente |

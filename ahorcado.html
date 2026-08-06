@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AHORCADO NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470;
+    --ink:#e8f6ff; --muted:#7fa6c8; --absent:#232c4a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:20px 14px 24px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    user-select:none;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px; display:flex; flex-direction:column; align-items:center;}
+  .back{align-self:flex-start; display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:10px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:10px;}
+  .logo{
+    font-size:clamp(22px,7vw,36px); font-weight:900; letter-spacing:1.5px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--purple),var(--cyan),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; margin:6px 0 14px; font-size:10px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:7px 4px;}
+  .hud .box b{display:block; font-size:15px; font-weight:900; letter-spacing:.5px; margin-top:2px; color:var(--ink);}
+  .hud .box.cat b{color:var(--gold); font-size:13px;}
+  .hud .box.lives b{color:var(--red);}
+  .hud .box.streak b{color:var(--cyan);}
+  .hud .box.best b{color:var(--pink);}
+
+  .gallows-wrap{width:100%; max-width:220px; margin:0 auto 10px; filter:drop-shadow(0 0 10px rgba(39,232,255,.25));}
+  .gallows-wrap svg{width:100%; height:auto; display:block; overflow:visible;}
+  .rig{stroke:rgba(138,75,255,.55); stroke-width:5; stroke-linecap:round; fill:none;}
+  .part{stroke:var(--red); stroke-width:5; stroke-linecap:round; stroke-linejoin:round; fill:none;
+    stroke-dasharray:220; stroke-dashoffset:220; filter:drop-shadow(0 0 8px rgba(255,84,112,.9));
+    transition:stroke-dashoffset .35s ease;}
+  .part.on{stroke-dashoffset:0;}
+  .part.head{fill:none;}
+  .eye{fill:var(--bg); opacity:0; transition:opacity .2s ease .3s;}
+  .eye.on{opacity:1;}
+  @keyframes flicker{0%,100%{opacity:1;}45%{opacity:.4;}55%{opacity:1;}75%{opacity:.55;}}
+  .part.flicker{animation:flicker .5s ease 1;}
+
+  .word{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:100%; margin:6px 0 16px;}
+  .letterbox{
+    width:30px; height:38px; display:flex; align-items:center; justify-content:center;
+    border-bottom:3px solid rgba(138,75,255,.5); font-size:19px; font-weight:900; text-transform:uppercase;
+    color:var(--ink); transition:border-color .2s ease, transform .2s ease;
+  }
+  .letterbox.filled{border-color:var(--green); animation:pop .18s ease;}
+  @keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.25);}100%{transform:scale(1);}}
+
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:20;
+    background:rgba(10,14,30,.95); border:1px solid var(--cyan); color:var(--ink);
+    padding:10px 18px; border-radius:10px; font-size:13px; font-weight:700; letter-spacing:.5px;
+    box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .2s ease, top .2s ease;
+  }
+  .toast.show{opacity:1; top:28px;}
+
+  .keyboard{display:flex; flex-direction:column; gap:6px; width:100%; max-width:440px;}
+  .krow{display:flex; gap:5px; justify-content:center;}
+  .key{
+    flex:1; max-width:34px; height:42px; display:flex; align-items:center; justify-content:center;
+    border-radius:7px; border:none; background:rgba(138,75,255,.18); color:var(--ink);
+    font-size:13px; font-weight:800; cursor:pointer; letter-spacing:.3px; transition:background .15s ease, transform .1s ease;
+  }
+  .key:active{transform:translateY(1px);}
+  .key.correct{background:linear-gradient(180deg,#1fbf7c,var(--green)); color:#031018;}
+  .key.absent{background:var(--absent); color:var(--muted); opacity:.6;}
+  .key:disabled{cursor:default;}
+
+  .overlay{position:fixed; inset:0; z-index:30; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(3,4,10,.88); backdrop-filter:blur(3px);}
+  .overlay.hidden{display:none;}
+  .panel{
+    width:100%; max-width:380px; border-radius:20px; padding:26px 22px;
+    background:linear-gradient(180deg, rgba(20,28,58,.92), rgba(10,14,30,.94));
+    border:1px solid rgba(138,75,255,.35); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px;
+    max-height:90vh; overflow-y:auto;
+  }
+  .panel h2{font-size:clamp(20px,6vw,26px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--green),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .panel h2.lose{background:linear-gradient(90deg,var(--red),var(--pink)); -webkit-background-clip:text; background-clip:text;}
+  .panel p{font-size:13px; color:var(--muted); line-height:1.55;}
+  .panel .word-reveal{font-size:22px; font-weight:900; letter-spacing:3px; color:var(--gold);}
+
+  .cats{display:flex; gap:8px; width:100%; flex-wrap:wrap; justify-content:center; margin:4px 0 2px;}
+  .catbtn{
+    flex:1; min-width:96px; cursor:pointer; border-radius:14px; padding:12px 8px;
+    background:rgba(138,75,255,.12); border:2px solid rgba(138,75,255,.3); color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; gap:4px; transition:border-color .15s ease, background .15s ease, transform .12s ease;
+    font-family:inherit;
+  }
+  .catbtn .ic{font-size:26px;}
+  .catbtn .lb{font-size:11px; font-weight:800; letter-spacing:.5px;}
+  .catbtn.sel{border-color:var(--cyan); background:rgba(39,232,255,.18); transform:translateY(-2px);}
+
+  .final-stats{display:flex; gap:10px; width:100%; margin-top:2px;}
+  .final-stats .fbox{flex:1; background:rgba(138,75,255,.12); border-radius:10px; padding:8px 4px;}
+  .final-stats .fbox b{display:block; font-size:16px; color:var(--cyan);}
+  .final-stats .fbox span{font-size:10px; color:var(--muted); letter-spacing:.5px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--green),var(--cyan)); box-shadow:0 8px 24px rgba(39,232,255,.3);
+    transition:transform .12s ease, box-shadow .12s ease; width:100%; font-family:inherit;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none; margin-top:2px; text-decoration:none; text-align:center;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">← ARCADE</a>
+    <header>
+      <div class="logo">AHORCADO NEÓN</div>
+      <div class="sub">N E O N &nbsp;A R C A D E</div>
+    </header>
+
+    <div class="hud">
+      <div class="box cat"><span>TEMA</span><b id="hudCat">-</b></div>
+      <div class="box lives"><span>ERRORES</span><b id="hudLives">0/6</b></div>
+      <div class="box streak"><span>RACHA</span><b id="hudStreak">0</b></div>
+      <div class="box best"><span>MEJOR</span><b id="hudBest">0</b></div>
+    </div>
+
+    <div class="gallows-wrap">
+      <svg viewBox="0 0 200 220">
+        <path class="rig" d="M20,205 L110,205"/>
+        <path class="rig" d="M45,205 L45,20"/>
+        <path class="rig" d="M45,20 L140,20"/>
+        <path class="rig" d="M45,38 L64,20"/>
+        <path class="part" id="part-rope" d="M140,20 L140,42"/>
+        <circle class="part head" id="part-head" cx="140" cy="58" r="16"/>
+        <circle class="eye" id="eye-l" cx="134" cy="54" r="1.6"/>
+        <circle class="eye" id="eye-r" cx="146" cy="54" r="1.6"/>
+        <path class="part" id="part-torso" d="M140,74 L140,125"/>
+        <path class="part" id="part-arml" d="M140,86 L115,105"/>
+        <path class="part" id="part-armr" d="M140,86 L165,105"/>
+        <path class="part" id="part-legl" d="M140,125 L118,155"/>
+        <path class="part" id="part-legr" d="M140,125 L162,155"/>
+      </svg>
+    </div>
+
+    <div class="word" id="word"></div>
+
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="panel">
+      <h2>AHORCADO NEÓN</h2>
+      <p>Elegí un tema y adiviná la palabra letra por letra antes de que se complete el muñeco. Tenés 6 errores permitidos.</p>
+      <div class="cats" id="catPicker"></div>
+      <button class="btn" id="startBtn">JUGAR ▶</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="endOverlay">
+    <div class="panel">
+      <h2 id="endTitle">¡GANASTE!</h2>
+      <div class="word-reveal" id="endWord"></div>
+      <p id="endMsg"></p>
+      <div class="final-stats">
+        <div class="fbox"><b id="statPlayed">0</b><span>JUGADAS</span></div>
+        <div class="fbox"><b id="statWinPct">0%</b><span>VICTORIAS</span></div>
+        <div class="fbox"><b id="statStreak">0</b><span>RACHA</span></div>
+      </div>
+      <button class="btn" id="nextBtn">SIGUIENTE PALABRA ▶</button>
+      <a class="btn ghost" href="index.html">VOLVER AL ARCADE</a>
+    </div>
+  </div>
+
+<script>
+const CATEGORIES = {
+  animales:{icon:'🐾', label:'Animales', words:['LEON','TIGRE','ELEFANTE','JIRAFA','CEBRA','MONO','OSO','LOBO','ZORRO','CONEJO','CABALLO','VACA','CERDO','OVEJA','GALLINA','PATO','AGUILA','BUHO','SERPIENTE','TORTUGA','DELFIN','BALLENA','TIBURON','PULPO','CANGREJO','HORMIGA','ABEJA','MARIPOSA','ARANA','MURCIELAGO','CANGURO','KOALA','PANDA','RINOCERONTE','HIPOPOTAMO','COCODRILO','PINGUINO','FLAMENCO','LORO','ÑANDU']},
+  paises:{icon:'🌎', label:'Países', words:['ARGENTINA','BRASIL','CHILE','URUGUAY','PARAGUAY','BOLIVIA','PERU','ECUADOR','COLOMBIA','VENEZUELA','MEXICO','ESPAÑA','FRANCIA','ITALIA','ALEMANIA','PORTUGAL','INGLATERRA','GRECIA','EGIPTO','JAPON','CHINA','INDIA','CANADA','CUBA','PANAMA','HONDURAS','GUATEMALA','NICARAGUA']},
+  comida:{icon:'🍔', label:'Comida', words:['PIZZA','ASADO','EMPANADA','MILANESA','FIDEOS','ARROZ','ENSALADA','HAMBURGUESA','TACO','SUSHI','HELADO','CHOCOLATE','TORTA','GALLETA','QUESO','LECHE','HUEVO','PESCADO','POLLO','CARNE','PAPAS','CHORIZO','MORCILLA','LOCRO','HUMITA','ALFAJOR','FACTURA','MATE','DULCE']}
+};
+const KEY_ROWS = [
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L','Ñ'],
+  ['Z','X','C','V','B','N','M']
+];
+const HANGMAN_PARTS = ['part-rope','part-head','part-torso','part-arml','part-armr','part-legl','part-legr'];
+const MAX_WRONG = 6;
+const STORE_KEY = 'ahorcadoNeon.stats';
+
+let category = 'animales';
+let answer = '';
+let guessed = new Set();
+let wrongCount = 0;
+let gameOver = false;
+let recentByCategory = {};
+let stats = loadStats();
+
+function loadStats(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { streak:0, best:0, played:0, wins:0 };
+}
+function saveStats(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(stats));
+}
+function updateHud(){
+  document.getElementById('hudCat').textContent = CATEGORIES[category].icon + ' ' + CATEGORIES[category].label;
+  document.getElementById('hudLives').textContent = wrongCount + '/' + MAX_WRONG;
+  document.getElementById('hudStreak').textContent = stats.streak;
+  document.getElementById('hudBest').textContent = stats.best;
+}
+
+function pickWord(cat){
+  const list = CATEGORIES[cat].words;
+  const recent = recentByCategory[cat] || [];
+  let candidates = list.filter(w => !recent.includes(w));
+  if(candidates.length === 0) candidates = list;
+  const word = candidates[Math.floor(Math.random()*candidates.length)];
+  recent.push(word);
+  if(recent.length > 12) recent.shift();
+  recentByCategory[cat] = recent;
+  return word;
+}
+
+function buildCatPicker(){
+  const wrap = document.getElementById('catPicker');
+  wrap.innerHTML = '';
+  Object.keys(CATEGORIES).forEach(key => {
+    const c = CATEGORIES[key];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'catbtn' + (key === category ? ' sel' : '');
+    btn.innerHTML = '<span class="ic">'+c.icon+'</span><span class="lb">'+c.label+'</span>';
+    btn.addEventListener('click', () => {
+      category = key;
+      document.querySelectorAll('.catbtn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function buildWord(){
+  const wordEl = document.getElementById('word');
+  wordEl.innerHTML = '';
+  answer.split('').forEach((ch, i) => {
+    const box = document.createElement('div');
+    box.className = 'letterbox';
+    box.id = 'lb'+i;
+    wordEl.appendChild(box);
+  });
+  renderWord();
+}
+function renderWord(){
+  answer.split('').forEach((ch, i) => {
+    const box = document.getElementById('lb'+i);
+    const show = guessed.has(ch);
+    box.textContent = show ? ch : '';
+    box.classList.toggle('filled', show);
+  });
+}
+
+function buildKeyboard(){
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+  KEY_ROWS.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'krow';
+    row.forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'key';
+      btn.textContent = k;
+      btn.dataset.key = k;
+      btn.addEventListener('click', () => handleGuess(k));
+      rowEl.appendChild(btn);
+    });
+    kb.appendChild(rowEl);
+  });
+}
+function resetHangmanArt(){
+  HANGMAN_PARTS.forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('on','flicker');
+  });
+  document.getElementById('eye-l').classList.remove('on');
+  document.getElementById('eye-r').classList.remove('on');
+}
+function revealNextPart(){
+  const id = HANGMAN_PARTS[wrongCount-1];
+  if(!id) return;
+  const el = document.getElementById(id);
+  el.classList.add('on','flicker');
+  setTimeout(()=>el.classList.remove('flicker'), 500);
+  if(wrongCount >= MAX_WRONG){
+    setTimeout(() => {
+      document.getElementById('eye-l').classList.add('on');
+      document.getElementById('eye-r').classList.add('on');
+    }, 350);
+  }
+}
+
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 1300);
+}
+
+function handleGuess(letter){
+  if(gameOver) return;
+  const btn = document.querySelector('.key[data-key="'+letter+'"]');
+  if(!btn || btn.disabled) return;
+  btn.disabled = true;
+  if(answer.includes(letter)){
+    guessed.add(letter);
+    btn.classList.add('correct');
+    renderWord();
+    const won = answer.split('').every(ch => guessed.has(ch));
+    if(won) endGame(true);
+  }else{
+    btn.classList.add('absent');
+    wrongCount++;
+    revealNextPart();
+    updateHud();
+    showToast('¡' + letter + ' no está!');
+    if(wrongCount >= MAX_WRONG) endGame(false);
+  }
+}
+
+function endGame(won){
+  gameOver = true;
+  stats.played++;
+  if(won){
+    stats.streak++;
+    stats.wins++;
+    if(stats.streak > stats.best) stats.best = stats.streak;
+  }else{
+    stats.streak = 0;
+  }
+  saveStats();
+  updateHud();
+
+  const endTitle = document.getElementById('endTitle');
+  const endWord = document.getElementById('endWord');
+  const endMsg = document.getElementById('endMsg');
+  endWord.textContent = answer;
+  if(won){
+    endTitle.textContent = ['¡GENIAL!','¡EXACTO!','¡GANASTE!','¡BIEN AHÍ!'][Math.min(wrongCount,3)] || '¡GANASTE!';
+    endTitle.classList.remove('lose');
+    endMsg.textContent = 'La adivinaste con ' + wrongCount + (wrongCount===1?' error.':' errores.');
+  }else{
+    endTitle.textContent = 'SE ACABÓ';
+    endTitle.classList.add('lose');
+    endMsg.textContent = 'La palabra secreta era:';
+  }
+  document.getElementById('statPlayed').textContent = stats.played;
+  document.getElementById('statWinPct').textContent = stats.played ? Math.round(stats.wins/stats.played*100)+'%' : '0%';
+  document.getElementById('statStreak').textContent = stats.streak;
+
+  setTimeout(() => {
+    document.getElementById('endOverlay').classList.remove('hidden');
+  }, won ? 300 : 550);
+}
+
+function newGame(){
+  answer = pickWord(category);
+  guessed = new Set();
+  wrongCount = 0;
+  gameOver = false;
+  resetHangmanArt();
+  buildWord();
+  buildKeyboard();
+  updateHud();
+  document.getElementById('endOverlay').classList.add('hidden');
+}
+
+document.addEventListener('keydown', (e) => {
+  if(!document.getElementById('startOverlay').classList.contains('hidden')) return;
+  if(!document.getElementById('endOverlay').classList.contains('hidden')) return;
+  const k = e.key.toUpperCase();
+  if(/^[A-ZÑ]$/.test(k)) handleGuess(k);
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('startOverlay').classList.add('hidden');
+  newGame();
+});
+document.getElementById('nextBtn').addEventListener('click', newGame);
+
+buildCatPicker();
+updateHud();
+</script>
+</body>
+</html>
