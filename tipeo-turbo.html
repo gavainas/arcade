@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TIPEO TURBO · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:20px 14px 24px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    user-select:none;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center;}
+  .back{align-self:flex-start; display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:10px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:10px;}
+  .logo{
+    font-size:clamp(24px,7vw,38px); font-weight:900; letter-spacing:1.5px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px; color:var(--pink); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; margin:6px 0 12px; font-size:10px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:7px 4px;}
+  .hud .box b{display:block; font-size:16px; font-weight:900; letter-spacing:.5px; margin-top:2px; color:var(--ink);}
+  .hud .box.score b{color:var(--cyan);}
+  .hud .box.lives b{color:var(--red);}
+  .hud .box.level b{color:var(--gold);}
+  .hud .box.best b{color:var(--pink);}
+
+  .field{
+    position:relative; width:100%; height:min(52vh,380px); border-radius:18px; overflow:hidden;
+    background:linear-gradient(180deg, rgba(20,28,58,.55), rgba(10,14,30,.75));
+    border:1px solid rgba(138,75,255,.3); box-shadow:inset 0 0 40px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.4);
+  }
+  .field .ground{position:absolute; left:0; right:0; bottom:0; height:3px; background:linear-gradient(90deg,transparent,var(--red),transparent); box-shadow:0 0 12px var(--red); opacity:.7;}
+  .word{
+    position:absolute; top:-40px; white-space:nowrap; font-size:17px; font-weight:800; letter-spacing:1px;
+    text-transform:lowercase; padding:4px 2px; transition:filter .15s ease;
+  }
+  .word .ch{color:var(--muted); text-shadow:0 0 6px rgba(127,166,200,.3);}
+  .word .ch.hit{color:var(--cyan); text-shadow:0 0 10px rgba(39,232,255,.85);}
+  .word.target .ch{color:var(--ink);}
+  .word.target .ch.hit{color:var(--green); text-shadow:0 0 12px rgba(57,255,158,.9);}
+  .word.target{filter:drop-shadow(0 0 10px rgba(255,43,214,.6));}
+  .word.pop{animation:pop .28s ease forwards;}
+  @keyframes pop{0%{transform:scale(1); opacity:1;}100%{transform:scale(1.6); opacity:0;}}
+  .word.miss{animation:shake .3s ease;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+  .floatpts{position:absolute; font-size:13px; font-weight:900; color:var(--green); pointer-events:none; animation:rise .7s ease forwards;}
+  @keyframes rise{0%{transform:translateY(0); opacity:1;}100%{transform:translateY(-30px); opacity:0;}}
+
+  .typer-wrap{width:100%; margin-top:12px; position:relative;}
+  #typer{
+    width:100%; padding:14px 16px; border-radius:14px; border:2px solid rgba(138,75,255,.4);
+    background:rgba(10,14,30,.85); color:var(--ink); font-size:16px; font-family:inherit;
+    letter-spacing:1px; outline:none; text-align:center; transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  #typer:focus{border-color:var(--cyan); box-shadow:0 0 18px rgba(39,232,255,.35);}
+  #typer.bad{border-color:var(--red); box-shadow:0 0 18px rgba(255,84,112,.4);}
+  .hint{margin-top:8px; text-align:center; font-size:11px; color:var(--muted); letter-spacing:.5px;}
+
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:20;
+    background:rgba(10,14,30,.95); border:1px solid var(--cyan); color:var(--ink);
+    padding:10px 18px; border-radius:10px; font-size:13px; font-weight:700; letter-spacing:.5px;
+    box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .2s ease, top .2s ease;
+  }
+  .toast.show{opacity:1; top:28px;}
+
+  .overlay{position:fixed; inset:0; z-index:30; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(3,4,10,.88); backdrop-filter:blur(3px);}
+  .overlay.hidden{display:none;}
+  .panel{
+    width:100%; max-width:380px; border-radius:20px; padding:26px 22px;
+    background:linear-gradient(180deg, rgba(20,28,58,.92), rgba(10,14,30,.94));
+    border:1px solid rgba(138,75,255,.35); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px;
+    max-height:90vh; overflow-y:auto;
+  }
+  .panel .emoji-hero{font-size:52px; filter:drop-shadow(0 0 18px rgba(39,232,255,.5)); animation:bob 3s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-8px) rotate(4deg);}}
+  .panel h2{font-size:clamp(20px,6vw,26px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .panel h2.lose{background:linear-gradient(90deg,var(--red),var(--pink)); -webkit-background-clip:text; background-clip:text;}
+  .panel p{font-size:13px; color:var(--muted); line-height:1.55;}
+
+  .final-stats{display:flex; gap:10px; width:100%; margin-top:2px;}
+  .final-stats .fbox{flex:1; background:rgba(138,75,255,.12); border-radius:10px; padding:8px 4px;}
+  .final-stats .fbox b{display:block; font-size:16px; color:var(--cyan);}
+  .final-stats .fbox span{font-size:10px; color:var(--muted); letter-spacing:.5px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--green),var(--cyan)); box-shadow:0 8px 24px rgba(39,232,255,.3);
+    transition:transform .12s ease, box-shadow .12s ease; width:100%; font-family:inherit;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none; margin-top:2px; text-decoration:none; text-align:center;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">← ARCADE</a>
+    <header>
+      <div class="logo">TIPEO TURBO</div>
+      <div class="sub">N E O N &nbsp;A R C A D E</div>
+    </header>
+
+    <div class="hud">
+      <div class="box score"><span>PUNTOS</span><b id="hudScore">0</b></div>
+      <div class="box lives"><span>VIDAS</span><b id="hudLives">❤❤❤</b></div>
+      <div class="box level"><span>NIVEL</span><b id="hudLevel">1</b></div>
+      <div class="box best"><span>MEJOR</span><b id="hudBest">0</b></div>
+    </div>
+
+    <div class="field" id="field">
+      <div class="ground"></div>
+    </div>
+
+    <div class="typer-wrap">
+      <input id="typer" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text" placeholder="Escribí acá…">
+    </div>
+    <div class="hint">Tipeá las palabras que caen antes de que toquen el piso.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="panel">
+      <div class="emoji-hero">⌨️</div>
+      <h2>TIPEO TURBO</h2>
+      <p>Caen palabras del cielo. Escribí la primera letra para apuntar a una, seguí tipeando para completarla antes de que llegue al piso. La velocidad sube con cada nivel.</p>
+      <div class="final-stats">
+        <div class="fbox"><b id="startBest">0</b><span>MEJOR PUNTAJE</span></div>
+      </div>
+      <button class="btn" id="startBtn">JUGAR ▶</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="endOverlay">
+    <div class="panel">
+      <div class="emoji-hero">💥</div>
+      <h2 class="lose">GAME OVER</h2>
+      <p id="endMsg">Una palabra tocó el piso.</p>
+      <div class="final-stats">
+        <div class="fbox"><b id="endScore">0</b><span>PUNTOS</span></div>
+        <div class="fbox"><b id="endLevel">1</b><span>NIVEL</span></div>
+        <div class="fbox"><b id="endBest">0</b><span>MEJOR</span></div>
+      </div>
+      <button class="btn" id="retryBtn">JUGAR DE NUEVO</button>
+      <a class="btn ghost" href="index.html">VOLVER AL ARCADE</a>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var WORDS = {
+    1: ["sol","luna","casa","gato","perro","arbol","playa","nube","fuego","agua","libro","mesa","silla","flor","pan","leche","cielo","mar","rio","monte","nieve","fruta","dedo","boca"],
+    2: ["cohete","planeta","estrella","dragon","castillo","jardin","montana","desierto","ventana","sombrero","guitarra","bicicleta","elefante","mariposa","tornado","volcan","pintura","musica","camino","sonrisa","tesoro","cascada","laberinto","pirata"],
+    3: ["computadora","universo","aventura","chocolate","biblioteca","escalera","television","dinosaurio","telefono","refrigerador","alfombra","rascacielos","submarino","extraterrestre","arcoiris","tecnologia","imaginacion","fotografia","electricidad","murcielago"]
+  };
+
+  var field = document.getElementById('field');
+  var typer = document.getElementById('typer');
+  var toastEl = document.getElementById('toast');
+  var startOverlay = document.getElementById('startOverlay');
+  var endOverlay = document.getElementById('endOverlay');
+  var hudScore = document.getElementById('hudScore');
+  var hudLives = document.getElementById('hudLives');
+  var hudLevel = document.getElementById('hudLevel');
+  var hudBest = document.getElementById('hudBest');
+
+  var BEST_KEY = 'tipeoTurboBest';
+  var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+  document.getElementById('startBest').textContent = best;
+  hudBest.textContent = best;
+
+  var running = false;
+  var words = [];        // active falling words
+  var target = null;     // currently targeted word
+  var score = 0, lives = 3, level = 1, combo = 0, wordsDone = 0;
+  var usedRecently = [];
+  var spawnTimer = null;
+  var rafId = null;
+  var lastT = 0;
+  var toastTimer = null;
+
+  function cfgFor(lv){
+    return {
+      speed: 42 + (lv - 1) * 9,               // px/s
+      spawnMs: Math.max(700, 2200 - (lv - 1) * 130),
+      tierWeights: lv <= 2 ? [1, 0, 0] : lv <= 5 ? [0.55, 0.45, 0] : [0.3, 0.45, 0.25]
+    };
+  }
+
+  function pickWord(){
+    var w = cfgFor(level).tierWeights;
+    var r = Math.random(), tier;
+    if (r < w[0]) tier = 1; else if (r < w[0] + w[1]) tier = 2; else tier = 3;
+    var pool = WORDS[tier].filter(function(x){ return usedRecently.indexOf(x) === -1; });
+    if (!pool.length) pool = WORDS[tier];
+    var word = pool[Math.floor(Math.random() * pool.length)];
+    usedRecently.push(word);
+    if (usedRecently.length > 8) usedRecently.shift();
+    return word;
+  }
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1400);
+  }
+
+  function renderWordHTML(text, matched){
+    var html = '';
+    for (var i = 0; i < text.length; i++){
+      html += '<span class="ch' + (i < matched ? ' hit' : '') + '">' + text[i] + '</span>';
+    }
+    return html;
+  }
+
+  function spawnWord(){
+    var text = pickWord();
+    var el = document.createElement('div');
+    el.className = 'word';
+    el.innerHTML = renderWordHTML(text, 0);
+    el.style.visibility = 'hidden';
+    field.appendChild(el);
+    var fw = field.clientWidth;
+    var ww = el.offsetWidth;
+    var left = Math.max(4, Math.random() * Math.max(1, fw - ww - 8));
+    el.style.left = left + 'px';
+    el.style.top = '-32px';
+    el.style.visibility = 'visible';
+    var w = {
+      el: el, text: text, matched: 0,
+      y: -32,
+      speed: cfgFor(level).speed * (0.9 + Math.random() * 0.35)
+    };
+    words.push(w);
+  }
+
+  function scheduleSpawn(){
+    clearTimeout(spawnTimer);
+    spawnTimer = setTimeout(function(){
+      if (!running) return;
+      spawnWord();
+      scheduleSpawn();
+    }, cfgFor(level).spawnMs);
+  }
+
+  function setTarget(w){
+    if (target && target !== w) target.el.classList.remove('target');
+    target = w;
+    if (target) target.el.classList.add('target');
+  }
+
+  function floatPoints(w, pts){
+    var f = document.createElement('div');
+    f.className = 'floatpts';
+    f.textContent = '+' + pts;
+    f.style.left = w.el.style.left;
+    f.style.top = w.y + 'px';
+    field.appendChild(f);
+    setTimeout(function(){ f.remove(); }, 700);
+  }
+
+  function completeWord(w){
+    words.splice(words.indexOf(w), 1);
+    if (target === w) target = null;
+    combo++;
+    wordsDone++;
+    var pts = w.text.length * 10 + combo * 5;
+    score += pts;
+    hudScore.textContent = score;
+    floatPoints(w, pts);
+    w.el.classList.add('pop');
+    setTimeout(function(){ w.el.remove(); }, 300);
+
+    if (wordsDone % 5 === 0){
+      level++;
+      hudLevel.textContent = level;
+      showToast('¡NIVEL ' + level + '!');
+      scheduleSpawn();
+    }
+  }
+
+  function loseWord(w){
+    words.splice(words.indexOf(w), 1);
+    if (target === w) target = null;
+    combo = 0;
+    w.el.remove();
+    loseLife();
+  }
+
+  function loseLife(){
+    lives--;
+    hudLives.textContent = '❤'.repeat(Math.max(0, lives)) + '🖤'.repeat(3 - Math.max(0, lives));
+    if (lives <= 0) gameOver();
+  }
+
+  function handleChar(ch){
+    if (!/^[a-z]$/.test(ch)) return;
+    if (target){
+      var expected = target.text[target.matched];
+      if (ch === expected){
+        target.matched++;
+        target.el.innerHTML = renderWordHTML(target.text, target.matched);
+        if (target.matched >= target.text.length){
+          completeWord(target);
+        }
+      } else {
+        target.el.classList.add('miss');
+        typer.classList.add('bad');
+        setTimeout(function(){ target && target.el && target.el.classList.remove('miss'); typer.classList.remove('bad'); }, 250);
+      }
+      return;
+    }
+    // find best candidate: word starting with ch, closest to ground
+    var best = null;
+    for (var i = 0; i < words.length; i++){
+      var w = words[i];
+      if (w.text[0] === ch && (!best || w.y > best.y)) best = w;
+    }
+    if (best){
+      best.matched = 1;
+      best.el.innerHTML = renderWordHTML(best.text, 1);
+      setTarget(best);
+      if (best.matched >= best.text.length) completeWord(best);
+    } else {
+      typer.classList.add('bad');
+      setTimeout(function(){ typer.classList.remove('bad'); }, 200);
+    }
+  }
+
+  typer.addEventListener('input', function(){
+    var v = typer.value;
+    typer.value = '';
+    if (!v.length) return;
+    var ch = v.charAt(v.length - 1).toLowerCase();
+    handleChar(ch);
+  });
+
+  function loop(t){
+    if (!running) return;
+    if (!lastT) lastT = t;
+    var dt = Math.min(50, t - lastT) / 1000;
+    lastT = t;
+    var groundY = field.clientHeight - 24;
+    for (var i = words.length - 1; i >= 0; i--){
+      var w = words[i];
+      w.y += w.speed * dt;
+      w.el.style.top = w.y + 'px';
+      if (w.y >= groundY) loseWord(w);
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function reset(){
+    words.forEach(function(w){ w.el.remove(); });
+    words = [];
+    target = null;
+    score = 0; lives = 3; level = 1; combo = 0; wordsDone = 0;
+    usedRecently = [];
+    hudScore.textContent = '0';
+    hudLevel.textContent = '1';
+    hudLives.textContent = '❤❤❤';
+    lastT = 0;
+  }
+
+  function start(){
+    reset();
+    running = true;
+    startOverlay.classList.add('hidden');
+    endOverlay.classList.add('hidden');
+    scheduleSpawn();
+    rafId = requestAnimationFrame(loop);
+    typer.value = '';
+    typer.focus();
+  }
+
+  function gameOver(){
+    running = false;
+    clearTimeout(spawnTimer);
+    cancelAnimationFrame(rafId);
+    if (score > best){
+      best = score;
+      localStorage.setItem(BEST_KEY, String(best));
+    }
+    hudBest.textContent = best;
+    document.getElementById('endScore').textContent = score;
+    document.getElementById('endLevel').textContent = level;
+    document.getElementById('endBest').textContent = best;
+    endOverlay.classList.remove('hidden');
+  }
+
+  document.getElementById('startBtn').addEventListener('click', start);
+  document.getElementById('retryBtn').addEventListener('click', start);
+
+  document.addEventListener('click', function(e){
+    if (running && !endOverlay.contains(e.target) && !startOverlay.contains(e.target)){
+      typer.focus();
+    }
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) lastT = 0;
+  });
+})();
+</script>
+</body>
+</html>
