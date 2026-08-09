@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
-  Genera las miniaturas del catálogo en thumbs/<id>.jpg.
+  Genera las miniaturas del catálogo en thumbs/<id>.webp.
 
   Abre cada juego en un Chromium headless, intenta entrar al gameplay
   (clickea el botón de inicio si lo hay), espera a que la pantalla tenga
@@ -140,8 +140,22 @@ async function shoot(page, game) {
 
   await page.waitForTimeout(waitMs);
 
-  const out = path.join(OUT_DIR, game.id + ".jpg");
-  await page.screenshot({ path: out, type: "jpeg", quality: 80 });
+  const out = path.join(OUT_DIR, game.id + ".webp");
+  // Playwright sólo exporta png y jpeg, así que sacamos un png sin pérdida y lo
+  // recodificamos a webp con el canvas del propio Chromium. Pesa ~55% menos que
+  // el jpeg equivalente y no agrega ninguna dependencia.
+  const png = await page.screenshot({ type: "png" });
+  const b64 = await page.evaluate(async (data) => {
+    const img = new Image();
+    img.src = "data:image/png;base64," + data;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    canvas.getContext("2d").drawImage(img, 0, 0);
+    return canvas.toDataURL("image/webp", 0.8).split(",")[1];
+  }, png.toString("base64"));
+  fs.writeFileSync(out, Buffer.from(b64, "base64"));
   return out;
 }
 
@@ -171,7 +185,7 @@ async function shoot(page, game) {
     fallidas = 0;
 
   for (const game of games) {
-    const dest = path.join(OUT_DIR, game.id + ".jpg");
+    const dest = path.join(OUT_DIR, game.id + ".webp");
     if (!force && fs.existsSync(dest)) {
       saltadas++;
       continue;

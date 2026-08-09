@@ -129,6 +129,11 @@ eso se cumple solo, porque lo que servimos **es** el código.
 Las miniaturas de `thumbs/` se generan solas con **[`tools/thumbs.js`](tools/thumbs.js)**:
 abre cada juego en un Chromium headless, entra al gameplay y saca la foto.
 
+Salen en **WebP**, que pesa la mitad que el JPEG equivalente. Como Playwright sólo
+exporta png y jpeg, el script saca un png y lo recodifica con el canvas del propio
+Chromium: no hace falta instalar nada. Son lo más pesado de la home por lejos, así que
+si algún día hay que adelgazar el sitio, es acá y no en el código.
+
 ```bash
 node tools/thumbs.js              # sólo las que falten
 node tools/thumbs.js --force      # regenerar todas

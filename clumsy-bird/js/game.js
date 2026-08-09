@@ -38,7 +38,13 @@ var game = {
             alert("Your browser does not support HTML5 canvas.");
             return;
         }
-        me.audio.init("mp3,ogg");
+        // Sólo mp3. El original traía también ogg porque en 2014 ningún formato
+        // andaba en todos los navegadores: el mp3 tenía patentes y Firefox no lo
+        // soportaba, y Safari nunca soportó ogg. Las patentes vencieron en 2017 y
+        // hoy el mp3 lo lee cualquier navegador, así que el ogg quedó como rama
+        // muerta: nunca se pedía. Se borró data/bgm/theme.ogg (2 MB) y se saca de
+        // esta lista para no dejar apuntando a un archivo que ya no está.
+        me.audio.init("mp3");
         me.loader.preload(game.resources, this.loaded.bind(this));
     },
 
