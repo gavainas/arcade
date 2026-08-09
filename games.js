@@ -207,6 +207,16 @@
       desc: "Apilá bloques que se mueven como un péndulo: lo que sobresale se corta. Encadená bloques perfectos para no perder ancho.",
       controles: "Click, espacio o toque", fecha: "2026-08-03",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+
+    // ---- Juegos de terceros. Ver la nota de arriba: autor/licencia/fuente son obligatorios. ----
+    {
+      id: "solitario", titulo: "Solitario", archivo: "solitario.html",
+      emoji: "🃏", categoria: "puzzle", tags: ["cartas", "klondike", "paciencia", "clasico"],
+      desc: "El Klondike de toda la vida: armá los cuatro palos del As al Rey. Arrastrá las cartas o tocá para que se acomoden solas.",
+      controles: "Arrastrá o tocá la carta", fecha: "2026-08-09",
+      origen: "externo", autor: "Justin Hatzimalis", licencia: "MIT",
+      fuente: "https://github.com/jhatzimalis/solitaire"
     }
   ];
 

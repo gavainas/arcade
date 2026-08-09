@@ -87,8 +87,31 @@ así que los links viejos no se rompen.
 > `python3 -m http.server`) funciona como corresponde.
 
 Cada juego declara `id`, `titulo`, `archivo`, `categoria`, `tags`, `desc`, `controles`,
-`fecha`, y los campos de atribución `origen` / `autor` / `licencia` (pensados para cuando
-sumemos juegos de terceros, donde la licencia es obligatoria).
+`fecha`, y los campos de atribución `origen` / `autor` / `licencia` / `fuente`.
+
+### Juegos de terceros
+
+El catálogo mezcla juegos propios con juegos de otra gente. Los externos llevan
+`origen: "externo"` más `autor`, `licencia` y `fuente`, y con eso la home les pone la
+etiqueta **DE AFUERA** y `game.html` muestra el bloque de atribución. Esa atribución no
+es decorativa: las licencias libres exigen mantenerla visible, así que se muestra siempre
+(la etiqueta de la grilla, en cambio, se apaga con `MOSTRAR_ORIGEN` en `index.html`).
+
+Para sumar uno:
+
+1. **Chequeá la licencia.** Tiene que permitir redistribución (MIT, Apache, CC-BY, GPL…).
+   Ojo con los assets: a veces el código es libre pero la música o los sprites no.
+2. **Copiá el juego al repo** como un `.html` más. No lo embebas por URL remota: el iframe
+   de `game.html` es del mismo origen a propósito, y `tools/thumbs.js` abre los archivos
+   por `file://`.
+3. **Pegá el aviso de copyright adentro del archivo.** Casi todas las licencias lo piden en
+   cada copia, y acá el `.html` viaja solo, sin el `LICENSE` de al lado.
+4. **Anotá los cambios** que le hagas al original en un comentario arriba de todo, así se
+   puede re-sincronizar con upstream más adelante.
+5. Agregá la entrada en `games.js` y corré `node tools/thumbs.js <id>`.
+
+El primero fue [Solitario](solitario.html), de Justin Hatzimalis (MIT) —
+[original](https://github.com/jhatzimalis/solitaire).
 
 Las miniaturas de `thumbs/` se generan solas con **[`tools/thumbs.js`](tools/thumbs.js)**:
 abre cada juego en un Chromium headless, entra al gameplay y saca la foto.
