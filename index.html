@@ -113,6 +113,7 @@
   .chip:hover{color:var(--ink); border-color:var(--border-strong);}
   .chip.active{background:var(--chip-accent,var(--cyan)); color:#06111c; border-color:transparent;}
   .chip .n{opacity:.65; font-weight:600; font-size:11px;}
+  .chip-sep{flex-shrink:0; width:1px; align-self:stretch; margin:2px 4px; background:var(--border-strong);}
   .sortsel{
     flex-shrink:0; height:36px; border-radius:10px; padding:0 12px; cursor:pointer;
     background:var(--surface); color:var(--ink); border:1px solid var(--border);
@@ -150,6 +151,8 @@
     background:var(--green); color:#04121b;
   }
   .badge.hot{background:var(--gold);}
+  /* Marca informativa de juego de terceros. Se apaga con MOSTRAR_ORIGEN. */
+  .badge.ext{background:rgba(8,11,21,.82); color:var(--ink); border:1px solid var(--border-strong); backdrop-filter:blur(4px);}
   .card-body{padding:12px 14px 14px; display:flex; flex-direction:column; flex:1;}
   .card-title{font-size:15px; font-weight:800; letter-spacing:-.1px; display:flex; align-items:center; gap:7px;}
   .card-title .emo{font-size:15px;}
@@ -236,6 +239,12 @@
   var GAMES = window.NEON_GAMES || [];
   var CATS  = window.NEON_CATEGORIAS || {};
 
+  // Etiqueta "DE AFUERA" en la grilla + filtro por origen. Es informativa, para la
+  // etapa en la que estamos mezclando juegos propios con juegos de terceros.
+  // Cuando no haga más falta, se pone en false y desaparece de toda la home.
+  // (La atribución de game.html NO depende de esto: la exigen las licencias.)
+  var MOSTRAR_ORIGEN = true;
+
   var LS_PLAYS = "neonArcade.plays";
   var LS_RECENT = "neonArcade.recent";
 
@@ -256,8 +265,12 @@
   function esNuevo(g){ return !!IDS_NUEVOS[g.id]; }
   function accent(g){ return (CATS[g.categoria] || {}).color || "#27e8ff"; }
   function catName(g){ return (CATS[g.categoria] || {}).nombre || g.categoria; }
+  function esExterno(g){ return g.origen === "externo"; }
 
-  var estado = { cat: "todos", q: "", sort: "destacados" };
+  // El filtro por origen sólo tiene sentido si el catálogo está mezclado.
+  var HAY_EXTERNOS = GAMES.some(esExterno);
+
+  var estado = { cat: "todos", q: "", sort: "destacados", origen: "todos" };
 
   // Sin acentos y en minúscula, para que "invasion" encuentre "Invasión".
   function normalizar(s){
@@ -302,6 +315,7 @@
         '<div class="badges">' +
           (nuevo ? '<span class="badge">NUEVO</span>' : '') +
           (jugado >= 3 ? '<span class="badge hot">TUYO ★</span>' : '') +
+          (MOSTRAR_ORIGEN && esExterno(g) ? '<span class="badge ext">DE AFUERA</span>' : '') +
         '</div>' +
       '</div>' +
       '<div class="card-body">' +
@@ -339,6 +353,26 @@
       b.addEventListener("click", function(){ estado.cat = d.key; pintarChips(); pintar(); });
       cont.appendChild(b);
     });
+
+    // Filtro por origen: aparece sólo cuando el catálogo está mezclado, así hoy
+    // (todos propios) no ocupa lugar con dos botones que no filtran nada.
+    if (MOSTRAR_ORIGEN && HAY_EXTERNOS){
+      var sep = document.createElement("span");
+      sep.className = "chip-sep";
+      cont.appendChild(sep);
+      [{ key:"todos", nombre:"Todo el catálogo", emoji:"🎮" },
+       { key:"propio", nombre:"Míos", emoji:"🏠" },
+       { key:"externo", nombre:"De afuera", emoji:"🌐" }].forEach(function(d){
+        var n = d.key === "todos" ? GAMES.length
+              : GAMES.filter(function(g){ return (g.origen || "propio") === d.key; }).length;
+        var b = document.createElement("button");
+        b.className = "chip" + (estado.origen === d.key ? " active" : "");
+        b.style.setProperty("--chip-accent", "#8ea4c2");
+        b.innerHTML = d.emoji + " " + d.nombre + ' <span class="n">' + n + "</span>";
+        b.addEventListener("click", function(){ estado.origen = d.key; pintarChips(); pintar(); });
+        cont.appendChild(b);
+      });
+    }
   }
 
   function pintarHero(){
@@ -380,7 +414,9 @@
 
   function pintar(){
     var lista = GAMES.filter(function(g){
-      return (estado.cat === "todos" || g.categoria === estado.cat) && coincideFlexible(g, estado.q);
+      return (estado.cat === "todos" || g.categoria === estado.cat)
+          && (estado.origen === "todos" || (g.origen || "propio") === estado.origen)
+          && coincideFlexible(g, estado.q);
     });
     lista = ordenar(lista);
 

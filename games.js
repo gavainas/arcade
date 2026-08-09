@@ -15,9 +15,15 @@
     desc       una o dos frases, se muestra en la tarjeta
     controles  cómo se juega (teclado / táctil)
     fecha      alta en el catálogo (YYYY-MM-DD), ordena "Nuevos"
-    origen     "propio" | "externo"
+    origen     "propio" (hecho acá) | "externo" (de terceros)
     autor      a quién se le atribuye
-    licencia   licencia del juego (importante para los externos)
+    licencia   licencia del juego
+    fuente     URL de origen. Sólo para los externos.
+
+  Sobre los externos: `autor` + `licencia` + `fuente` NO son decorativos. Casi todas
+  las licencias libres (MIT, Apache, CC-BY…) exigen mantener la atribución visible,
+  así que `game.html` la muestra siempre. La etiqueta "DE AFUERA" de la grilla, en
+  cambio, es sólo informativa y se apaga con MOSTRAR_ORIGEN en index.html.
 */
 (function (root) {
   "use strict";
