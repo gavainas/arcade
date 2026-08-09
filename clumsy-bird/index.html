@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<!--
+  Clumsy Bird — clon de Flappy Bird hecho con melonJS.
+
+  Juego de terceros. NO es un juego de Neon Arcade: se publica acá respetando su
+  licencia. El aviso de abajo lo exige la GPL y no se borra.
+
+      Clumsy Bird
+      Copyright (c) Ellison Leão y colaboradores
+
+      Este programa es software libre: podés redistribuirlo y/o modificarlo bajo
+      los términos de la GNU General Public License publicada por la Free Software
+      Foundation, en su versión 3 o (a tu elección) cualquier versión posterior.
+
+      Se distribuye con la esperanza de que sea útil, pero SIN NINGUNA GARANTÍA;
+      ni siquiera la garantía implícita de COMERCIABILIDAD o APTITUD PARA UN
+      PROPÓSITO PARTICULAR. Ver la GNU General Public License para más detalles.
+
+      El texto completo de la licencia está en LICENSE.md, en esta misma carpeta.
+
+  Original: https://github.com/ellisonleao/clumsy-bird
+  Motor: melonJS (MIT), incluido en js/melonJS-min.js
+
+  Cambios respecto del original (la licencia permite modificar):
+    - Textos de la interfaz traducidos al español, en js/screens/.
+    - `lang="en"` -> `lang="es"`.
+    - Se cargan los fuentes de js/ en vez del bundle build/clumsy-min.js, que se
+      eliminó. Son los mismos 6 archivos y en el mismo orden que armaba el
+      Gruntfile: así los textos viven en un solo lugar y no hace falta grunt ni
+      npm para volver a tocarlos.
+    - Se sacaron el token de google-site-verification y las meta og:/twitter:,
+      que apuntaban al sitio del autor original y no tienen sentido acá.
+    - Se borró el andamiaje de despliegue que no usamos: Gruntfile.js,
+      package.json, Procfile, app.json, .jshintrc.
+  La lógica del juego no se tocó.
+-->
+<html lang="es">
+    <head>
+        <title>Clumsy Bird</title>
+        <link rel="apple-touch-icon-precomposed" href="data/img/touch-icon-iphone.png"/>
+        <link rel="apple-touch-icon-precomposed" sizes="120x120" href="data/img/touch-icon-iphone-retina.png"/>
+        <link rel="shortcut icon" href="data/img/favicon.ico">
+        <link rel="stylesheet" type="text/css" media="screen" href="index.css">
+        <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="apple-mobile-web-app-title" content="Clumsy Bird">
+        <meta charset="UTF-8" />
+        <meta name="description" content="Clumsy Bird - clon de Flappy Bird hecho con melonJS"/>
+
+        <!-- Humans -->
+        <link rel="author" href="humans.txt" />
+    </head>
+
+    <body>
+        <!-- Canvas placeholder -->
+        <div id="screen"></div>
+
+        <!-- melonJS Library -->
+        <script type="text/javascript" src="js/melonJS-min.js" ></script>
+
+        <!-- Fuentes del juego, en el orden que definía el Gruntfile del original. -->
+        <script type="text/javascript" src="js/game.js" ></script>
+        <script type="text/javascript" src="js/entities/entities.js" ></script>
+        <script type="text/javascript" src="js/entities/HUD.js" ></script>
+        <script type="text/javascript" src="js/screens/title.js" ></script>
+        <script type="text/javascript" src="js/screens/play.js" ></script>
+        <script type="text/javascript" src="js/screens/gameover.js" ></script>
+
+        <script type="text/javascript">
+            window.onReady(function onReady() {
+                game.onload();
+            });
+        </script>
+
+    </body>
+</html>

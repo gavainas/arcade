@@ -110,8 +110,21 @@ Para sumar uno:
    puede re-sincronizar con upstream más adelante.
 5. Agregá la entrada en `games.js` y corré `node tools/thumbs.js <id>`.
 
-El primero fue [Solitario](solitario.html), de Justin Hatzimalis (MIT) —
-[original](https://github.com/jhatzimalis/solitaire).
+Hasta ahora hay dos:
+
+| Juego | Autor | Licencia | Original |
+|---|---|---|---|
+| [Solitario](solitario.html) | Justin Hatzimalis | MIT | [repo](https://github.com/jhatzimalis/solitaire) |
+| [Clumsy Bird](clumsy-bird/index.html) | Ellison Leão | GPL-3.0 | [repo](https://github.com/ellisonleao/clumsy-bird) |
+
+Si el juego son varios archivos, va en su propia carpeta y `archivo` apunta adentro
+(`clumsy-bird/index.html`). El `LICENSE` del original se conserva ahí mismo: la GPL pide
+que quien reciba el juego pueda llegar a su código y a su licencia, y en un sitio estático
+eso se cumple solo, porque lo que servimos **es** el código.
+
+> Dato útil: los juegos que cargan assets por XHR (los que usan un motor, como melonJS)
+> tiran errores de CORS si abrís el `.html` con doble click, porque `file://` no tiene
+> origen. Servido por HTTP andan bien. Para probarlos, `python3 -m http.server`.
 
 Las miniaturas de `thumbs/` se generan solas con **[`tools/thumbs.js`](tools/thumbs.js)**:
 abre cada juego en un Chromium headless, entra al gameplay y saca la foto.

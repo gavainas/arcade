@@ -217,6 +217,14 @@
       controles: "Arrastrá o tocá la carta", fecha: "2026-08-09",
       origen: "externo", autor: "Justin Hatzimalis", licencia: "MIT",
       fuente: "https://github.com/jhatzimalis/solitaire"
+    },
+    {
+      id: "clumsy-bird", titulo: "Clumsy Bird", archivo: "clumsy-bird/index.html",
+      emoji: "🐤", categoria: "reflejos", tags: ["flappy bird", "pajaro", "timing", "un boton"],
+      desc: "El clásico Flappy Bird: tocá para aletear y pasá entre los caños sin rozarlos. Un solo botón, paciencia infinita.",
+      controles: "Toque, click o espacio", fecha: "2026-08-09",
+      origen: "externo", autor: "Ellison Leão", licencia: "GPL-3.0",
+      fuente: "https://github.com/ellisonleao/clumsy-bird"
     }
   ];
 
