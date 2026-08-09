@@ -243,9 +243,6 @@
     try { return JSON.parse(localStorage.getItem(key)) || fallback; }
     catch(_){ return fallback; }
   }
-  function writeJSON(key, val){
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch(_){}
-  }
 
   var plays = readJSON(LS_PLAYS, {});
   var recent = readJSON(LS_RECENT, []);
@@ -291,7 +288,8 @@
   function tarjeta(g){
     var a = document.createElement("a");
     a.className = "card";
-    a.href = g.archivo;
+    // Va al marco del portal, no al .html suelto: así el jugador no se va del sitio.
+    a.href = "game.html?id=" + encodeURIComponent(g.id);
     a.style.setProperty("--accent", accent(g));
 
     var nuevo = esNuevo(g);
@@ -319,16 +317,11 @@
     var img = a.querySelector("img");
     img.addEventListener("error", function(){ img.remove(); });
 
-    a.addEventListener("click", function(){ registrarJugada(g.id); });
     return a;
   }
 
-  function registrarJugada(id){
-    plays[id] = (plays[id] || 0) + 1;
-    writeJSON(LS_PLAYS, plays);
-    recent = [id].concat(recent.filter(function(x){ return x !== id; })).slice(0, 8);
-    writeJSON(LS_RECENT, recent);
-  }
+  // Las jugadas las cuenta game.html, que es donde el juego realmente se abre.
+  // Acá sólo se leen, para ordenar y para armar "Seguí jugando".
 
   function pintarChips(){
     var cont = document.getElementById("chips");
@@ -364,14 +357,12 @@
             '<span class="cat-pill" style="--accent:#8ea4c2">' + g.controles + '</span>' +
           '</div>' +
           '<div class="hero-actions">' +
-            '<a class="btn btn-primary" href="' + g.archivo + '" id="heroPlay">JUGAR AHORA ▶</a>' +
+            '<a class="btn btn-primary" href="game.html?id=' + encodeURIComponent(g.id) + '" id="heroPlay">JUGAR AHORA ▶</a>' +
             '<a class="btn btn-ghost" href="#listTitle">Ver los ' + GAMES.length + ' juegos</a>' +
           '</div>' +
         '</div>' +
         '<div class="hero-art"><img alt="' + g.titulo + '" src="thumbs/' + g.id + '.jpg"></div>' +
       '</div>';
-    var hp = document.getElementById("heroPlay");
-    if (hp) hp.addEventListener("click", function(){ registrarJugada(g.id); });
   }
 
   function pintarRecientes(){
@@ -425,6 +416,14 @@
   });
 
   // ---------- Arranque ----------
+  // El buscador de game.html manda acá con ?q=…
+  var qInicial = new URLSearchParams(location.search).get("q");
+  if (qInicial){
+    estado.q = qInicial.trim();
+    q.value = estado.q;
+    searchWrap.classList.toggle("has-value", !!estado.q);
+  }
+
   document.getElementById("total").textContent =
     GAMES.length + (GAMES.length === 1 ? " juego disponible" : " juegos disponibles");
   pintarHero();

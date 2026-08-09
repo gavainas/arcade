@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Arcade</title>
+<meta name="description" content="Jugá gratis en el navegador, sin instalar nada.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Neon Arcade">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
+<style>
+  :root{
+    --bg:#080b15;
+    --bg-soft:#0d1222;
+    --surface:#141b2e;
+    --surface-2:#1b2440;
+    --border:rgba(255,255,255,.07);
+    --border-strong:rgba(255,255,255,.14);
+    --ink:#e9f0fb;
+    --muted:#8ea4c2;
+    --cyan:#27e8ff; --pink:#ff2bd6; --green:#39ff9e; --gold:#ffd23b;
+    --radius:14px;
+    --accent:var(--cyan);
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    min-height:100vh; overflow-x:hidden; line-height:1.5;
+  }
+  body::before{
+    content:""; position:fixed; inset:0 0 auto; height:420px; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(60% 100% at 20% 0%, rgba(138,75,255,.16), transparent 70%),
+      radial-gradient(50% 100% at 80% 0%, rgba(39,232,255,.12), transparent 70%);
+  }
+  .wrap{position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:0 20px;}
+
+  /* ---------- Barra superior ---------- */
+  .topbar{position:sticky; top:0; z-index:50; background:rgba(8,11,21,.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border);}
+  .topbar .wrap{display:flex; align-items:center; gap:14px; height:62px;}
+  .brand{display:flex; align-items:center; gap:9px; text-decoration:none; color:inherit; flex-shrink:0;}
+  .brand .mark{font-size:22px; filter:drop-shadow(0 0 10px rgba(39,232,255,.6));}
+  .brand .name{font-size:19px; font-weight:900; letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink));
+    -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .search{position:relative; flex:1; max-width:380px; margin-left:auto;}
+  .search input{
+    width:100%; height:38px; padding:0 14px 0 38px; border-radius:999px;
+    border:1px solid var(--border-strong); background:var(--surface); color:var(--ink);
+    font-size:14px; font-family:inherit; outline:none; transition:border-color .15s;
+  }
+  .search input::placeholder{color:var(--muted);}
+  .search input:focus{border-color:var(--cyan);}
+  .search .ico{position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:14px; opacity:.6; pointer-events:none;}
+
+  /* ---------- Cabecera del juego ---------- */
+  .crumb{padding:18px 0 0; font-size:13px; color:var(--muted);}
+  .crumb a{color:var(--muted); text-decoration:none;}
+  .crumb a:hover{color:var(--cyan);}
+
+  .ghead{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:10px 0 14px;}
+  .ghead h1{font-size:clamp(21px,3vw,30px); font-weight:900; letter-spacing:-.4px; display:flex; align-items:center; gap:10px;}
+  .pills{display:flex; gap:7px; flex-wrap:wrap; margin-top:8px;}
+  .pill{font-size:11px; font-weight:700; letter-spacing:.4px; padding:4px 10px; border-radius:999px;
+    color:var(--accent); background:color-mix(in srgb, var(--accent) 14%, transparent);}
+  .pill.plain{color:var(--muted); background:rgba(255,255,255,.06);}
+  .ghead-actions{display:flex; gap:9px; flex-wrap:wrap;}
+  .btn{display:inline-flex; align-items:center; gap:7px; cursor:pointer; text-decoration:none; border:none;
+    border-radius:999px; padding:10px 18px; font-size:13px; font-weight:800; font-family:inherit;
+    transition:transform .14s, background .14s, box-shadow .14s;}
+  .btn-ghost{color:var(--ink); background:rgba(255,255,255,.06); border:1px solid var(--border-strong);}
+  .btn-ghost:hover{background:rgba(255,255,255,.11);}
+  .btn-primary{color:#04121b; background:linear-gradient(90deg,var(--green),var(--cyan)); box-shadow:0 6px 18px rgba(39,232,255,.25);}
+  .btn-primary:hover{transform:translateY(-2px);}
+
+  /* ---------- Escenario del juego ---------- */
+  .stage{
+    position:relative; margin:0 auto; background:var(--bg-soft);
+    border:1px solid var(--border-strong); border-radius:18px; overflow:hidden;
+    box-shadow:0 16px 44px rgba(0,0,0,.5);
+    width:min(100%, 560px);
+    height:clamp(520px, calc(100vh - 250px), 840px);
+  }
+  .stage iframe{width:100%; height:100%; border:0; display:block; background:var(--bg);}
+  /* En pantalla completa el marco desaparece y el juego toma todo. */
+  .stage:fullscreen{width:100%; height:100%; max-width:none; border:0; border-radius:0;}
+  .stage:fullscreen iframe{width:100%; height:100%;}
+  .stage-hint{text-align:center; font-size:12px; color:var(--muted); margin-top:10px;}
+
+  .desc{max-width:640px; margin:22px auto 0; text-align:center; color:var(--muted); font-size:14.5px;}
+
+  /* ---------- Relacionados ---------- */
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:38px 0 14px;}
+  .section-head h2{font-size:18px; font-weight:800;}
+  .section-head a{font-size:13px; color:var(--cyan); text-decoration:none;}
+  .grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+  .card{position:relative; display:flex; flex-direction:column; text-decoration:none; color:inherit;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+    transition:transform .16s, border-color .16s, box-shadow .16s;}
+  .card::before{content:""; position:absolute; inset:0 0 auto; height:3px; z-index:2; background:var(--cardAccent); opacity:.85;}
+  .card:hover{transform:translateY(-5px); border-color:var(--cardAccent); box-shadow:0 14px 32px rgba(0,0,0,.5);}
+  .shot{position:relative; aspect-ratio:6/5; overflow:hidden; background:var(--bg-soft);}
+  .shot img{position:relative; z-index:1; width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s;}
+  .card:hover .shot img{transform:scale(1.06);}
+  .shot .fallback{position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center; font-size:46px;}
+  .card-body{padding:11px 13px 13px;}
+  .card-title{font-size:14.5px; font-weight:800; display:flex; align-items:center; gap:6px;}
+  .card-foot{margin-top:9px; display:flex; align-items:center; justify-content:space-between;}
+  .cat-pill{font-size:10.5px; font-weight:700; color:var(--cardAccent);
+    background:color-mix(in srgb, var(--cardAccent) 14%, transparent); padding:3px 9px; border-radius:999px;}
+  .play{font-size:11.5px; font-weight:800; opacity:.75;}
+
+  .notfound{text-align:center; padding:80px 20px;}
+  .notfound .big{font-size:56px; margin-bottom:14px;}
+  .notfound h1{font-size:24px; margin-bottom:10px;}
+  .notfound p{color:var(--muted); margin-bottom:22px;}
+
+  footer{margin-top:56px; padding:28px 0 46px; border-top:1px solid var(--border); text-align:center; color:var(--muted); font-size:12.5px;}
+  footer a{color:var(--cyan); text-decoration:none;}
+
+  @media (max-width:760px){
+    .brand .name{display:none;}
+    .stage{width:100%; height:clamp(460px, calc(100vh - 215px), 760px); border-radius:14px;}
+    .ghead{align-items:flex-start; padding-bottom:10px;}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:12px;}
+    /* Que los controles entren en una sola fila y no empujen el juego hacia abajo. */
+    .btn{padding:9px 14px; font-size:12px;}
+    #btnRaw{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="mark">🕹️</span><span class="name">NEON ARCADE</span></a>
+    <div class="search">
+      <span class="ico">🔎</span>
+      <input id="q" type="search" placeholder="Buscar otro juego…" autocomplete="off" aria-label="Buscar juegos">
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="app"></div>
+
+<script src="games.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var GAMES = window.NEON_GAMES || [];
+  var CATS  = window.NEON_CATEGORIAS || {};
+  var app = document.getElementById("app");
+
+  function accent(g){ return (CATS[g.categoria] || {}).color || "#27e8ff"; }
+  function catName(g){ return (CATS[g.categoria] || {}).nombre || g.categoria; }
+
+  function readJSON(k, f){ try { return JSON.parse(localStorage.getItem(k)) || f; } catch(_){ return f; } }
+  function writeJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(_){} }
+
+  function registrarJugada(id){
+    var plays = readJSON("neonArcade.plays", {});
+    plays[id] = (plays[id] || 0) + 1;
+    writeJSON("neonArcade.plays", plays);
+    var recent = readJSON("neonArcade.recent", []);
+    recent = [id].concat(recent.filter(function(x){ return x !== id; })).slice(0, 8);
+    writeJSON("neonArcade.recent", recent);
+  }
+
+  function escapar(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+
+  // ---------- Buscar el juego pedido ----------
+  var id = new URLSearchParams(location.search).get("id");
+  var game = GAMES.filter(function(g){ return g.id === id; })[0];
+
+  if (!game){
+    app.innerHTML =
+      '<div class="notfound">' +
+        '<div class="big">🕹️</div>' +
+        '<h1>No encontramos ese juego</h1>' +
+        '<p>Puede que el link esté mal o que el juego haya cambiado de nombre.</p>' +
+        '<a class="btn btn-primary" href="index.html">VER TODOS LOS JUEGOS ▶</a>' +
+      '</div>';
+    return;
+  }
+
+  document.title = game.titulo + " · Neon Arcade";
+  var md = document.querySelector('meta[name="description"]');
+  if (md) md.setAttribute("content", game.desc);
+  document.documentElement.style.setProperty("--accent", accent(game));
+
+  // ---------- Relacionados: misma categoría primero, después se completa ----------
+  function relacionados(){
+    var resto = GAMES.filter(function(g){ return g.id !== game.id; });
+    var mismos = resto.filter(function(g){ return g.categoria === game.categoria; });
+    var otros  = resto.filter(function(g){ return g.categoria !== game.categoria; })
+                      .sort(function(a,b){ return (b.fecha||"").localeCompare(a.fecha||""); });
+    return mismos.concat(otros).slice(0, 4);
+  }
+
+  function tarjetaHTML(g){
+    return '' +
+      '<a class="card" href="game.html?id=' + encodeURIComponent(g.id) + '" style="--cardAccent:' + accent(g) + '">' +
+        '<div class="shot">' +
+          '<div class="fallback">' + g.emoji + '</div>' +
+          '<img loading="lazy" alt="' + escapar(g.titulo) + '" src="thumbs/' + g.id + '.jpg" onerror="this.remove()">' +
+        '</div>' +
+        '<div class="card-body">' +
+          '<div class="card-title"><span>' + g.emoji + '</span>' + escapar(g.titulo) + '</div>' +
+          '<div class="card-foot">' +
+            '<span class="cat-pill">' + escapar(catName(g)) + '</span>' +
+            '<span class="play">JUGAR ▶</span>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+  }
+
+  app.innerHTML =
+    '<div class="crumb"><a href="index.html">← Todos los juegos</a> · ' +
+      '<a href="index.html">' + escapar(catName(game)) + '</a></div>' +
+
+    '<div class="ghead">' +
+      '<div>' +
+        '<h1><span>' + game.emoji + '</span>' + escapar(game.titulo) + '</h1>' +
+        '<div class="pills">' +
+          '<span class="pill">' + escapar(catName(game)) + '</span>' +
+          '<span class="pill plain">' + escapar(game.controles) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ghead-actions">' +
+        '<button class="btn btn-ghost" id="btnFull">⛶ Pantalla completa</button>' +
+        '<button class="btn btn-ghost" id="btnReset">↺ Reiniciar</button>' +
+        '<a class="btn btn-ghost" id="btnRaw" href="' + game.archivo + '">↗ Abrir solo</a>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="stage" id="stage">' +
+      '<iframe id="frame" src="' + game.archivo + '" title="' + escapar(game.titulo) + '" ' +
+        'allow="fullscreen; autoplay" scrolling="no"></iframe>' +
+    '</div>' +
+    '<div class="stage-hint">Si el teclado no responde, hacé un click sobre el juego.</div>' +
+
+    '<p class="desc">' + escapar(game.desc) + '</p>' +
+
+    '<div class="section-head"><h2>Te puede gustar</h2><a href="index.html">Ver los ' + GAMES.length + ' juegos →</a></div>' +
+    '<div class="grid">' + relacionados().map(tarjetaHTML).join("") + '</div>' +
+
+    '<footer>Hecho con ♥ y mucho neón · ' +
+      '<a href="https://github.com/gavainas/arcade">Código en GitHub</a></footer>';
+
+  registrarJugada(game.id);
+
+  // ---------- El juego adentro del marco ----------
+  var frame = document.getElementById("frame");
+  var stage = document.getElementById("stage");
+
+  frame.addEventListener("load", function(){
+    // Mismo origen: podemos ocultar el "← ARCADE" propio del juego, que acá
+    // queda redundante, sin tener que editar los 23 archivos.
+    try {
+      var doc = frame.contentDocument;
+      var st = doc.createElement("style");
+      st.textContent = '.back, a[href="index.html"]{display:none !important;}';
+      doc.head.appendChild(st);
+    } catch (_) {
+      // Si algún día embebemos un juego de otro origen, esto no aplica.
+    }
+    // Que el teclado vaya al juego sin que el usuario tenga que clickear.
+    try { frame.contentWindow.focus(); } catch (_){}
+  });
+
+  document.getElementById("btnReset").addEventListener("click", function(){
+    frame.src = frame.src;
+  });
+
+  var btnFull = document.getElementById("btnFull");
+  btnFull.addEventListener("click", function(){
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (stage.requestFullscreen) stage.requestFullscreen();
+    else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+  });
+  document.addEventListener("fullscreenchange", function(){
+    btnFull.textContent = document.fullscreenElement ? "⛶ Salir de pantalla completa" : "⛶ Pantalla completa";
+    try { frame.contentWindow.focus(); } catch (_){}
+  });
+
+  // ---------- Buscador: delega en la home ----------
+  var q = document.getElementById("q");
+  q.addEventListener("keydown", function(e){
+    if (e.key === "Enter" && q.value.trim()){
+      location.href = "index.html?q=" + encodeURIComponent(q.value.trim());
+    }
+  });
+})();
+</script>
+</body>
+</html>

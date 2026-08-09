@@ -59,9 +59,32 @@ El prompt maestro para continuar el desarrollo está en [`VECTOR_PILOT_PROMPT.md
 
 ## Cómo está armado el portal
 
-El catálogo vive en **[`games.js`](games.js)**, que es la única fuente de verdad: `index.html`
-arma el destacado, los filtros por categoría, el buscador y la grilla leyendo ese archivo.
-No hay tarjetas escritas a mano en el HTML.
+Son tres piezas:
+
+| Archivo | Qué hace |
+|---------|----------|
+| [`games.js`](games.js) | El catálogo. Única fuente de verdad. |
+| [`index.html`](index.html) | La home: destacado, buscador, filtros y grilla. |
+| [`game.html`](game.html) | El marco donde se juega: `game.html?id=torre`. |
+
+El catálogo vive en **`games.js`**: `index.html` arma el destacado, los filtros por
+categoría, el buscador y la grilla leyendo ese archivo. No hay tarjetas escritas a mano
+en el HTML.
+
+**`game.html?id=<id>`** es la página de juego. Carga el `.html` del juego en un `<iframe>`
+y le pone alrededor el marco del portal: título, categoría, controles, pantalla completa,
+reiniciar y una fila de juegos relacionados. Así el jugador termina una partida y tiene
+otros cuatro juegos ahí mismo, en vez de quedar en un callejón sin salida.
+
+Los juegos **no se modifican** para entrar al marco: como el iframe es del mismo origen,
+`game.html` le inyecta una regla CSS que esconde el `← ARCADE` propio del juego, que ahí
+adentro queda redundante. Los archivos sueltos (`torre.html`) siguen funcionando directo,
+así que los links viejos no se rompen.
+
+> Sobre `file://`: si abrís el portal con doble click desde el disco, el navegador trata
+> cada archivo como un origen distinto y bloquea ese ajuste — el juego anda igual, sólo
+> queda visible su link de volver duplicado. Servido por HTTP (GitHub Pages o
+> `python3 -m http.server`) funciona como corresponde.
 
 Cada juego declara `id`, `titulo`, `archivo`, `categoria`, `tags`, `desc`, `controles`,
 `fecha`, y los campos de atribución `origen` / `autor` / `licencia` (pensados para cuando
@@ -89,5 +112,6 @@ El portal guarda en `localStorage` cuántas veces abriste cada juego, para orden
 2. Agregá su entrada al final de `NEON_GAMES` en `games.js`.
 3. Corré `node tools/thumbs.js` para generar la miniatura.
 
-No hace falta tocar `index.html`. Todo es estático: se puede hostear en GitHub Pages,
+No hace falta tocar `index.html` ni `game.html`: la tarjeta, la página de juego y los
+relacionados salen solos del catálogo. Todo es estático: se puede hostear en GitHub Pages,
 Vercel, Netlify o cualquier servidor de archivos.
