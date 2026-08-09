@@ -45,7 +45,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | 16 | 🪢 | Ahorcado Neón | `ahorcado.html` | Palabras | Ahorcado con categorías (animales, países, comida) y dibujo neón animado. | ✅ 2026-08-06 |
 | 17 | 🔤 | Sopa de Letras | `sopa-letras.html` | Palabras | Sopas generadas al azar; arrastrá para marcar las palabras escondidas. | ✅ 2026-07-22 (ya publicado como `sopa-letras.html`, fuera de esta rutina) |
 | 18 | ⌨️ | Tipeo Turbo | `tipeo-turbo.html` | Habilidad | Palabras que caen del cielo: escribilas antes de que toquen el piso. | ✅ 2026-08-08 |
-| 19 | 🔀 | Anagramas | `anagramas.html` | Palabras | Letras desordenadas contra reloj: armá la palabra antes de que se acabe el tiempo. | ⏳ Pendiente |
+| 19 | 🔀 | Anagramas | `anagramas.html` | Palabras | Letras desordenadas contra reloj: armá la palabra antes de que se acabe el tiempo. | ✅ 2026-08-09 |
 | 20 | 🎵 | Simón Neón | `simon-neon.html` | Memoria | Repetí secuencias de luces y sonidos cada vez más largas. | ⏳ Pendiente |
 | 21 | 🔍 | El Impostor | `el-impostor.html` | Visión | Encontrá la figura distinta en la grilla; cada nivel la diferencia es más sutil. | ⏳ Pendiente |
 

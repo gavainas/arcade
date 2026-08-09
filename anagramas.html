@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ANAGRAMAS · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:20px 14px 24px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    user-select:none;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px; display:flex; flex-direction:column; align-items:center;}
+  .back{align-self:flex-start; display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:10px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:10px;}
+  .logo{
+    font-size:clamp(22px,7vw,36px); font-weight:900; letter-spacing:1.5px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--purple),var(--cyan),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; margin:6px 0 10px; font-size:10px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:7px 4px;}
+  .hud .box b{display:block; font-size:15px; font-weight:900; letter-spacing:.5px; margin-top:2px; color:var(--ink);}
+  .hud .box.score b{color:var(--gold);}
+  .hud .box.round b{color:var(--cyan);}
+  .hud .box.lives b{color:var(--red); font-size:13px;}
+  .hud .box.best b{color:var(--pink);}
+
+  .timerbar{width:100%; height:9px; border-radius:6px; background:rgba(138,75,255,.15); overflow:hidden; margin-bottom:16px; border:1px solid rgba(138,75,255,.25);}
+  .timerfill{height:100%; width:100%; border-radius:6px; background:linear-gradient(90deg,var(--green),var(--cyan)); transition:width .1s linear, background .3s ease;}
+  .timerfill.low{background:linear-gradient(90deg,var(--gold),var(--red));}
+  .timerfill.crit{background:var(--red); box-shadow:0 0 10px rgba(255,84,112,.8);}
+
+  .slots{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:100%; margin-bottom:22px; min-height:52px;}
+  .slot{
+    width:38px; height:48px; display:flex; align-items:center; justify-content:center;
+    border-bottom:3px solid rgba(138,75,255,.5); border-radius:6px 6px 0 0;
+    font-size:22px; font-weight:900; color:var(--ink); background:rgba(138,75,255,.08);
+    transition:border-color .15s ease, transform .15s ease, background .15s ease;
+  }
+  .slot.filled{border-color:var(--cyan); background:rgba(39,232,255,.12); animation:pop .16s ease;}
+  .slots.shake{animation:shakeRow .4s ease;}
+  @keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.2);}100%{transform:scale(1);}}
+  @keyframes shakeRow{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
+  .slot.correct{border-color:var(--green); background:rgba(57,255,158,.18); animation:none;}
+
+  .tray{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; width:100%; margin-bottom:18px;}
+  .tile{
+    width:44px; height:52px; border-radius:10px; border:none; cursor:pointer;
+    background:linear-gradient(180deg, rgba(39,232,255,.22), rgba(138,75,255,.22));
+    border:1px solid rgba(39,232,255,.4); color:var(--ink); font-size:20px; font-weight:900;
+    font-family:inherit; transition:transform .12s ease, opacity .15s ease, box-shadow .12s ease;
+    box-shadow:0 4px 14px rgba(39,232,255,.15);
+  }
+  .tile:active{transform:translateY(2px);}
+  .tile.used{opacity:0; pointer-events:none; transform:scale(.6);}
+
+  .controls{display:flex; gap:10px; width:100%; margin-bottom:6px;}
+  .ctlbtn{
+    flex:1; cursor:pointer; border:1px solid rgba(138,75,255,.4); border-radius:12px; padding:11px 6px;
+    background:rgba(138,75,255,.14); color:var(--ink); font-size:12px; font-weight:800; letter-spacing:.5px;
+    font-family:inherit; transition:background .15s ease, transform .12s ease;
+  }
+  .ctlbtn:active{transform:translateY(1px);}
+  .ctlbtn:disabled{opacity:.4; pointer-events:none;}
+  .ctlbtn.hint{color:var(--gold); border-color:rgba(255,210,59,.45);}
+
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:20;
+    background:rgba(10,14,30,.95); border:1px solid var(--cyan); color:var(--ink);
+    padding:10px 18px; border-radius:10px; font-size:13px; font-weight:700; letter-spacing:.5px;
+    box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .2s ease, top .2s ease;
+    text-align:center; max-width:90vw;
+  }
+  .toast.show{opacity:1; top:28px;}
+
+  .overlay{position:fixed; inset:0; z-index:30; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(3,4,10,.88); backdrop-filter:blur(3px);}
+  .overlay.hidden{display:none;}
+  .panel{
+    width:100%; max-width:380px; border-radius:20px; padding:26px 22px;
+    background:linear-gradient(180deg, rgba(20,28,58,.92), rgba(10,14,30,.94));
+    border:1px solid rgba(138,75,255,.35); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px;
+    max-height:90vh; overflow-y:auto;
+  }
+  .panel h2{font-size:clamp(20px,6vw,26px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--green),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .panel h2.lose{background:linear-gradient(90deg,var(--red),var(--pink)); -webkit-background-clip:text; background-clip:text;}
+  .panel p{font-size:13px; color:var(--muted); line-height:1.55;}
+
+  .final-stats{display:flex; gap:10px; width:100%; margin-top:2px;}
+  .final-stats .fbox{flex:1; background:rgba(138,75,255,.12); border-radius:10px; padding:8px 4px;}
+  .final-stats .fbox b{display:block; font-size:16px; color:var(--cyan);}
+  .final-stats .fbox span{font-size:10px; color:var(--muted); letter-spacing:.5px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--green),var(--cyan)); box-shadow:0 8px 24px rgba(39,232,255,.3);
+    transition:transform .12s ease, box-shadow .12s ease; width:100%; font-family:inherit;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none; margin-top:2px; text-decoration:none; text-align:center; display:block;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">← ARCADE</a>
+    <header>
+      <div class="logo">ANAGRAMAS</div>
+      <div class="sub">N E O N &nbsp;A R C A D E</div>
+    </header>
+
+    <div class="hud">
+      <div class="box score"><span>PUNTOS</span><b id="hudScore">0</b></div>
+      <div class="box round"><span>RONDA</span><b id="hudRound">1</b></div>
+      <div class="box lives"><span>VIDAS</span><b id="hudLives">❤❤❤</b></div>
+      <div class="box best"><span>MEJOR</span><b id="hudBest">0</b></div>
+    </div>
+
+    <div class="timerbar"><div class="timerfill" id="timerFill"></div></div>
+
+    <div class="slots" id="slots"></div>
+    <div class="tray" id="tray"></div>
+
+    <div class="controls">
+      <button class="ctlbtn" id="clearBtn">⌫ BORRAR</button>
+      <button class="ctlbtn hint" id="hintBtn">💡 PISTA</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="panel">
+      <h2>ANAGRAMAS</h2>
+      <p>Las letras están desordenadas. Tocalas en el orden correcto (o escribí con el teclado) para armar la palabra antes de que se acabe el tiempo. 3 vidas, las palabras se ponen más largas en cada ronda.</p>
+      <button class="btn" id="startBtn">JUGAR ▶</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="endOverlay">
+    <div class="panel">
+      <h2 class="lose">SE ACABARON LAS VIDAS</h2>
+      <p id="endMsg"></p>
+      <div class="final-stats">
+        <div class="fbox"><b id="statScore">0</b><span>PUNTAJE</span></div>
+        <div class="fbox"><b id="statRound">0</b><span>RONDA</span></div>
+        <div class="fbox"><b id="statBest">0</b><span>MEJOR</span></div>
+      </div>
+      <button class="btn" id="retryBtn">JUGAR DE NUEVO ▶</button>
+      <a class="btn ghost" href="index.html">VOLVER AL ARCADE</a>
+    </div>
+  </div>
+
+<script>
+const WORDS_BY_LEN = {
+  4: ['SAPO','LUNA','MESA','CASA','PATO','LOBO','RATA','TREN','NUBE','ROSA','LORO','SOPA','ISLA','MONO','GATO'],
+  5: ['PERRO','PIZZA','TIGRE','CEBRA','PLAYA','LIBRO','FLORA','NIEVE','VERDE','NEGRO','TORRE','CIELO','FUEGO','PLATO','SILLA','CAMPO','RATON'],
+  6: ['JIRAFA','CAMION','COHETE','ESCUDO','CASTOR','MEDICO','VOLCAN','PUENTE','MANTEL','CAMISA','ZAPATO','COMETA','MOLINO'],
+  7: ['PLANETA','BOTELLA','VENTANA','CARTERA','PANTERA','CORBATA','CANGURO','TORTUGA','ZAPALLO'],
+  8: ['ELEFANTE','PINGUINO','ESTRELLA','CASTILLO','MARIPOSA','CALABAZA','PARAGUAS','SOMBRERO'],
+  9: ['ZANAHORIA','COCODRILO','ARMADILLO','BICICLETA','CHOCOLATE','ESQUELETO']
+};
+const MAX_LEN = 9, MIN_LEN = 4;
+const MAX_LIVES = 3;
+const STORE_KEY = 'anagramasNeon.stats';
+
+let score = 0, round = 1, lives = MAX_LIVES, streak = 0;
+let answer = '', tileLetters = [], tileUsed = [], placed = [];
+let timeLeft = 0, timeTotal = 0, timerId = null, hintUsed = false, frozen = false;
+let recentByLen = {};
+let stats = loadStats();
+
+function loadStats(){
+  try{ const raw = localStorage.getItem(STORE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return { best: 0 };
+}
+function saveStats(){ localStorage.setItem(STORE_KEY, JSON.stringify(stats)); }
+
+function updateHud(){
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('hudRound').textContent = round;
+  document.getElementById('hudLives').textContent = '❤'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives);
+  document.getElementById('hudBest').textContent = stats.best;
+}
+
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 1200);
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function lengthForRound(r){
+  const tier = Math.min(MAX_LEN - MIN_LEN, Math.floor((r - 1) / 2));
+  return MIN_LEN + tier;
+}
+
+function pickWord(len){
+  const list = WORDS_BY_LEN[len];
+  const recent = recentByLen[len] || [];
+  let candidates = list.filter(w => !recent.includes(w));
+  if(candidates.length === 0) candidates = list;
+  const word = candidates[Math.floor(Math.random() * candidates.length)];
+  recent.push(word);
+  if(recent.length > 6) recent.shift();
+  recentByLen[len] = recent;
+  return word;
+}
+
+function timeForRound(len, r){
+  return Math.max(8, Math.round(9 + len * 1.5 - Math.min(r, 20) * 0.3));
+}
+
+function renderTray(){
+  const tray = document.getElementById('tray');
+  tray.innerHTML = '';
+  tileLetters.forEach((ch, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tile' + (tileUsed[i] ? ' used' : '');
+    btn.textContent = ch;
+    btn.type = 'button';
+    btn.addEventListener('click', () => placeTile(i));
+    tray.appendChild(btn);
+  });
+}
+function renderSlots(){
+  const wrap = document.getElementById('slots');
+  wrap.innerHTML = '';
+  for(let i = 0; i < answer.length; i++){
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    if(i < placed.length){
+      slot.classList.add('filled');
+      slot.textContent = tileLetters[placed[i]];
+    }
+    wrap.appendChild(slot);
+  }
+}
+
+function placeTile(i){
+  if(frozen || tileUsed[i] || placed.length >= answer.length) return;
+  tileUsed[i] = true;
+  placed.push(i);
+  renderTray();
+  renderSlots();
+  if(placed.length === answer.length) checkAnswer();
+}
+function removeLast(){
+  if(frozen || placed.length === 0) return;
+  const idx = placed.pop();
+  tileUsed[idx] = false;
+  renderTray();
+  renderSlots();
+}
+function clearAll(){
+  if(frozen) return;
+  while(placed.length) removeLast();
+}
+
+function checkAnswer(){
+  const attempt = placed.map(i => tileLetters[i]).join('');
+  if(attempt === answer){
+    correctAnswer();
+  }else{
+    const wrap = document.getElementById('slots');
+    wrap.classList.add('shake');
+    setTimeout(() => wrap.classList.remove('shake'), 400);
+    showToast('No es la palabra, ¡probá de nuevo!');
+    setTimeout(clearAll, 500);
+  }
+}
+
+function stopTimer(){
+  if(timerId){ clearInterval(timerId); timerId = null; }
+}
+function startTimer(){
+  stopTimer();
+  const fill = document.getElementById('timerFill');
+  timerId = setInterval(() => {
+    timeLeft -= 0.1;
+    if(timeLeft < 0) timeLeft = 0;
+    const pct = Math.max(0, (timeLeft / timeTotal) * 100);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('low', pct <= 45);
+    fill.classList.toggle('crit', pct <= 18);
+    if(timeLeft <= 0){
+      stopTimer();
+      timeUp();
+    }
+  }, 100);
+}
+
+function correctAnswer(){
+  stopTimer();
+  frozen = true;
+  document.querySelectorAll('.slot').forEach(s => s.classList.add('correct'));
+  const timeBonus = Math.round(timeLeft * 2);
+  const base = answer.length * 10;
+  const streakBonus = streak * 5;
+  const penalty = hintUsed ? 15 : 0;
+  const gained = Math.max(5, base + timeBonus + streakBonus - penalty);
+  score += gained;
+  streak++;
+  if(score > stats.best){ stats.best = score; saveStats(); }
+  updateHud();
+  showToast('¡Correcto! +' + gained + (streak > 1 ? ' (racha x' + streak + ')' : ''));
+  round++;
+  setTimeout(() => { frozen = false; setupRound(); }, 700);
+}
+
+function timeUp(){
+  frozen = true;
+  streak = 0;
+  lives--;
+  updateHud();
+  showToast('¡Se acabó el tiempo! Era "' + answer + '"');
+  setTimeout(() => {
+    frozen = false;
+    if(lives <= 0){ endGame(); }else{ setupRound(); }
+  }, 1100);
+}
+
+function setupRound(){
+  document.getElementById('hintBtn').disabled = false;
+  hintUsed = false;
+  const len = lengthForRound(round);
+  answer = pickWord(len);
+  let shuffled;
+  do{ shuffled = shuffle(answer.split('')); }while(shuffled.join('') === answer && answer.length > 1);
+  tileLetters = shuffled;
+  tileUsed = tileLetters.map(() => false);
+  placed = [];
+  renderTray();
+  renderSlots();
+  timeTotal = timeForRound(len, round);
+  timeLeft = timeTotal;
+  const fill = document.getElementById('timerFill');
+  fill.style.width = '100%';
+  fill.classList.remove('low', 'crit');
+  updateHud();
+  startTimer();
+}
+
+function useHint(){
+  if(frozen || hintUsed || placed.length >= answer.length) return;
+  hintUsed = true;
+  document.getElementById('hintBtn').disabled = true;
+  const nextIdx = placed.length;
+  const neededLetter = answer[nextIdx];
+  const tileIdx = tileLetters.findIndex((ch, i) => ch === neededLetter && !tileUsed[i]);
+  if(tileIdx !== -1){
+    placeTile(tileIdx);
+    showToast('Pista usada (-15 puntos si completás la ronda)');
+  }
+}
+
+function endGame(){
+  stopTimer();
+  frozen = true;
+  document.getElementById('endMsg').textContent = 'Llegaste a la ronda ' + round + ' con ' + score + ' puntos.';
+  document.getElementById('statScore').textContent = score;
+  document.getElementById('statRound').textContent = round;
+  document.getElementById('statBest').textContent = stats.best;
+  document.getElementById('endOverlay').classList.remove('hidden');
+}
+
+function newGame(){
+  score = 0; round = 1; lives = MAX_LIVES; streak = 0; frozen = false;
+  document.getElementById('endOverlay').classList.add('hidden');
+  updateHud();
+  setupRound();
+}
+
+document.addEventListener('keydown', (e) => {
+  if(!document.getElementById('startOverlay').classList.contains('hidden')) return;
+  if(!document.getElementById('endOverlay').classList.contains('hidden')) return;
+  if(frozen) return;
+  if(e.key === 'Backspace' || e.key === 'Delete'){ e.preventDefault(); removeLast(); return; }
+  const k = e.key.toUpperCase();
+  if(/^[A-Z]$/.test(k)){
+    const idx = tileLetters.findIndex((ch, i) => ch === k && !tileUsed[i]);
+    if(idx !== -1) placeTile(idx);
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ stopTimer(); }
+  else if(!frozen && answer && document.getElementById('startOverlay').classList.contains('hidden') && document.getElementById('endOverlay').classList.contains('hidden')){ startTimer(); }
+});
+
+document.getElementById('clearBtn').addEventListener('click', clearAll);
+document.getElementById('hintBtn').addEventListener('click', useHint);
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('startOverlay').classList.add('hidden');
+  newGame();
+});
+document.getElementById('retryBtn').addEventListener('click', newGame);
+
+updateHud();
+</script>
+</body>
+</html>

@@ -156,6 +156,13 @@
       controles: "Teclado", fecha: "2026-08-08",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     },
+    {
+      id: "anagramas", titulo: "Anagramas", archivo: "anagramas.html",
+      emoji: "🔀", categoria: "palabras", tags: ["anagrama", "contrarreloj", "letras", "vidas"],
+      desc: "Las letras están desordenadas: armá la palabra antes de que se acabe el tiempo. 3 vidas y palabras cada vez más largas.",
+      controles: "Click / toque o teclado", fecha: "2026-08-09",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
 
     {
       id: "brain-test", titulo: "Big Brain", archivo: "brain-test.html",
