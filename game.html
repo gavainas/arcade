@@ -292,29 +292,50 @@
     (le pasaba al selector de minijuegos de Big Brain en el celular). Acá medimos el
     contenido real y estiramos el marco lo necesario: el scroll lo hace la página.
   */
+  var altoBase = 0;       // alto del marco sin estirar
   var altoAplicado = 0;   // el marco solo crece: achicarlo a mitad de partida saltaría la página
+  var estirones = 0;      // freno por si un juego crece cada vez que lo agrandamos
+
+  /*
+    Alto real del juego, medido SIN tocar el marco: hasta dónde llega su último
+    bloque. No se puede usar scrollHeight, porque los juegos miden 100vh y eso
+    devuelve siempre el alto del marco; habría que achicar el marco para medir y
+    volver a agrandarlo, y ese achicar-y-restaurar en cada medición le rompía el
+    dibujado a los juegos con animación 3D en Safari (las cartas del memory
+    desaparecían).
+  */
+  function altoContenido(doc){
+    var vista = doc.defaultView, cuerpo = doc.body;
+    var origen = doc.documentElement.getBoundingClientRect().top;
+    var fin = 0;
+    for (var i = 0; i < cuerpo.children.length; i++){
+      var el = cuerpo.children[i];
+      var cs = vista.getComputedStyle(el);
+      if (cs.position === "fixed" || cs.display === "none") continue;  // fondos y adornos
+      var r = el.getBoundingClientRect();
+      if (r.height) fin = Math.max(fin, r.bottom - origen);
+    }
+    var cs2 = vista.getComputedStyle(cuerpo);
+    return Math.ceil(fin + (parseFloat(cs2.paddingBottom) || 0) + (parseFloat(cs2.marginBottom) || 0));
+  }
 
   function ajustarAlto(){
     if (document.fullscreenElement) return;
     var doc;
     try { doc = frame.contentDocument; } catch (_){ return; }   // otro origen: no se puede medir
     if (!doc || !doc.body) return;
+    if (!altoBase) altoBase = stage.clientHeight;
 
-    // Se mide con el marco en su alto base: los juegos usan 100vh, así que medirlos
-    // ya estirados devolvería siempre el alto actual y nunca bajaría.
-    var previo = stage.style.getPropertyValue("--alto-juego");
-    stage.style.removeProperty("--alto-juego");
-    var base = stage.clientHeight;
-    var contenido = Math.ceil(Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight));
-    if (previo) stage.style.setProperty("--alto-juego", previo);
+    var necesario = Math.max(altoContenido(doc), altoAplicado);
+    // Tope: si un juego siempre pide un poco más de lo que le damos, se corta acá.
+    if (necesario > altoBase * 3 || estirones > 12) return;
 
-    var necesario = Math.max(contenido, altoAplicado);
-    if (necesario > base + 2){
+    // Solo se escribe cuando el valor cambia: si el juego ya entra, no se toca nada
+    // y no hay resize del marco mientras se juega.
+    if (necesario > altoBase + 2 && necesario > altoAplicado + 2){
       altoAplicado = necesario;
+      estirones++;
       stage.style.setProperty("--alto-juego", necesario + "px");
-    } else if (previo){
-      altoAplicado = 0;
-      stage.style.removeProperty("--alto-juego");
     }
   }
 
@@ -333,14 +354,14 @@
   }
   // Al recargar el juego o cambiar el tamaño de la ventana se recalcula desde cero.
   function recalcularDesdeCero(){
-    altoAplicado = 0;
+    altoAplicado = 0; estirones = 0;
     stage.style.removeProperty("--alto-juego");
+    altoBase = stage.clientHeight;
     pedirAjuste();
   }
 
   frame.addEventListener("load", function(){
-    altoAplicado = 0;
-    stage.style.removeProperty("--alto-juego");
+    recalcularDesdeCero();
     // Mismo origen: podemos ocultar el "← ARCADE" propio del juego, que acá
     // queda redundante, sin tener que editar los 23 archivos.
     try {
