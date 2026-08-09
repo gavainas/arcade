@@ -3,78 +3,435 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEON ARCADE · Minijuegos</title>
+<title>Neon Arcade · Minijuegos para jugar en el navegador</title>
+<meta name="description" content="Colección de minijuegos HTML5 gratis: arcade, puzzle, palabras, deportes y reflejos. Sin instalar nada, andan en celu y compu.">
+<meta property="og:title" content="Neon Arcade · Minijuegos">
+<meta property="og:description" content="Minijuegos gratis para jugar en el navegador. Arcade, puzzle, palabras y más.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
 <style>
   :root{
-    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
-    --green:#39ff9e; --gold:#ffd23b; --ink:#e8f6ff; --muted:#7fa6c8;
+    /* Base más sobria: el color fuerte ahora lo aportan las miniaturas */
+    --bg:#080b15;
+    --bg-soft:#0d1222;
+    --surface:#141b2e;
+    --surface-2:#1b2440;
+    --border:rgba(255,255,255,.07);
+    --border-strong:rgba(255,255,255,.14);
+    --ink:#e9f0fb;
+    --muted:#8ea4c2;
+    --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff; --green:#39ff9e; --gold:#ffd23b;
+    --radius:14px;
+    --shadow:0 8px 28px rgba(0,0,0,.45);
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{min-height:100%;}
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
   body{
-    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
-    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
-    min-height:100vh; padding:48px 20px 80px; overflow-x:hidden;
+    background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    min-height:100vh; overflow-x:hidden; line-height:1.5;
   }
+  /* Resplandor suave arriba, sin la grilla neón a pantalla completa */
   body::before{
-    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    content:""; position:fixed; inset:0 0 auto; height:520px; z-index:0; pointer-events:none;
     background:
-      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
-      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
-    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+      radial-gradient(60% 100% at 20% 0%, rgba(138,75,255,.18), transparent 70%),
+      radial-gradient(50% 100% at 80% 0%, rgba(39,232,255,.14), transparent 70%);
   }
-  .stage{position:relative; z-index:1; max-width:980px; margin:0 auto;}
-  header{text-align:center; margin-bottom:14px;}
-  .logo{
-    font-size:clamp(40px,9vw,76px); font-weight:900; letter-spacing:4px; line-height:1;
-    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple),var(--cyan));
-    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
-    animation:shine 6s linear infinite;
-    filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  .wrap{position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:0 20px;}
+
+  /* ---------- Barra superior ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(8,11,21,.82); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
   }
-  @keyframes shine{to{background-position:300% center;}}
-  .sub{margin-top:10px; color:var(--pink); font-weight:600; letter-spacing:6px; font-size:13px;}
-  .tagline{margin-top:8px; color:var(--muted); font-size:14px;}
-  .grid{margin-top:42px; display:grid; gap:22px; grid-template-columns:repeat(auto-fill, minmax(240px,1fr));}
-  .card{position:relative; display:flex; flex-direction:column; border-radius:18px; overflow:hidden; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 30px rgba(0,0,0,.45); text-decoration:none; color:inherit; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;}
-  .card.live:hover{transform:translateY(-6px); border-color:var(--cyan); box-shadow:0 16px 40px rgba(0,0,0,.55), 0 0 30px rgba(39,232,255,.3);}
-  .thumb{height:150px; display:flex; align-items:center; justify-content:center; position:relative; background:radial-gradient(circle at 50% 40%, rgba(39,232,255,.12), transparent 70%),linear-gradient(180deg,#0a1024,#05070f); font-size:74px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5));}
-  .thumb .glyph{animation:float 4s ease-in-out infinite;}
-  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
-  .body{padding:16px 18px 20px;}.title{font-size:19px; font-weight:800; letter-spacing:.5px;}.desc{margin-top:6px; font-size:13px; color:var(--muted); line-height:1.45; min-height:36px;}.row{margin-top:14px; display:flex; align-items:center; justify-content:space-between;}.tag{font-size:11px; letter-spacing:1px; padding:4px 10px; border-radius:999px; font-weight:700;}.tag.new{color:#031018; background:var(--green);}.play{font-size:13px; font-weight:800; color:var(--cyan); letter-spacing:.5px;}
-  footer{margin-top:54px; text-align:center; color:var(--muted); font-size:12px; line-height:1.7;}
+  .topbar .wrap{display:flex; align-items:center; gap:18px; height:62px;}
+  .brand{display:flex; align-items:center; gap:9px; text-decoration:none; color:inherit; flex-shrink:0;}
+  .brand .mark{font-size:22px; filter:drop-shadow(0 0 10px rgba(39,232,255,.6));}
+  .brand .name{
+    font-size:19px; font-weight:900; letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .search{position:relative; flex:1; max-width:420px; margin-left:auto;}
+  .search input{
+    width:100%; height:38px; padding:0 36px 0 38px; border-radius:999px;
+    border:1px solid var(--border-strong); background:var(--surface); color:var(--ink);
+    font-size:14px; font-family:inherit; outline:none; transition:border-color .15s, background .15s;
+  }
+  .search input::placeholder{color:var(--muted);}
+  .search input:focus{border-color:var(--cyan); background:var(--surface-2);}
+  .search .ico{position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:14px; opacity:.6; pointer-events:none;}
+  .search .clear{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    border:none; background:transparent; color:var(--muted); cursor:pointer;
+    font-size:16px; padding:6px; line-height:1; display:none;
+  }
+  .search.has-value .clear{display:block;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:34px 0 8px;}
+  .hero-inner{
+    display:grid; grid-template-columns:1.15fr 1fr; gap:26px; align-items:center;
+    background:linear-gradient(120deg, var(--surface) 0%, var(--bg-soft) 100%);
+    border:1px solid var(--border); border-radius:22px; padding:26px; box-shadow:var(--shadow);
+  }
+  .hero-copy .eyebrow{
+    font-size:11px; font-weight:800; letter-spacing:2px; color:var(--gold); margin-bottom:10px;
+  }
+  .hero-copy h1{font-size:clamp(24px,3.6vw,38px); font-weight:900; letter-spacing:-.5px; line-height:1.1;}
+  .hero-copy p{margin-top:12px; color:var(--muted); font-size:15px; max-width:46ch;}
+  .hero-meta{display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;}
+  .hero-actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer; text-decoration:none;
+    border:none; border-radius:999px; padding:12px 24px; font-size:14px; font-weight:800;
+    font-family:inherit; letter-spacing:.3px; transition:transform .14s, box-shadow .14s, background .14s;
+  }
+  .btn-primary{color:#04121b; background:linear-gradient(90deg,var(--green),var(--cyan)); box-shadow:0 8px 22px rgba(39,232,255,.28);}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 12px 28px rgba(39,232,255,.4);}
+  .btn-ghost{color:var(--ink); background:rgba(255,255,255,.06); border:1px solid var(--border-strong);}
+  .btn-ghost:hover{background:rgba(255,255,255,.1);}
+  .hero-art{position:relative; border-radius:16px; overflow:hidden; border:1px solid var(--border-strong); aspect-ratio:6/5; background:var(--bg-soft);}
+  .hero-art img{width:100%; height:100%; object-fit:cover; display:block;}
+
+  /* ---------- Filtros ---------- */
+  .toolbar{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:26px 0 16px; position:sticky; top:62px; z-index:40;
+    background:linear-gradient(180deg, var(--bg) 72%, transparent);
+  }
+  .chips{display:flex; gap:8px; overflow-x:auto; flex:1; padding-bottom:4px; scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0; cursor:pointer; border-radius:999px; padding:8px 15px; font-size:13px; font-weight:700;
+    background:var(--surface); color:var(--muted); border:1px solid var(--border);
+    font-family:inherit; transition:background .14s, color .14s, border-color .14s;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .chip:hover{color:var(--ink); border-color:var(--border-strong);}
+  .chip.active{background:var(--chip-accent,var(--cyan)); color:#06111c; border-color:transparent;}
+  .chip .n{opacity:.65; font-weight:600; font-size:11px;}
+  .sortsel{
+    flex-shrink:0; height:36px; border-radius:10px; padding:0 12px; cursor:pointer;
+    background:var(--surface); color:var(--ink); border:1px solid var(--border);
+    font-size:13px; font-family:inherit; outline:none;
+  }
+
+  /* ---------- Secciones ---------- */
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:26px 0 14px;}
+  .section-head h2{font-size:19px; font-weight:800; letter-spacing:-.2px;}
+  .section-head .hint{font-size:12px; color:var(--muted);}
+
+  /* ---------- Grilla ---------- */
+  .grid{display:grid; gap:18px; grid-template-columns:repeat(auto-fill,minmax(216px,1fr));}
+  .card{
+    position:relative; display:flex; flex-direction:column; text-decoration:none; color:inherit;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    overflow:hidden; transition:transform .16s, border-color .16s, box-shadow .16s;
+  }
+  .card::before{
+    content:""; position:absolute; inset:0 0 auto; height:3px; z-index:2;
+    background:var(--accent); opacity:.85;
+  }
+  .card:hover{transform:translateY(-5px); border-color:var(--accent); box-shadow:0 14px 34px rgba(0,0,0,.5);}
+  .shot{position:relative; aspect-ratio:6/5; overflow:hidden; background:var(--bg-soft);}
+  .shot img{position:relative; z-index:1; width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s ease;}
+  .card:hover .shot img{transform:scale(1.06);}
+  /* Queda debajo de la miniatura: sólo se ve si la imagen todavía no existe. */
+  .shot .fallback{
+    position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center;
+    font-size:52px; background:radial-gradient(circle at 50% 40%, rgba(39,232,255,.12), transparent 70%);
+  }
+  .badges{position:absolute; top:9px; left:9px; display:flex; gap:6px; z-index:2;}
+  .badge{
+    font-size:10px; font-weight:800; letter-spacing:.8px; padding:3px 8px; border-radius:999px;
+    background:var(--green); color:#04121b;
+  }
+  .badge.hot{background:var(--gold);}
+  .card-body{padding:12px 14px 14px; display:flex; flex-direction:column; flex:1;}
+  .card-title{font-size:15px; font-weight:800; letter-spacing:-.1px; display:flex; align-items:center; gap:7px;}
+  .card-title .emo{font-size:15px;}
+  .card-desc{margin-top:5px; font-size:12.5px; color:var(--muted); line-height:1.45; flex:1;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .card-foot{margin-top:11px; display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .cat-pill{font-size:10.5px; font-weight:700; letter-spacing:.4px; color:var(--accent);
+    background:color-mix(in srgb, var(--accent) 14%, transparent); padding:3px 9px; border-radius:999px;}
+  .play{font-size:12px; font-weight:800; color:var(--ink); opacity:.75;}
+
+  .empty{text-align:center; padding:60px 20px; color:var(--muted);}
+  .empty .big{font-size:44px; margin-bottom:12px;}
+
+  footer{margin-top:56px; padding:30px 0 50px; border-top:1px solid var(--border); text-align:center; color:var(--muted); font-size:12.5px; line-height:1.9;}
+  footer a{color:var(--cyan); text-decoration:none;}
+
+  @media (max-width:760px){
+    .hero-inner{grid-template-columns:1fr; padding:18px;}
+    .hero-art{order:-1;}
+    .brand .name{display:none;}
+    .search{max-width:none;}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:13px;}
+    .card-desc{-webkit-line-clamp:2; font-size:12px;}
+    /* El selector va arriba en su propia línea; así los chips usan todo el ancho
+       y se ve que la fila scrollea, en vez de quedar un chip cortado al costado. */
+    .toolbar{top:62px; gap:10px; padding-top:20px;}
+    .sortsel{order:1; margin-left:auto;}
+    .chips{order:2; flex-basis:100%;}
+  }
 </style>
 </head>
 <body>
-  <div class="stage">
-    <header><div class="logo">NEON ARCADE</div><div class="sub">M I N I J U E G O S</div><div class="tagline">Una colección de juegos hechos para jugar en el navegador.</div></header>
-    <main class="grid" id="grid">
-      <a class="card live" href="serpiente-neon.html"><div class="thumb"><span class="glyph">🐍</span></div><div class="body"><div class="title">Serpiente Neón</div><div class="desc">Snake con portales en los bordes y frutas especiales: doradas, hielo y cortes. Crecé sin morder tu cola.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="rompebloques.html"><div class="thumb"><span class="glyph">🧱</span></div><div class="body"><div class="title">Rompebloques</div><div class="desc">Breakout con power-ups: multi-bola, paleta gigante y bola de fuego. Rompé todos los bloques y subí de nivel.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="cambio-color.html"><div class="thumb"><span class="glyph">🌀</span></div><div class="body"><div class="title">Cambio de Color</div><div class="desc">Un toque para saltar. Cruzá los aros que giran pasando sólo por el color de tu bolita. Reflejos puros.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="sopa-letras.html"><div class="thumb"><span class="glyph">🔤</span></div><div class="body"><div class="title">Sopa de Letras</div><div class="desc">Para peques: encontrá las palabras escondidas deslizando el dedo. Temas, 3 niveles y pistas.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="vector-pilot.html"><div class="thumb"><span class="glyph">🚀</span></div><div class="body"><div class="title">Vector Pilot</div><div class="desc">Aplicá vectores de impulso, dominá la gravedad y guiá la nave hasta el portal.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="knight-quest.html"><div class="thumb"><span class="glyph">♞</span></div><div class="body"><div class="title">Knight Quest</div><div class="desc">Saltá en L, esquivá a las piezas de ajedrez que te persiguen y subí lo más alto posible.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="brain-test.html"><div class="thumb"><span class="glyph">🧠</span></div><div class="body"><div class="title">Big Brain</div><div class="desc">Cálculo, memoria, visión y lógica contra reloj. ¿Qué tan grande es tu cerebro?</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="head-soccer.html"><div class="thumb"><span class="glyph">⚽</span></div><div class="body"><div class="title">Neon Heads</div><div class="desc">Fútbol cabezón: 1 jugador vs CPU o 2 jugadores. Cabezazos, saltos y patadas al arco.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="invasion-neon.html"><div class="thumb"><span class="glyph">👾</span></div><div class="body"><div class="title">Invasión Neón</div><div class="desc">Space invaders con oleadas cada vez más rápidas y un jefe con barra de vida cada 3 oleadas.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="pong-turbo.html"><div class="thumb"><span class="glyph">🏓</span></div><div class="body"><div class="title">Pong Turbo</div><div class="desc">Pong vs CPU o de a 2, con power-ups que agrandan/achican paletas y curvan la pelota.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="asteroides.html"><div class="thumb"><span class="glyph">☄️</span></div><div class="body"><div class="title">Asteroides</div><div class="desc">Nave con inercia y rotación real: volá las rocas antes de que te choquen y mirá cómo se parten en pedazos más chicos.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="cruza-la-avenida.html"><div class="thumb"><span class="glyph">🐸</span></div><div class="body"><div class="title">Cruzá la Avenida</div><div class="desc">Estilo Frogger: cruzá carriles de tráfico neón cada vez más rápido y llegá a la meta.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="bloques-neon.html"><div class="thumb"><span class="glyph">🟣</span></div><div class="body"><div class="title">Bloques Neón</div><div class="desc">Piezas que caen estilo tetromino: armá líneas completas antes de que lleguen al tope.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="2048-neon.html"><div class="thumb"><span class="glyph">🔢</span></div><div class="body"><div class="title">2048 Neón</div><div class="desc">Deslizá y fusioná fichas iguales hasta llegar a 2048. Con teclado o swipe.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="buscaminas.html"><div class="thumb"><span class="glyph">💣</span></div><div class="body"><div class="title">Buscaminas</div><div class="desc">Buscaminas clásico con 3 dificultades y banderitas con toque largo en mobile.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="memoria.html"><div class="thumb"><span class="glyph">🃏</span></div><div class="body"><div class="title">Memoria Neón</div><div class="desc">Encontrá las parejas de cartas contra reloj: cada nivel trae más cartas y menos tiempo.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="laberinto.html"><div class="thumb"><span class="glyph">🌀</span></div><div class="body"><div class="title">Laberinto</div><div class="desc">Laberintos generados al azar con una linterna de visión limitada, contra reloj. Memorizá el camino antes de que se acabe el tiempo.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="nonograma.html"><div class="thumb"><span class="glyph">🎨</span></div><div class="body"><div class="title">Nonograma</div><div class="desc">Picross neón: pintá las celdas según las pistas numéricas y revelá el dibujo oculto. 8 niveles de dificultad creciente.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="torre.html"><div class="thumb"><span class="glyph">🗼</span></div><div class="body"><div class="title">Torre</div><div class="desc">Apilá bloques que se mueven como un péndulo: lo que sobresale se corta. Encadená bloques perfectos para no perder ancho.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="4-en-linea.html"><div class="thumb"><span class="glyph">🔴</span></div><div class="body"><div class="title">4 en Línea</div><div class="desc">Cuatro en línea contra una CPU con 3 niveles de dificultad, o de a dos jugadores en el mismo dispositivo.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="palabra-secreta.html"><div class="thumb"><span class="glyph">📗</span></div><div class="body"><div class="title">Palabra Secreta</div><div class="desc">Estilo Wordle en español: adiviná la palabra de 5 letras en 6 intentos. Modo infinito con racha guardada.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="ahorcado.html"><div class="thumb"><span class="glyph">🪢</span></div><div class="body"><div class="title">Ahorcado Neón</div><div class="desc">Ahorcado con categorías (animales, países, comida) y un muñeco de neón que se dibuja con cada error.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-      <a class="card live" href="tipeo-turbo.html"><div class="thumb"><span class="glyph">⌨️</span></div><div class="body"><div class="title">Tipeo Turbo</div><div class="desc">Palabras que caen del cielo: escribilas antes de que toquen el piso. La velocidad sube en cada nivel.</div><div class="row"><span class="tag new">NUEVO</span><span class="play">JUGAR ▶</span></div></div></a>
-    </main>
-    <footer>Hecho con ♥ y mucho neón · <span id="count"></span><br>Más juegos en camino.</footer>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="mark">🕹️</span><span class="name">NEON ARCADE</span></a>
+    <div class="search" id="searchWrap">
+      <span class="ico">🔎</span>
+      <input id="q" type="search" placeholder="Buscar juego, género o palabra clave…" autocomplete="off" aria-label="Buscar juegos">
+      <button class="clear" id="clearBtn" aria-label="Limpiar búsqueda">✕</button>
+    </div>
   </div>
-<script>const live=document.querySelectorAll('.card.live').length;document.getElementById('count').textContent=live+(live===1?' juego disponible':' juegos disponibles');</script>
+</div>
+
+<div class="wrap">
+
+  <section class="hero" id="hero"></section>
+
+  <div class="toolbar">
+    <div class="chips" id="chips"></div>
+    <select class="sortsel" id="sort" aria-label="Ordenar">
+      <option value="destacados">Destacados</option>
+      <option value="nuevos">Más nuevos</option>
+      <option value="jugados">Más jugados</option>
+      <option value="az">A → Z</option>
+    </select>
+  </div>
+
+  <section id="recentSection" hidden>
+    <div class="section-head"><h2>Seguí jugando</h2><span class="hint">Lo último que abriste en este dispositivo</span></div>
+    <div class="grid" id="recentGrid"></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2 id="listTitle">Todos los juegos</h2><span class="hint" id="listCount"></span></div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>
+      <div class="big">🕹️</div>
+      <p>No encontramos nada con esa búsqueda.</p>
+    </div>
+  </section>
+
+  <footer>
+    Hecho con ♥ y mucho neón · <span id="total"></span><br>
+    Todo corre en tu navegador, sin instalar nada. <a href="https://github.com/gavainas/arcade">Código en GitHub</a>
+  </footer>
+</div>
+
+<script src="games.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var GAMES = window.NEON_GAMES || [];
+  var CATS  = window.NEON_CATEGORIAS || {};
+
+  var LS_PLAYS = "neonArcade.plays";
+  var LS_RECENT = "neonArcade.recent";
+
+  function readJSON(key, fallback){
+    try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+    catch(_){ return fallback; }
+  }
+  function writeJSON(key, val){
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(_){}
+  }
+
+  var plays = readJSON(LS_PLAYS, {});
+  var recent = readJSON(LS_RECENT, []);
+
+  // "Nuevo" = los 4 más recientes del catálogo. Con una ventana de días el badge
+  // terminaba en media grilla y dejaba de significar algo.
+  var IDS_NUEVOS = GAMES.slice()
+    .sort(function(a,b){ return (b.fecha||"").localeCompare(a.fecha||""); })
+    .slice(0, 4)
+    .reduce(function(set,g){ set[g.id] = true; return set; }, {});
+  function esNuevo(g){ return !!IDS_NUEVOS[g.id]; }
+  function accent(g){ return (CATS[g.categoria] || {}).color || "#27e8ff"; }
+  function catName(g){ return (CATS[g.categoria] || {}).nombre || g.categoria; }
+
+  var estado = { cat: "todos", q: "", sort: "destacados" };
+
+  // Sin acentos y en minúscula, para que "invasion" encuentre "Invasión".
+  function normalizar(s){
+    return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  }
+  // Todas las palabras del query tienen que aparecer en algún lado.
+  function coincideFlexible(g, q){
+    if (!q) return true;
+    var heno = normalizar([g.titulo, g.desc, catName(g), (g.tags||[]).join(" ")].join(" "));
+    return normalizar(q).split(/\s+/).filter(Boolean).every(function(t){ return heno.indexOf(t) !== -1; });
+  }
+
+  function ordenar(lista){
+    var l = lista.slice();
+    if (estado.sort === "az")      l.sort(function(a,b){ return a.titulo.localeCompare(b.titulo, "es"); });
+    else if (estado.sort === "nuevos")  l.sort(function(a,b){ return (b.fecha||"").localeCompare(a.fecha||""); });
+    else if (estado.sort === "jugados") l.sort(function(a,b){ return (plays[b.id]||0) - (plays[a.id]||0) || (b.fecha||"").localeCompare(a.fecha||""); });
+    else {
+      // Destacados: primero lo más jugado por vos, después lo más nuevo.
+      l.sort(function(a,b){
+        var d = (plays[b.id]||0) - (plays[a.id]||0);
+        return d !== 0 ? d : (b.fecha||"").localeCompare(a.fecha||"");
+      });
+    }
+    return l;
+  }
+
+  function tarjeta(g){
+    var a = document.createElement("a");
+    a.className = "card";
+    a.href = g.archivo;
+    a.style.setProperty("--accent", accent(g));
+
+    var nuevo = esNuevo(g);
+    var jugado = plays[g.id] || 0;
+
+    a.innerHTML =
+      '<div class="shot">' +
+        '<div class="fallback">' + g.emoji + '</div>' +
+        '<img loading="lazy" alt="' + g.titulo + '" src="thumbs/' + g.id + '.jpg">' +
+        '<div class="badges">' +
+          (nuevo ? '<span class="badge">NUEVO</span>' : '') +
+          (jugado >= 3 ? '<span class="badge hot">TUYO ★</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-title"><span class="emo">' + g.emoji + '</span>' + g.titulo + '</div>' +
+        '<div class="card-desc">' + g.desc + '</div>' +
+        '<div class="card-foot">' +
+          '<span class="cat-pill">' + catName(g) + '</span>' +
+          '<span class="play">JUGAR ▶</span>' +
+        '</div>' +
+      '</div>';
+
+    // Si la miniatura no existe todavía, queda el emoji de fondo.
+    var img = a.querySelector("img");
+    img.addEventListener("error", function(){ img.remove(); });
+
+    a.addEventListener("click", function(){ registrarJugada(g.id); });
+    return a;
+  }
+
+  function registrarJugada(id){
+    plays[id] = (plays[id] || 0) + 1;
+    writeJSON(LS_PLAYS, plays);
+    recent = [id].concat(recent.filter(function(x){ return x !== id; })).slice(0, 8);
+    writeJSON(LS_RECENT, recent);
+  }
+
+  function pintarChips(){
+    var cont = document.getElementById("chips");
+    cont.innerHTML = "";
+    var defs = [{ key:"todos", nombre:"Todos", emoji:"✨", color:"#27e8ff", n:GAMES.length }];
+    Object.keys(CATS).forEach(function(k){
+      var n = GAMES.filter(function(g){ return g.categoria === k; }).length;
+      if (n) defs.push({ key:k, nombre:CATS[k].nombre, emoji:CATS[k].emoji, color:CATS[k].color, n:n });
+    });
+    defs.forEach(function(d){
+      var b = document.createElement("button");
+      b.className = "chip" + (estado.cat === d.key ? " active" : "");
+      b.style.setProperty("--chip-accent", d.color);
+      b.innerHTML = d.emoji + " " + d.nombre + ' <span class="n">' + d.n + "</span>";
+      b.addEventListener("click", function(){ estado.cat = d.key; pintarChips(); pintar(); });
+      cont.appendChild(b);
+    });
+  }
+
+  function pintarHero(){
+    // Destacado = el juego más nuevo del catálogo.
+    var g = GAMES.slice().sort(function(a,b){ return (b.fecha||"").localeCompare(a.fecha||""); })[0];
+    if (!g) return;
+    var hero = document.getElementById("hero");
+    hero.innerHTML =
+      '<div class="hero-inner">' +
+        '<div class="hero-copy">' +
+          '<div class="eyebrow">★ ÚLTIMO AGREGADO</div>' +
+          '<h1>' + g.emoji + " " + g.titulo + '</h1>' +
+          '<p>' + g.desc + '</p>' +
+          '<div class="hero-meta">' +
+            '<span class="cat-pill" style="--accent:' + accent(g) + '">' + catName(g) + '</span>' +
+            '<span class="cat-pill" style="--accent:#8ea4c2">' + g.controles + '</span>' +
+          '</div>' +
+          '<div class="hero-actions">' +
+            '<a class="btn btn-primary" href="' + g.archivo + '" id="heroPlay">JUGAR AHORA ▶</a>' +
+            '<a class="btn btn-ghost" href="#listTitle">Ver los ' + GAMES.length + ' juegos</a>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hero-art"><img alt="' + g.titulo + '" src="thumbs/' + g.id + '.jpg"></div>' +
+      '</div>';
+    var hp = document.getElementById("heroPlay");
+    if (hp) hp.addEventListener("click", function(){ registrarJugada(g.id); });
+  }
+
+  function pintarRecientes(){
+    var sec = document.getElementById("recentSection");
+    var grid = document.getElementById("recentGrid");
+    var lista = recent
+      .map(function(id){ return GAMES.filter(function(g){ return g.id === id; })[0]; })
+      .filter(Boolean)
+      .slice(0, 4);
+    if (!lista.length){ sec.hidden = true; return; }
+    sec.hidden = false;
+    grid.innerHTML = "";
+    lista.forEach(function(g){ grid.appendChild(tarjeta(g)); });
+  }
+
+  function pintar(){
+    var lista = GAMES.filter(function(g){
+      return (estado.cat === "todos" || g.categoria === estado.cat) && coincideFlexible(g, estado.q);
+    });
+    lista = ordenar(lista);
+
+    var grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    lista.forEach(function(g){ grid.appendChild(tarjeta(g)); });
+
+    document.getElementById("empty").hidden = lista.length > 0;
+    document.getElementById("listTitle").textContent =
+      estado.q ? 'Resultados para "' + estado.q + '"'
+               : (estado.cat === "todos" ? "Todos los juegos" : CATS[estado.cat].nombre);
+    document.getElementById("listCount").textContent =
+      lista.length + (lista.length === 1 ? " juego" : " juegos");
+  }
+
+  // ---------- Eventos ----------
+  var q = document.getElementById("q");
+  var searchWrap = document.getElementById("searchWrap");
+  q.addEventListener("input", function(){
+    estado.q = q.value.trim();
+    searchWrap.classList.toggle("has-value", !!estado.q);
+    pintar();
+  });
+  document.getElementById("clearBtn").addEventListener("click", function(){
+    q.value = ""; estado.q = ""; searchWrap.classList.remove("has-value"); pintar(); q.focus();
+  });
+  document.getElementById("sort").addEventListener("change", function(e){
+    estado.sort = e.target.value; pintar();
+  });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "/" && document.activeElement !== q){ e.preventDefault(); q.focus(); }
+    if (e.key === "Escape" && document.activeElement === q){ q.blur(); }
+  });
+
+  // ---------- Arranque ----------
+  document.getElementById("total").textContent =
+    GAMES.length + (GAMES.length === 1 ? " juego disponible" : " juegos disponibles");
+  pintarHero();
+  pintarChips();
+  pintarRecientes();
+  pintar();
+})();
+</script>
 </body>
 </html>

@@ -57,9 +57,37 @@ Pensado para los más chicos:
 
 El prompt maestro para continuar el desarrollo está en [`VECTOR_PILOT_PROMPT.md`](VECTOR_PILOT_PROMPT.md).
 
+## Cómo está armado el portal
+
+El catálogo vive en **[`games.js`](games.js)**, que es la única fuente de verdad: `index.html`
+arma el destacado, los filtros por categoría, el buscador y la grilla leyendo ese archivo.
+No hay tarjetas escritas a mano en el HTML.
+
+Cada juego declara `id`, `titulo`, `archivo`, `categoria`, `tags`, `desc`, `controles`,
+`fecha`, y los campos de atribución `origen` / `autor` / `licencia` (pensados para cuando
+sumemos juegos de terceros, donde la licencia es obligatoria).
+
+Las miniaturas de `thumbs/` se generan solas con **[`tools/thumbs.js`](tools/thumbs.js)**:
+abre cada juego en un Chromium headless, entra al gameplay y saca la foto.
+
+```bash
+node tools/thumbs.js              # sólo las que falten
+node tools/thumbs.js --force      # regenerar todas
+node tools/thumbs.js torre 2048-neon   # sólo esos juegos
+```
+
+Algunos juegos necesitan ayuda para llegar al gameplay (menús dentro del canvas, botones
+que aparecen recién al elegir dificultad, partidas que terminan solas en un segundo). Eso
+se configura por juego en el objeto `OVERRIDES` del script.
+
+El portal guarda en `localStorage` cuántas veces abriste cada juego, para ordenar por
+"Más jugados" y armar la fila "Seguí jugando". No se manda nada a ningún servidor.
+
 ## Agregar un juego nuevo
 
-1. Sumá `mi-juego.html` en la raíz.
-2. Duplicá una tarjeta `.card.live` en `index.html` apuntando al nuevo archivo.
+1. Sumá `mi-juego.html` en la raíz (un solo archivo autocontenido, sin dependencias).
+2. Agregá su entrada al final de `NEON_GAMES` en `games.js`.
+3. Corré `node tools/thumbs.js` para generar la miniatura.
 
-Todo es estático: se puede hostear en GitHub Pages, Vercel, Netlify o cualquier servidor de archivos.
+No hace falta tocar `index.html`. Todo es estático: se puede hostear en GitHub Pages,
+Vercel, Netlify o cualquier servidor de archivos.

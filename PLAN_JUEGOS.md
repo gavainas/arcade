@@ -69,6 +69,9 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 
 ## Reglas para el juego del día
 
+- Registrar el juego en `games.js` (una entrada en `NEON_GAMES`) y correr
+  `node tools/thumbs.js` para generar su miniatura. **No se editan tarjetas a mano en
+  `index.html`:** la home se arma sola desde el catálogo.
 - Un solo archivo `.html` auto-contenido (HTML + CSS + JS inline, canvas, sin dependencias).
 - Jugable con teclado **y** táctil/mouse (mobile-first).
 - Pantalla de inicio, game over, puntaje y récord guardado en `localStorage`.
@@ -82,7 +85,8 @@ GitHub Pages sirve este arcade desde la rama **`main`** (modo *Deploy from a bra
 
 La corrida de la rutina **no finaliza** hasta cumplir TODO esto:
 
-1. Commitear el juego nuevo + `index.html` + `README.md` + este `PLAN_JUEGOS.md` (fila ✅).
+1. Commitear el juego nuevo + su entrada en `games.js` + su miniatura en `thumbs/`
+   + `README.md` + este `PLAN_JUEGOS.md` (fila ✅).
 2. Pushear a la rama de trabajo designada.
 3. **Llevar los cambios a `main`** (fast-forward/merge) y pushear `main`, para que el
    deploy de GitHub Pages los tome. Este paso es el que hace que el juego quede live.
