@@ -80,7 +80,8 @@
     border:1px solid var(--border-strong); border-radius:18px; overflow:hidden;
     box-shadow:0 16px 44px rgba(0,0,0,.5);
     width:min(100%, 560px);
-    height:clamp(520px, calc(100vh - 250px), 840px);
+    /* --alto-juego lo calcula el script cuando el juego es más alto que el marco. */
+    height:var(--alto-juego, clamp(520px, calc(100vh - 250px), 840px));
   }
   .stage iframe{width:100%; height:100%; border:0; display:block; background:var(--bg);}
   /* En pantalla completa el marco desaparece y el juego toma todo. */
@@ -129,7 +130,7 @@
 
   @media (max-width:760px){
     .brand .name{display:none;}
-    .stage{width:100%; height:clamp(460px, calc(100vh - 215px), 760px); border-radius:14px;}
+    .stage{width:100%; height:var(--alto-juego, clamp(460px, calc(100vh - 215px), 760px)); border-radius:14px;}
     .ghead{align-items:flex-start; padding-bottom:10px;}
     .grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:12px;}
     /* Que los controles entren en una sola fila y no empujen el juego hacia abajo. */
@@ -285,7 +286,61 @@
   var frame = document.getElementById("frame");
   var stage = document.getElementById("stage");
 
+  /*
+    El marco tiene un alto fijo y no scrollea por dentro (scrolling="no"), así que
+    un juego más alto que el marco quedaría cortado y sin manera de llegar al final
+    (le pasaba al selector de minijuegos de Big Brain en el celular). Acá medimos el
+    contenido real y estiramos el marco lo necesario: el scroll lo hace la página.
+  */
+  var altoAplicado = 0;   // el marco solo crece: achicarlo a mitad de partida saltaría la página
+
+  function ajustarAlto(){
+    if (document.fullscreenElement) return;
+    var doc;
+    try { doc = frame.contentDocument; } catch (_){ return; }   // otro origen: no se puede medir
+    if (!doc || !doc.body) return;
+
+    // Se mide con el marco en su alto base: los juegos usan 100vh, así que medirlos
+    // ya estirados devolvería siempre el alto actual y nunca bajaría.
+    var previo = stage.style.getPropertyValue("--alto-juego");
+    stage.style.removeProperty("--alto-juego");
+    var base = stage.clientHeight;
+    var contenido = Math.ceil(Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight));
+    if (previo) stage.style.setProperty("--alto-juego", previo);
+
+    var necesario = Math.max(contenido, altoAplicado);
+    if (necesario > base + 2){
+      altoAplicado = necesario;
+      stage.style.setProperty("--alto-juego", necesario + "px");
+    } else if (previo){
+      altoAplicado = 0;
+      stage.style.removeProperty("--alto-juego");
+    }
+  }
+
+  /*
+    Ojo: acá no sirve un debounce. Muchos juegos tocan el DOM en cada frame (la barra
+    de tiempo, el marcador) y reiniciarían la espera para siempre, así que nunca se
+    mediría. Esto agenda una medición y no la pospone: como mucho una cada 300ms.
+  */
+  var ajustePendiente = null;
+  function pedirAjuste(){
+    if (ajustePendiente) return;
+    ajustePendiente = setTimeout(function(){
+      ajustePendiente = null;
+      ajustarAlto();
+    }, 300);
+  }
+  // Al recargar el juego o cambiar el tamaño de la ventana se recalcula desde cero.
+  function recalcularDesdeCero(){
+    altoAplicado = 0;
+    stage.style.removeProperty("--alto-juego");
+    pedirAjuste();
+  }
+
   frame.addEventListener("load", function(){
+    altoAplicado = 0;
+    stage.style.removeProperty("--alto-juego");
     // Mismo origen: podemos ocultar el "← ARCADE" propio del juego, que acá
     // queda redundante, sin tener que editar los 23 archivos.
     try {
@@ -293,12 +348,28 @@
       var st = doc.createElement("style");
       st.textContent = '.back, a[href="index.html"]{display:none !important;}';
       doc.head.appendChild(st);
+
+      // El juego cambia de pantalla (intro → partida → final) y cada una tiene su
+      // alto, así que volvemos a medir cuando su contenido se mueve.
+      if (window.MutationObserver){
+        new MutationObserver(pedirAjuste).observe(doc.documentElement, {
+          childList:true, subtree:true, attributes:true,
+          attributeFilter:["class","style","hidden"]
+        });
+      }
     } catch (_) {
       // Si algún día embebemos un juego de otro origen, esto no aplica.
     }
+    ajustarAlto();
+    // Fuentes y emojis pueden acomodarse un instante después de load.
+    setTimeout(ajustarAlto, 300);
+
     // Que el teclado vaya al juego sin que el usuario tenga que clickear.
     try { frame.contentWindow.focus(); } catch (_){}
   });
+
+  window.addEventListener("resize", recalcularDesdeCero);
+  window.addEventListener("orientationchange", recalcularDesdeCero);
 
   document.getElementById("btnReset").addEventListener("click", function(){
     frame.src = frame.src;
@@ -312,6 +383,7 @@
   });
   document.addEventListener("fullscreenchange", function(){
     btnFull.textContent = document.fullscreenElement ? "⛶ Salir de pantalla completa" : "⛶ Pantalla completa";
+    pedirAjuste();
     try { frame.contentWindow.focus(); } catch (_){}
   });
 
