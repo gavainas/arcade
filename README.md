@@ -32,6 +32,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🪢 Ahorcado Neón | [`ahorcado.html`](ahorcado.html) | Ahorcado con categorías (animales, países, comida): adiviná la palabra letra por letra antes de que el muñeco de neón se complete, con 6 errores permitidos. |
 | ⌨️ Tipeo Turbo | [`tipeo-turbo.html`](tipeo-turbo.html) | Palabras que caen del cielo: tipeá la primera letra para apuntar a una y completala antes de que toque el piso. Niveles, combos y velocidad creciente. |
 | 🔀 Anagramas | [`anagramas.html`](anagramas.html) | Letras desordenadas contra reloj: tocá las fichas (o escribí con el teclado) para armar la palabra en el orden correcto antes de que se acabe el tiempo. Niveles, rachas y mejor puntaje guardado. |
+| 🎵 Simón Neón | [`simon-neon.html`](simon-neon.html) | Repetí secuencias de luces y sonidos cada vez más largas en un tablero de 4 cuadrantes neón; un paso mal y se corta la racha. |
 
 ## Sopa de Letras
 

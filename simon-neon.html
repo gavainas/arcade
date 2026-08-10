@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SIMÓN NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:480px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,7vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 2px 18px; flex-wrap:wrap;}
+  .hud .box{flex:1; min-width:64px; max-width:120px; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px; font-size:10px; letter-spacing:1px; color:var(--muted);}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.best b{color:var(--gold);}
+  .hud .box.score b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:22px 12px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    min-height:320px; display:flex; align-items:center; justify-content:center;
+  }
+
+  .simon-wrap{position:relative; width:min(300px,72vw); aspect-ratio:1;}
+  .simon-board{
+    display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
+    gap:6px; width:100%; height:100%; border-radius:50%; overflow:hidden;
+    box-shadow:0 0 0 6px rgba(5,7,15,.9), 0 0 40px rgba(39,232,255,.15);
+    background:#05070f;
+  }
+  .pad{
+    cursor:pointer; border:none; outline:none; display:block;
+    filter:brightness(.55) saturate(.9);
+    transition:filter .08s ease, transform .08s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .pad:nth-child(1){background:var(--cyan); border-top-left-radius:100%;}
+  .pad:nth-child(2){background:var(--pink); border-top-right-radius:100%;}
+  .pad:nth-child(3){background:var(--green); border-bottom-left-radius:100%;}
+  .pad:nth-child(4){background:var(--purple); border-bottom-right-radius:100%;}
+  .pad.active{filter:brightness(1.7) saturate(1.3); transform:scale(.97);}
+  .simon-board.locked .pad{cursor:default;}
+  .pad:focus-visible{filter:brightness(1.1);}
+
+  .hub{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:36%; height:36%; border-radius:50%; background:radial-gradient(circle, #10152c 0%, #05070f 80%);
+    border:2px solid rgba(138,75,255,.4); display:flex; align-items:center; justify-content:center;
+    flex-direction:column; box-shadow:0 0 20px rgba(0,0,0,.6); pointer-events:none;
+  }
+  .hub .lv{font-size:clamp(18px,5vw,26px); font-weight:900; color:var(--ink); line-height:1;}
+  .hub .lv-lbl{font-size:9px; letter-spacing:2px; color:var(--muted); margin-top:2px;}
+
+  .overlay{position:absolute; inset:0; border-radius:20px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px; gap:12px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.6; max-width:300px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--pink)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:24px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .status{margin-top:14px; text-align:center; min-height:18px; font-size:13px; font-weight:700; letter-spacing:1px; color:var(--muted);}
+  .status.watch{color:var(--cyan);}
+  .status.turn{color:var(--green);}
+
+  .controls{margin-top:6px; text-align:center;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">SIMÓN NEÓN</div>
+      <div class="sub">L U C E S &nbsp; · &nbsp; S O N I D O S</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">RONDA<b id="levelEl">0</b></div>
+      <div class="box best">MEJOR<b id="bestEl">0</b></div>
+      <div class="box score">PUNTOS<b id="scoreEl">0</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="simon-wrap">
+        <div class="simon-board" id="board">
+          <button class="pad" type="button" data-idx="0" aria-label="Cian"></button>
+          <button class="pad" type="button" data-idx="1" aria-label="Rosa"></button>
+          <button class="pad" type="button" data-idx="2" aria-label="Verde"></button>
+          <button class="pad" type="button" data-idx="3" aria-label="Violeta"></button>
+        </div>
+        <div class="hub"><div class="lv" id="hubLv">0</div><div class="lv-lbl">RONDA</div></div>
+      </div>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">SIMÓN NEÓN</h2>
+        <p id="ovText">Mirá la secuencia de luces y sonidos, y repetila en el mismo orden. Cada ronda suma un paso más.</p>
+        <p id="ovRecord" style="font-size:12px;"></p>
+        <button class="btn" id="startBtn">JUGAR</button>
+      </div>
+    </div>
+
+    <div class="status" id="statusEl"></div>
+
+    <div class="controls">
+      <div class="hint">Tocá o hacé click en los cuadrantes · teclado: Q W A S o flechas</div>
+    </div>
+
+    <footer>NEON ARCADE · Simón Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const board=document.getElementById('board');
+  const overlay=document.getElementById('overlay');
+  const levelEl=document.getElementById('levelEl');
+  const bestEl=document.getElementById('bestEl');
+  const scoreEl=document.getElementById('scoreEl');
+  const hubLv=document.getElementById('hubLv');
+  const startBtn=document.getElementById('startBtn');
+  const ovRecord=document.getElementById('ovRecord');
+  const statusEl=document.getElementById('statusEl');
+  const pads=Array.from(board.querySelectorAll('.pad'));
+
+  const BEST_KEY='neon-simon-best-level';
+  const FREQS=[261.63,329.63,392.00,523.25];
+
+  let sequence=[], playerStep=0, level=0, score=0, running=false, canInput=false;
+  let audioCtx=null;
+
+  function loadBest(){ return parseInt(localStorage.getItem(BEST_KEY)||'0',10); }
+
+  function ensureAudio(){
+    if(!audioCtx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(AC) audioCtx=new AC();
+    }
+    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  }
+
+  function beep(idx, dur){
+    if(!audioCtx) return;
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type='sine';
+    osc.frequency.value=FREQS[idx];
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.22, audioCtx.currentTime+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur/1000);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime+dur/1000+0.02);
+  }
+
+  function flash(idx, dur){
+    const pad=pads[idx];
+    pad.classList.add('active');
+    beep(idx, dur);
+    setTimeout(()=>pad.classList.remove('active'), dur*0.85);
+  }
+
+  function stepDuration(lv){
+    return Math.max(650-(lv-1)*22, 280);
+  }
+
+  function setStatus(text, cls){
+    statusEl.textContent=text;
+    statusEl.className='status'+(cls?(' '+cls):'');
+  }
+
+  function nextRound(){
+    level++;
+    sequence.push(Math.floor(Math.random()*4));
+    levelEl.textContent=level;
+    hubLv.textContent=level;
+    playSequence();
+  }
+
+  function playSequence(){
+    canInput=false;
+    playerStep=0;
+    board.classList.add('locked');
+    setStatus('MIRÁ LA SECUENCIA…', 'watch');
+    const dur=stepDuration(level);
+    const gap=dur+160;
+    sequence.forEach((idx,i)=>{
+      setTimeout(()=>flash(idx,dur), i*gap+400);
+    });
+    setTimeout(()=>{
+      canInput=true;
+      board.classList.remove('locked');
+      setStatus('TU TURNO', 'turn');
+    }, sequence.length*gap+400);
+  }
+
+  function onPad(idx){
+    if(!running || !canInput) return;
+    const dur=stepDuration(level);
+    flash(idx, Math.min(dur,350));
+    if(sequence[playerStep]===idx){
+      playerStep++;
+      if(playerStep>=sequence.length){
+        canInput=false;
+        score+=level*10;
+        scoreEl.textContent=score;
+        setStatus('¡BIEN!', 'turn');
+        setTimeout(nextRound, 750);
+      }
+    }else{
+      canInput=false;
+      gameOver();
+    }
+  }
+
+  function startGame(){
+    ensureAudio();
+    sequence=[]; level=0; score=0; playerStep=0;
+    scoreEl.textContent=0;
+    overlay.classList.add('hidden');
+    running=true;
+    setStatus('','');
+    nextRound();
+  }
+
+  function gameOver(){
+    running=false;
+    board.classList.add('locked');
+    setStatus('','');
+    const best=loadBest();
+    const finalLevel=level-1;
+    let newRecord=false;
+    if(finalLevel>best){ localStorage.setItem(BEST_KEY, finalLevel); newRecord=true; }
+    bestEl.textContent=Math.max(best,finalLevel);
+    overlay.innerHTML='';
+    const h2=document.createElement('h2'); h2.textContent='¡SE ROMPIÓ LA SECUENCIA!';
+    const p=document.createElement('p');
+    p.innerHTML=`<span class="final">Ronda <b>${finalLevel}</b> · Puntaje <b>${score}</b></span>`+
+      (newRecord?`<br><span class="newrec">¡NUEVO RÉCORD!</span>`:`<br>Récord: ronda ${Math.max(best,finalLevel)}`);
+    const btn=document.createElement('button'); btn.className='btn'; btn.textContent='JUGAR DE NUEVO';
+    btn.addEventListener('click', startGame);
+    overlay.appendChild(h2); overlay.appendChild(p); overlay.appendChild(btn);
+    overlay.classList.remove('hidden');
+  }
+
+  pads.forEach(pad=>{
+    pad.addEventListener('click', ()=>onPad(parseInt(pad.dataset.idx,10)));
+  });
+
+  const KEYMAP={'q':0,'w':1,'a':2,'s':3,'arrowup':0,'arrowright':1,'arrowdown':2,'arrowleft':3};
+  window.addEventListener('keydown', e=>{
+    const idx=KEYMAP[e.key.toLowerCase()];
+    if(idx===undefined) return;
+    e.preventDefault();
+    onPad(idx);
+  });
+
+  startBtn.addEventListener('click', startGame);
+
+  const best=loadBest();
+  bestEl.textContent=best;
+  if(best>0){ ovRecord.textContent=`Récord: ronda ${best}`; }
+})();
+</script>
+</body>
+</html>

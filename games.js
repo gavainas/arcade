@@ -214,6 +214,13 @@
       desc: "Apilá bloques que se mueven como un péndulo: lo que sobresale se corta. Encadená bloques perfectos para no perder ancho.",
       controles: "Click, espacio o toque", fecha: "2026-08-03",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "simon-neon", titulo: "Simón Neón", archivo: "simon-neon.html",
+      emoji: "🎵", categoria: "mental", tags: ["simon", "secuencias", "memoria", "sonido"],
+      desc: "Repetí secuencias de luces y sonidos cada vez más largas. Un paso mal y se corta la racha.",
+      controles: "Click / toque, o teclado (Q W A S / flechas)", fecha: "2026-08-10",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
