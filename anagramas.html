@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ANAGRAMAS · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:20px 14px 24px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    user-select:none;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:540px; display:flex; flex-direction:column; align-items:center;}
+  .back{align-self:flex-start; display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:10px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:10px;}
+  .logo{
+    font-size:clamp(24px,7vw,38px); font-weight:900; letter-spacing:1.5px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px; color:var(--pink); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; margin:6px 0 12px; font-size:10px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:7px 4px;}
+  .hud .box b{display:block; font-size:16px; font-weight:900; letter-spacing:.5px; margin-top:2px; color:var(--ink);}
+  .hud .box.score b{color:var(--cyan);}
+  .hud .box.lives b{color:var(--red);}
+  .hud .box.level b{color:var(--gold);}
+  .hud .box.best b{color:var(--pink);}
+
+  .timer-track{width:100%; height:8px; border-radius:999px; background:rgba(20,28,58,.7); border:1px solid rgba(138,75,255,.25); overflow:hidden; margin-bottom:16px;}
+  .timer-fill{height:100%; width:100%; border-radius:999px; background:linear-gradient(90deg,var(--green),var(--cyan)); transition:width .1s linear, background .3s ease;}
+  .timer-fill.warn{background:linear-gradient(90deg,var(--gold),#ffb23b);}
+  .timer-fill.danger{background:linear-gradient(90deg,var(--red),#ff2b4d);}
+
+  .board{
+    width:100%; border-radius:18px; padding:22px 16px;
+    background:linear-gradient(180deg, rgba(20,28,58,.55), rgba(10,14,30,.75));
+    border:1px solid rgba(138,75,255,.3); box-shadow:inset 0 0 40px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.4);
+    display:flex; flex-direction:column; align-items:center; gap:20px; min-height:190px;
+  }
+  .len-hint{font-size:11px; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase;}
+
+  .slots{display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
+  .slot{
+    width:clamp(26px,8vw,38px); height:clamp(30px,9vw,42px); border-radius:8px;
+    border:2px dashed rgba(127,166,200,.4); display:flex; align-items:center; justify-content:center;
+    font-size:clamp(14px,4.2vw,19px); font-weight:900; text-transform:uppercase; color:var(--ink);
+    transition:transform .12s ease, border-color .15s ease, background .15s ease;
+  }
+  .slot.filled{border-style:solid; border-color:var(--cyan); background:rgba(39,232,255,.12); cursor:pointer; box-shadow:0 0 10px rgba(39,232,255,.25);}
+  .slot.filled:active{transform:scale(.92);}
+  .slots.shake{animation:shake .35s ease;}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+  .slots.reveal .slot{border-color:var(--red); background:rgba(255,84,112,.14); color:var(--red);}
+
+  .letters{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; min-height:clamp(30px,9vw,42px);}
+  .tile{
+    width:clamp(28px,8.5vw,42px); height:clamp(32px,9.5vw,46px); border-radius:10px; border:none; cursor:pointer;
+    font-size:clamp(15px,4.5vw,20px); font-weight:900; text-transform:uppercase; font-family:inherit;
+    color:#031018; background:linear-gradient(180deg,var(--cyan),var(--purple));
+    box-shadow:0 6px 16px rgba(39,232,255,.3); transition:transform .1s ease, box-shadow .1s ease;
+  }
+  .tile:hover{transform:translateY(-2px);}
+  .tile:active{transform:translateY(1px) scale(.95);}
+
+  .toolrow{display:flex; gap:10px; width:100%; margin-top:14px;}
+  .tbtn{
+    flex:1; cursor:pointer; border:1px solid rgba(138,75,255,.4); border-radius:12px; padding:10px 6px;
+    background:rgba(138,75,255,.12); color:var(--ink); font-family:inherit; font-size:12px; font-weight:700;
+    letter-spacing:.5px; transition:background .15s ease, transform .1s ease;
+  }
+  .tbtn:hover{background:rgba(138,75,255,.22);}
+  .tbtn:active{transform:scale(.97);}
+
+  .hint{margin-top:12px; text-align:center; font-size:11px; color:var(--muted); letter-spacing:.5px; line-height:1.5;}
+
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:20;
+    background:rgba(10,14,30,.95); border:1px solid var(--cyan); color:var(--ink);
+    padding:10px 18px; border-radius:10px; font-size:13px; font-weight:700; letter-spacing:.5px;
+    box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .2s ease, top .2s ease;
+    text-align:center; max-width:90vw;
+  }
+  .toast.show{opacity:1; top:28px;}
+
+  .overlay{position:fixed; inset:0; z-index:30; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(3,4,10,.88); backdrop-filter:blur(3px);}
+  .overlay.hidden{display:none;}
+  .panel{
+    width:100%; max-width:380px; border-radius:20px; padding:26px 22px;
+    background:linear-gradient(180deg, rgba(20,28,58,.92), rgba(10,14,30,.94));
+    border:1px solid rgba(138,75,255,.35); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px;
+    max-height:90vh; overflow-y:auto;
+  }
+  .panel .emoji-hero{font-size:52px; filter:drop-shadow(0 0 18px rgba(39,232,255,.5)); animation:bob 3s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-8px) rotate(4deg);}}
+  .panel h2{font-size:clamp(20px,6vw,26px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .panel h2.lose{background:linear-gradient(90deg,var(--red),var(--pink)); -webkit-background-clip:text; background-clip:text;}
+  .panel p{font-size:13px; color:var(--muted); line-height:1.55;}
+
+  .final-stats{display:flex; gap:10px; width:100%; margin-top:2px;}
+  .final-stats .fbox{flex:1; background:rgba(138,75,255,.12); border-radius:10px; padding:8px 4px;}
+  .final-stats .fbox b{display:block; font-size:16px; color:var(--cyan);}
+  .final-stats .fbox span{font-size:10px; color:var(--muted); letter-spacing:.5px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--green),var(--cyan)); box-shadow:0 8px 24px rgba(39,232,255,.3);
+    transition:transform .12s ease, box-shadow .12s ease; width:100%; font-family:inherit;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none; margin-top:2px; text-decoration:none; text-align:center;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">← ARCADE</a>
+    <header>
+      <div class="logo">ANAGRAMAS</div>
+      <div class="sub">N E O N &nbsp;A R C A D E</div>
+    </header>
+
+    <div class="hud">
+      <div class="box score"><span>PUNTOS</span><b id="hudScore">0</b></div>
+      <div class="box lives"><span>VIDAS</span><b id="hudLives">❤❤❤</b></div>
+      <div class="box level"><span>NIVEL</span><b id="hudLevel">1</b></div>
+      <div class="box best"><span>MEJOR</span><b id="hudBest">0</b></div>
+    </div>
+
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+
+    <div class="board">
+      <div class="len-hint" id="lenHint">PALABRA DE 4 LETRAS</div>
+      <div class="slots" id="slots"></div>
+      <div class="letters" id="letters"></div>
+    </div>
+
+    <div class="toolrow">
+      <button class="tbtn" id="shuffleBtn">🔀 MEZCLAR</button>
+      <button class="tbtn" id="backBtn">⌫ BORRAR</button>
+    </div>
+
+    <div class="hint">Tocá las letras (o escribilas con el teclado) para armar la palabra en el orden correcto antes de que se acabe el tiempo.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="panel">
+      <div class="emoji-hero">🔀</div>
+      <h2>ANAGRAMAS</h2>
+      <p>Las letras están desordenadas. Armá la palabra correcta tocando las fichas (o escribiendo) antes de que se acabe el tiempo. Cada 5 palabras subís de nivel: menos tiempo, palabras más largas.</p>
+      <div class="final-stats">
+        <div class="fbox"><b id="startBest">0</b><span>MEJOR PUNTAJE</span></div>
+      </div>
+      <button class="btn" id="startBtn">JUGAR ▶</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="endOverlay">
+    <div class="panel">
+      <div class="emoji-hero">⏱️</div>
+      <h2 class="lose">GAME OVER</h2>
+      <p id="endMsg">Se te acabaron las vidas.</p>
+      <div class="final-stats">
+        <div class="fbox"><b id="endScore">0</b><span>PUNTOS</span></div>
+        <div class="fbox"><b id="endLevel">1</b><span>NIVEL</span></div>
+        <div class="fbox"><b id="endBest">0</b><span>MEJOR</span></div>
+      </div>
+      <button class="btn" id="retryBtn">JUGAR DE NUEVO</button>
+      <a class="btn ghost" href="index.html">VOLVER AL ARCADE</a>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var WORDS = {
+    1: ["casa","gato","perro","libro","mesa","luna","nube","agua","flor","dedo","boca","playa","fuego","leche","cielo","monte","nieve","fruta","techo","plaza","pared","arbol","hielo","pato"],
+    2: ["dragon","jardin","volcan","musica","camino","tesoro","pirata","zapato","laguna","fogata","cometa","sirena","duende","tijera","gorila","jirafa","cohete","montana","ventana","tornado","pintura","sonrisa","cascada","manzana"],
+    3: ["universo","aventura","escalera","telefono","alfombra","arcoiris","murcielago","zanahoria","chimenea","terremoto","horizonte","papelera","ensalada","calendario","campanario","escritorio","chocolate","biblioteca","television","dinosaurio"]
+  };
+
+  var slotsEl = document.getElementById('slots');
+  var lettersEl = document.getElementById('letters');
+  var lenHint = document.getElementById('lenHint');
+  var timerFill = document.getElementById('timerFill');
+  var toastEl = document.getElementById('toast');
+  var startOverlay = document.getElementById('startOverlay');
+  var endOverlay = document.getElementById('endOverlay');
+  var hudScore = document.getElementById('hudScore');
+  var hudLives = document.getElementById('hudLives');
+  var hudLevel = document.getElementById('hudLevel');
+  var hudBest = document.getElementById('hudBest');
+
+  var BEST_KEY = 'anagramasBest';
+  var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+  document.getElementById('startBest').textContent = best;
+  hudBest.textContent = best;
+
+  var running = false;
+  var roundActive = false;
+  var score = 0, lives = 3, level = 1, streak = 0, wordsDone = 0;
+  var usedRecently = [];
+  var currentWord = '';
+  var letters = [];   // [{char, used, id}]
+  var slots = [];      // [tileId | null]
+  var roundTime = 10, timeLeft = 10;
+  var rafId = null, lastT = 0;
+  var toastTimer = null, transitionTimer = null;
+
+  function tierWeights(lv){
+    return lv <= 2 ? [1, 0, 0] : lv <= 5 ? [0.5, 0.5, 0] : [0.25, 0.45, 0.3];
+  }
+
+  function pickWord(){
+    var w = tierWeights(level);
+    var r = Math.random(), tier;
+    if (r < w[0]) tier = 1; else if (r < w[0] + w[1]) tier = 2; else tier = 3;
+    var pool = WORDS[tier].filter(function(x){ return usedRecently.indexOf(x) === -1; });
+    if (!pool.length) pool = WORDS[tier];
+    var word = pool[Math.floor(Math.random() * pool.length)];
+    usedRecently.push(word);
+    if (usedRecently.length > 10) usedRecently.shift();
+    return word;
+  }
+
+  function shuffleArray(arr){
+    for (var i = arr.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function scrambleWord(word){
+    var arr = word.split('');
+    var scrambled = arr.slice();
+    var tries = 0;
+    do {
+      scrambled = shuffleArray(arr.slice());
+      tries++;
+    } while (scrambled.join('') === word && tries < 20);
+    return scrambled;
+  }
+
+  function computeRoundTime(lv, len){
+    var base = 4 + len * 1.3;
+    var reduction = Math.min(2.5, (lv - 1) * 0.12);
+    return Math.max(6, base - reduction);
+  }
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1400);
+  }
+
+  function renderSlots(){
+    slotsEl.innerHTML = '';
+    for (var i = 0; i < slots.length; i++){
+      var el = document.createElement('div');
+      var tileId = slots[i];
+      if (tileId != null){
+        var tile = letters[tileId];
+        el.className = 'slot filled';
+        el.textContent = tile.char;
+        el.dataset.idx = i;
+        el.addEventListener('click', onSlotClick);
+      } else {
+        el.className = 'slot';
+      }
+      slotsEl.appendChild(el);
+    }
+  }
+
+  function renderLetters(){
+    lettersEl.innerHTML = '';
+    for (var i = 0; i < letters.length; i++){
+      var tile = letters[i];
+      if (tile.used) continue;
+      var btn = document.createElement('button');
+      btn.className = 'tile';
+      btn.type = 'button';
+      btn.textContent = tile.char;
+      btn.dataset.id = tile.id;
+      btn.addEventListener('click', function(e){
+        selectTile(parseInt(e.currentTarget.dataset.id, 10));
+      });
+      lettersEl.appendChild(btn);
+    }
+  }
+
+  function onSlotClick(e){
+    var idx = parseInt(e.currentTarget.dataset.idx, 10);
+    clearSlot(idx);
+  }
+
+  function clearSlot(idx){
+    if (!roundActive) return;
+    var tileId = slots[idx];
+    if (tileId == null) return;
+    slots[idx] = null;
+    letters[tileId].used = false;
+    renderSlots();
+    renderLetters();
+  }
+
+  function clearLastFilled(){
+    if (!roundActive) return;
+    for (var i = slots.length - 1; i >= 0; i--){
+      if (slots[i] != null){ clearSlot(i); return; }
+    }
+  }
+
+  function selectTile(id){
+    if (!roundActive) return;
+    var tile = letters[id];
+    if (!tile || tile.used) return;
+    var emptyIdx = slots.indexOf(null);
+    if (emptyIdx === -1) return;
+    slots[emptyIdx] = id;
+    tile.used = true;
+    renderSlots();
+    renderLetters();
+    if (slots.indexOf(null) === -1) checkAnswer();
+  }
+
+  function checkAnswer(){
+    var assembled = slots.map(function(id){ return letters[id].char; }).join('');
+    if (assembled === currentWord){
+      roundSuccess();
+    } else {
+      slotsEl.classList.add('shake');
+      setTimeout(function(){ slotsEl.classList.remove('shake'); }, 350);
+    }
+  }
+
+  function updateBar(){
+    var ratio = Math.max(0, timeLeft / roundTime);
+    timerFill.style.width = (ratio * 100) + '%';
+    timerFill.classList.toggle('warn', ratio <= 0.5 && ratio > 0.22);
+    timerFill.classList.toggle('danger', ratio <= 0.22);
+  }
+
+  function roundSuccess(){
+    roundActive = false;
+    streak++;
+    wordsDone++;
+    var pts = currentWord.length * 12 + Math.round(timeLeft * 3) + streak * 4;
+    score += pts;
+    hudScore.textContent = score;
+    showToast('¡BIEN! +' + pts + (streak > 1 ? ' · racha x' + streak : ''));
+
+    if (wordsDone % 5 === 0){
+      level++;
+      hudLevel.textContent = level;
+      showToast('¡NIVEL ' + level + '!');
+    }
+
+    clearTimeout(transitionTimer);
+    transitionTimer = setTimeout(function(){ if (running) newRound(); }, 700);
+  }
+
+  function roundFail(){
+    roundActive = false;
+    streak = 0;
+    lives--;
+    hudLives.textContent = '❤'.repeat(Math.max(0, lives)) + '🖤'.repeat(3 - Math.max(0, lives));
+    slotsEl.classList.add('reveal');
+    var chars = currentWord.split('');
+    var slotEls = slotsEl.querySelectorAll('.slot');
+    chars.forEach(function(ch, i){ if (slotEls[i]) slotEls[i].textContent = ch; });
+    showToast('SE ACABÓ EL TIEMPO: "' + currentWord.toUpperCase() + '"');
+
+    if (lives <= 0){
+      clearTimeout(transitionTimer);
+      transitionTimer = setTimeout(gameOver, 900);
+      return;
+    }
+    clearTimeout(transitionTimer);
+    transitionTimer = setTimeout(function(){ if (running) newRound(); }, 1100);
+  }
+
+  function newRound(){
+    currentWord = pickWord();
+    letters = scrambleWord(currentWord).map(function(ch, i){ return { char: ch, used: false, id: i }; });
+    slots = new Array(currentWord.length).fill(null);
+    roundTime = computeRoundTime(level, currentWord.length);
+    timeLeft = roundTime;
+    lenHint.textContent = 'PALABRA DE ' + currentWord.length + ' LETRAS';
+    slotsEl.classList.remove('reveal');
+    renderSlots();
+    renderLetters();
+    updateBar();
+    roundActive = true;
+    lastT = 0;
+  }
+
+  function loop(t){
+    if (!running) return;
+    if (roundActive){
+      if (!lastT) lastT = t;
+      var dt = Math.min(50, t - lastT) / 1000;
+      lastT = t;
+      timeLeft -= dt;
+      if (timeLeft <= 0){
+        timeLeft = 0;
+        updateBar();
+        roundFail();
+      } else {
+        updateBar();
+      }
+    } else {
+      lastT = 0;
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function reset(){
+    score = 0; lives = 3; level = 1; streak = 0; wordsDone = 0;
+    usedRecently = [];
+    hudScore.textContent = '0';
+    hudLevel.textContent = '1';
+    hudLives.textContent = '❤❤❤';
+    clearTimeout(transitionTimer);
+  }
+
+  function start(){
+    reset();
+    running = true;
+    startOverlay.classList.add('hidden');
+    endOverlay.classList.add('hidden');
+    newRound();
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function gameOver(){
+    running = false;
+    roundActive = false;
+    cancelAnimationFrame(rafId);
+    if (score > best){
+      best = score;
+      localStorage.setItem(BEST_KEY, String(best));
+    }
+    hudBest.textContent = best;
+    document.getElementById('endScore').textContent = score;
+    document.getElementById('endLevel').textContent = level;
+    document.getElementById('endBest').textContent = best;
+    endOverlay.classList.remove('hidden');
+  }
+
+  document.getElementById('startBtn').addEventListener('click', start);
+  document.getElementById('retryBtn').addEventListener('click', start);
+  document.getElementById('backBtn').addEventListener('click', clearLastFilled);
+  document.getElementById('shuffleBtn').addEventListener('click', function(){
+    if (!roundActive) return;
+    shuffleArray(letters);
+    renderLetters();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (!running || !roundActive) return;
+    var key = e.key;
+    if (key === 'Backspace'){
+      e.preventDefault();
+      clearLastFilled();
+      return;
+    }
+    if (key === 'Enter'){
+      if (slots.indexOf(null) === -1) checkAnswer();
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(key)){
+      var ch = key.toLowerCase();
+      for (var i = 0; i < letters.length; i++){
+        if (!letters[i].used && letters[i].char === ch){
+          selectTile(letters[i].id);
+          break;
+        }
+      }
+    }
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) lastT = 0;
+  });
+})();
+</script>
+</body>
+</html>

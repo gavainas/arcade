@@ -156,6 +156,13 @@
       controles: "Teclado", fecha: "2026-08-08",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     },
+    {
+      id: "anagramas", titulo: "Anagramas", archivo: "anagramas.html",
+      emoji: "🔀", categoria: "palabras", tags: ["anagrama", "letras", "contrarreloj", "vocabulario"],
+      desc: "Letras desordenadas contra reloj: tocá las fichas para armar la palabra en el orden correcto antes de que se acabe el tiempo.",
+      controles: "Click / toque o teclado", fecha: "2026-08-10",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
 
     {
       id: "brain-test", titulo: "Big Brain", archivo: "brain-test.html",
