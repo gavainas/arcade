@@ -221,6 +221,13 @@
       desc: "Repetí secuencias de luces y sonidos cada vez más largas. Un paso mal y se corta la racha.",
       controles: "Click / toque, o teclado (Q W A S / flechas)", fecha: "2026-08-10",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "el-impostor", titulo: "El Impostor", archivo: "el-impostor.html",
+      emoji: "🔍", categoria: "mental", tags: ["percepcion", "atencion", "grilla", "velocidad"],
+      desc: "Todas las agujas apuntan igual, menos una: encontrala antes de que se acabe el tiempo. Cada nivel la diferencia es más sutil y la grilla crece.",
+      controles: "Click / toque, o teclado (flechas + Enter)", fecha: "2026-08-11",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -33,6 +33,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ⌨️ Tipeo Turbo | [`tipeo-turbo.html`](tipeo-turbo.html) | Palabras que caen del cielo: tipeá la primera letra para apuntar a una y completala antes de que toque el piso. Niveles, combos y velocidad creciente. |
 | 🔀 Anagramas | [`anagramas.html`](anagramas.html) | Letras desordenadas contra reloj: tocá las fichas (o escribí con el teclado) para armar la palabra en el orden correcto antes de que se acabe el tiempo. Niveles, rachas y mejor puntaje guardado. |
 | 🎵 Simón Neón | [`simon-neon.html`](simon-neon.html) | Repetí secuencias de luces y sonidos cada vez más largas en un tablero de 4 cuadrantes neón; un paso mal y se corta la racha. |
+| 🔍 El Impostor | [`el-impostor.html`](el-impostor.html) | Todas las agujas apuntan igual, menos una: encontrala antes de que se acabe el tiempo. La grilla crece y la diferencia se vuelve más sutil en cada nivel. |
 
 ## Sopa de Letras
 
