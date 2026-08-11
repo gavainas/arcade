@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EL IMPOSTOR · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:480px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,7vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple),var(--cyan));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:center; align-items:center; gap:8px; margin:4px 2px 18px; flex-wrap:wrap;}
+  .hud .box{flex:1; min-width:64px; max-width:110px; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px; font-size:10px; letter-spacing:1px; color:var(--muted);}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.best b{color:var(--gold);}
+  .hud .box.score b{color:var(--green);}
+  .hud .box.lives b{color:var(--red);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:20px 16px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    min-height:340px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+
+  .timerbar{width:100%; max-width:380px; height:6px; border-radius:999px; background:rgba(255,255,255,.08); margin-bottom:18px; overflow:hidden;}
+  .timerfill{height:100%; width:100%; background:linear-gradient(90deg,var(--cyan),var(--green)); border-radius:999px; transition:background .3s ease;}
+  .timerfill.low{background:linear-gradient(90deg,var(--red),var(--gold));}
+
+  .grid{display:grid; gap:10px; width:100%; max-width:380px; margin:0 auto;}
+  .cell{
+    position:relative; border:none; border-radius:50%; width:100%; aspect-ratio:1; padding:0;
+    background:radial-gradient(circle at 35% 30%, #1c2650, #0a0e22 75%);
+    box-shadow:inset 0 0 0 1px rgba(138,75,255,.28);
+    cursor:pointer; transition:box-shadow .15s ease, transform .08s ease;
+  }
+  .cell::after{
+    content:""; position:absolute; top:50%; left:50%; width:14%; height:38%;
+    background:var(--cyan); border-radius:3px;
+    transform:translate(-50%,-100%) rotate(var(--ang,0deg)); transform-origin:50% 100%;
+    box-shadow:0 0 10px var(--cyan), 0 0 3px #fff;
+  }
+  .cell.locked{cursor:default;}
+  .cell.focused{box-shadow:inset 0 0 0 1px rgba(138,75,255,.28), 0 0 0 2px var(--cyan), 0 0 16px rgba(39,232,255,.55);}
+  .cell.correct{box-shadow:inset 0 0 0 1px rgba(138,75,255,.28), 0 0 0 3px var(--green), 0 0 22px rgba(57,255,158,.65);}
+  .cell.wrong{box-shadow:inset 0 0 0 1px rgba(138,75,255,.28), 0 0 0 3px var(--red), 0 0 22px rgba(255,84,112,.65); animation:shake .3s ease;}
+  @keyframes shake{20%{transform:translateX(-5px);}40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
+
+  .overlay{position:absolute; inset:0; border-radius:20px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px; gap:12px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.6; max-width:300px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--pink)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:24px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .status{margin-top:14px; text-align:center; min-height:18px; font-size:13px; font-weight:700; letter-spacing:1px; color:var(--muted);}
+  .status.ok{color:var(--green);}
+  .status.bad{color:var(--red);}
+
+  .controls{margin-top:6px; text-align:center;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">EL IMPOSTOR</div>
+      <div class="sub">E N C O N T R Á &nbsp; L A &nbsp; D I S T I N T A</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">NIVEL<b id="levelEl">0</b></div>
+      <div class="box lives">VIDAS<b id="livesEl">3</b></div>
+      <div class="box score">PUNTOS<b id="scoreEl">0</b></div>
+      <div class="box best">MEJOR<b id="bestEl">0</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="timerbar"><div class="timerfill" id="timerFill"></div></div>
+      <div class="grid" id="grid" role="group" aria-label="Grilla de figuras"></div>
+
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">EL IMPOSTOR</h2>
+        <p id="ovText">Todas las agujas apuntan igual, menos una. Encontrala antes de que se acabe el tiempo. Cada nivel la diferencia es más sutil y la grilla crece.</p>
+        <p id="ovRecord" style="font-size:12px;"></p>
+        <button class="btn" id="startBtn">JUGAR</button>
+      </div>
+    </div>
+
+    <div class="status" id="statusEl"></div>
+
+    <div class="controls">
+      <div class="hint">Tocá o hacé click en la figura distinta · teclado: flechas + Enter</div>
+    </div>
+
+    <footer>NEON ARCADE · El Impostor</footer>
+  </div>
+
+<script>
+(()=>{
+  const grid=document.getElementById('grid');
+  const overlay=document.getElementById('overlay');
+  const levelEl=document.getElementById('levelEl');
+  const livesEl=document.getElementById('livesEl');
+  const scoreEl=document.getElementById('scoreEl');
+  const bestEl=document.getElementById('bestEl');
+  const startBtn=document.getElementById('startBtn');
+  const ovRecord=document.getElementById('ovRecord');
+  const statusEl=document.getElementById('statusEl');
+  const timerFill=document.getElementById('timerFill');
+
+  const BEST_KEY='neon-impostor-best';
+  const START_LIVES=3;
+
+  let level=0, lives=START_LIVES, score=0, running=false, locked=false;
+  let gridN=3, impostorIndex=0, focusedIndex=0, cellEls=[];
+  let rafId=null, timerStart=0, timerDuration=0;
+  let audioCtx=null;
+
+  function loadBest(){ return parseInt(localStorage.getItem(BEST_KEY)||'0',10); }
+
+  function ensureAudio(){
+    if(!audioCtx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(AC) audioCtx=new AC();
+    }
+    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  }
+
+  function beep(freq, dur, type){
+    if(!audioCtx) return;
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type=type||'sine';
+    osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur/1000);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime+dur/1000+0.02);
+  }
+
+  function setStatus(text, cls){
+    statusEl.textContent=text;
+    statusEl.className='status'+(cls?(' '+cls):'');
+  }
+
+  function gridSizeForLevel(lv){
+    return Math.min(3+Math.floor((lv-1)/3), 8);
+  }
+  function deltaForLevel(lv){
+    return Math.max(85-(lv-1)*5, 6);
+  }
+  function timeForLevel(lv){
+    return Math.max(6000-(lv-1)*180, 2200);
+  }
+
+  function buildLevel(){
+    gridN=gridSizeForLevel(level);
+    const total=gridN*gridN;
+    impostorIndex=Math.floor(Math.random()*total);
+    const base=Math.random()*360;
+    const delta=deltaForLevel(level)*(Math.random()<0.5?-1:1);
+    const angles=[];
+    for(let i=0;i<total;i++){
+      angles.push(i===impostorIndex ? ((base+delta)+360)%360 : base);
+    }
+    renderGrid(angles);
+    focusedIndex=0;
+    updateFocus();
+    startTimer(timeForLevel(level));
+  }
+
+  function renderGrid(angles){
+    grid.innerHTML='';
+    grid.style.setProperty('--cols', gridN);
+    grid.style.gridTemplateColumns=`repeat(${gridN}, 1fr)`;
+    cellEls=angles.map((ang,i)=>{
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='cell';
+      btn.style.setProperty('--ang', ang+'deg');
+      btn.setAttribute('aria-label','Figura '+(i+1));
+      btn.addEventListener('click', ()=>selectCell(i));
+      grid.appendChild(btn);
+      return btn;
+    });
+  }
+
+  function updateFocus(){
+    cellEls.forEach((el,i)=>el.classList.toggle('focused', i===focusedIndex));
+  }
+
+  function startTimer(durationMs){
+    cancelAnimationFrame(rafId);
+    timerStart=performance.now();
+    timerDuration=durationMs;
+    locked=false;
+    timerFill.classList.remove('low');
+    timerFill.style.width='100%';
+    tick();
+  }
+
+  function tick(){
+    const elapsed=performance.now()-timerStart;
+    const frac=Math.max(0, 1-elapsed/timerDuration);
+    timerFill.style.width=(frac*100)+'%';
+    if(frac<=0.28) timerFill.classList.add('low');
+    if(elapsed>=timerDuration){
+      onTimeout();
+      return;
+    }
+    rafId=requestAnimationFrame(tick);
+  }
+
+  function stopTimer(){
+    cancelAnimationFrame(rafId);
+  }
+
+  function onTimeout(){
+    if(!running || locked) return;
+    locked=true;
+    stopTimer();
+    beep(160,260,'sawtooth');
+    setStatus('¡SE ACABÓ EL TIEMPO!', 'bad');
+    cellEls[impostorIndex].classList.add('correct');
+    loseLife();
+  }
+
+  function selectCell(idx){
+    if(!running || locked) return;
+    if(idx===impostorIndex){
+      correct(idx);
+    }else{
+      wrong(idx);
+    }
+  }
+
+  function correct(idx){
+    locked=true;
+    stopTimer();
+    beep(660,180,'sine');
+    const elapsed=performance.now()-timerStart;
+    const timeLeftMs=Math.max(timerDuration-elapsed,0);
+    score+=50+level*12+Math.floor(timeLeftMs/40);
+    scoreEl.textContent=score;
+    cellEls[idx].classList.add('correct');
+    setStatus('¡ESA ERA!', 'ok');
+    setTimeout(()=>{
+      level++;
+      levelEl.textContent=level;
+      buildLevel();
+      setStatus('','');
+    }, 550);
+  }
+
+  function wrong(idx){
+    locked=true;
+    stopTimer();
+    beep(160,260,'sawtooth');
+    setStatus('ESA NO ERA…', 'bad');
+    cellEls[idx].classList.add('wrong');
+    cellEls[impostorIndex].classList.add('correct');
+    loseLife();
+  }
+
+  function loseLife(){
+    lives--;
+    livesEl.textContent=Math.max(lives,0);
+    if(lives<=0){
+      setTimeout(gameOver, 650);
+    }else{
+      setTimeout(()=>{
+        buildLevel();
+        setStatus('','');
+      }, 650);
+    }
+  }
+
+  function startGame(){
+    ensureAudio();
+    level=1; lives=START_LIVES; score=0;
+    levelEl.textContent=level;
+    livesEl.textContent=lives;
+    scoreEl.textContent=0;
+    overlay.classList.add('hidden');
+    running=true;
+    setStatus('','');
+    buildLevel();
+  }
+
+  function gameOver(){
+    running=false;
+    stopTimer();
+    const best=loadBest();
+    const finalScore=score;
+    let newRecord=false;
+    if(finalScore>best){ localStorage.setItem(BEST_KEY, finalScore); newRecord=true; }
+    bestEl.textContent=Math.max(best,finalScore);
+    setStatus('','');
+    overlay.innerHTML='';
+    const h2=document.createElement('h2'); h2.textContent='¡TE ATRAPÓ EL IMPOSTOR!';
+    const p=document.createElement('p');
+    p.innerHTML=`<span class="final">Nivel <b>${level}</b> · Puntaje <b>${finalScore}</b></span>`+
+      (newRecord?`<br><span class="newrec">¡NUEVO RÉCORD!</span>`:`<br>Récord: ${Math.max(best,finalScore)}`);
+    const btn=document.createElement('button'); btn.className='btn'; btn.textContent='JUGAR DE NUEVO';
+    btn.addEventListener('click', startGame);
+    overlay.appendChild(h2); overlay.appendChild(p); overlay.appendChild(btn);
+    overlay.classList.remove('hidden');
+  }
+
+  window.addEventListener('keydown', e=>{
+    if(!running) return;
+    const key=e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright'].includes(key)){
+      e.preventDefault();
+      const row=Math.floor(focusedIndex/gridN);
+      const col=focusedIndex%gridN;
+      let nr=row, nc=col;
+      if(key==='arrowup') nr=Math.max(row-1,0);
+      if(key==='arrowdown') nr=Math.min(row+1,gridN-1);
+      if(key==='arrowleft') nc=Math.max(col-1,0);
+      if(key==='arrowright') nc=Math.min(col+1,gridN-1);
+      focusedIndex=nr*gridN+nc;
+      updateFocus();
+    }else if(key==='enter' || key===' '){
+      e.preventDefault();
+      selectCell(focusedIndex);
+    }
+  });
+
+  startBtn.addEventListener('click', startGame);
+
+  const best=loadBest();
+  bestEl.textContent=best;
+  if(best>0){ ovRecord.textContent=`Récord: ${best}`; }
+})();
+</script>
+</body>
+</html>
