@@ -53,7 +53,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 
 | # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
 |---|-------|-------|---------|--------|--------------------|--------|
-| 22 | 🚁 | Alas Neón | `alas-neon.html` | Reflejos | Estilo flappy: tocá para aletear y pasá entre las torres de neón. | ⏳ Pendiente |
+| 22 | 🚁 | Alas Neón | `alas-neon.html` | Reflejos | Estilo flappy: tocá para aletear y pasá entre las torres de neón. | ✅ 2026-08-13 |
 | 23 | 🦘 | Salto Infinito | `salto-infinito.html` | Plataformas | Saltá de plataforma en plataforma hacia arriba, sin caerte (inclinación/flechas). | ⏳ Pendiente |
 | 24 | 🔨 | Topos Neón | `topos-neon.html` | Reflejos | Whack-a-mole: golpeá los topos que se asoman, evitá las bombas. | ⏳ Pendiente |
 | 25 | 🏎️ | Ruta Neón | `ruta-neon.html` | Carreras | Carrera top-down esquivando tráfico, juntando combustible y turbo. | ⏳ Pendiente |

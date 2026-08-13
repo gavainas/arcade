@@ -47,6 +47,8 @@ const OVERRIDES = {
   "cambio-color": { steps: [], wait: 900 },
   // La linterna deja la pantalla casi negra, así que va la portada.
   "laberinto": { steps: [], wait: 900 },
+  // Cae solo y choca rápido sin nadie aleteando: va la portada con las torres detrás.
+  "alas-neon": { steps: [], wait: 900 },
   // Los que caen solos necesitan un ratito para que aparezcan cosas en pantalla.
   "tipeo-turbo": { wait: 3400 },
   "cruza-la-avenida": { wait: 2600 },

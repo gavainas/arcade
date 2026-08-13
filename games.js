@@ -228,6 +228,13 @@
       desc: "Una figura de la grilla gira distinto a todas las demás: encontrala antes de que se acabe el tiempo. Cada ronda la diferencia es más sutil y la grilla crece.",
       controles: "Click / toque, o flechas + Enter", fecha: "2026-08-12",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "alas-neon", titulo: "Alas Neón", archivo: "alas-neon.html",
+      emoji: "🚁", categoria: "reflejos", tags: ["flappy", "un boton", "torres", "reflejos"],
+      desc: "Estilo flappy: tocá para aletear y pasá entre las torres de neón. El hueco se achica y la velocidad sube con cada punto.",
+      controles: "Click, espacio o toque", fecha: "2026-08-13",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
