@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SALTO INFINITO · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:420px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.2vw,42px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--green),var(--purple),var(--cyan));
+    background-size:400% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:400% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:4px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:20px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(138,75,255,.07); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:22px;
+    background:rgba(5,7,15,.88); backdrop-filter:blur(3px); gap:13px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,30px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:320px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--pink)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; text-align:center;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  footer{margin-top:18px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">SALTO INFINITO</div>
+      <div class="sub">P L A T A F O R M A S &nbsp; · &nbsp; S I N &nbsp; C A E R T E</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">ALTURA<b id="score">0</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+      <div class="box">VELOCIDAD<b id="speedTag">1×</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="400" height="640"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">SALTO INFINITO</h2>
+        <p id="ovText">Rebotá de plataforma en plataforma hacia arriba. Movete a los costados para no caerte: cuidado con las que se rompen, aprovechá los resortes.</p>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Flechas / A D para moverte, o arrastrá el dedo / mouse.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Movimiento: <b>◄ ►</b> / <b>A D</b> o <b>arrastrá</b> · <b>P</b> pausa. Si te vas de un borde, aparecés del otro lado.</div>
+    </div>
+
+    <footer>NEON ARCADE · Salto Infinito</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const scoreEl=document.getElementById('score');
+  const bestEl=document.getElementById('best');
+  const speedTagEl=document.getElementById('speedTag');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const startBtn=document.getElementById('startBtn');
+
+  const BEST_KEY='neon-salto-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  // Física
+  const G=0.32;
+  const BOUNCE=-11;
+  const SPRING_BOUNCE=-17.5;
+  const MAX_VX=5.6;
+  const ACCEL=0.9;
+  const FRICTION=0.86;
+  const PLAYER_W=30, PLAYER_H=34;
+
+  const HUES=['#27e8ff','#8a4bff'];
+
+  let player, platforms, particles, keys;
+  let score, best_score, running, paused, started, shake, scrollY, topGenY, pointerX, dragging;
+
+  function pickPlatformType(sc){
+    const springChance=Math.min(0.05+sc*0.0007,0.12);
+    const breakChance=Math.min(0.08+sc*0.0009,0.22);
+    const movingChance=Math.min(0.10+sc*0.0011,0.26);
+    const r=Math.random();
+    if(r<springChance) return 'spring';
+    if(r<springChance+breakChance) return 'break';
+    if(r<springChance+breakChance+movingChance) return 'moving';
+    return 'normal';
+  }
+
+  function platformWidth(sc){
+    return Math.max(42, 72-Math.min(sc,150)*0.16);
+  }
+
+  function addPlatform(y, sc){
+    const w=platformWidth(sc);
+    const x=w/2+Math.random()*(W-w);
+    const type=pickPlatformType(sc);
+    platforms.push({
+      x, y, w, type,
+      baseX:x, phase:Math.random()*Math.PI*2, amp:30+Math.random()*40, mvSpeed:0.015+Math.random()*0.02,
+      state:'idle', hue:HUES[(platforms.length)%HUES.length], breakT:0
+    });
+  }
+
+  function reset(){
+    player={x:W/2, y:H-90, vy:0, vx:0, squash:1, facing:1};
+    platforms=[]; particles=[];
+    keys={left:false,right:false};
+    score=0; paused=false; shake=0; scrollY=0; dragging=false; pointerX=null;
+    scoreEl.textContent=0;
+    speedTagEl.textContent='1×';
+
+    // piso inicial ancho para arrancar parado
+    platforms.push({x:W/2,y:H-40,w:120,type:'normal',baseX:W/2,phase:0,amp:0,mvSpeed:0,state:'idle',hue:HUES[0],breakT:0});
+    let y=H-140;
+    topGenY=y;
+    while(y>-H){
+      addPlatform(y,0);
+      y-=gapForScore(0);
+      topGenY=y;
+    }
+  }
+
+  function gapForScore(sc){
+    return 62+Math.min(sc,220)*0.34+Math.random()*30;
+  }
+
+  function start(){
+    reset();
+    started=true; running=true;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function gameOver(){
+    running=false; started=false;
+    shake=14;
+    const isRec = score>0 && score>=best;
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    ovTitle.textContent='GAME OVER';
+    ovText.innerHTML=`<span class="final">Altura: <b>${score}</b></span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Encadená plataformas y usá los resortes verdes para ganar altura rápido.';
+    overlay.classList.remove('hidden');
+  }
+
+  function addBurst(x,y,color,n,spread){
+    spread=spread||3;
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=1+Math.random()*spread;
+      particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color});
+    }
+  }
+
+  let last=0;
+  function update(dt){
+    // control horizontal
+    if(dragging && pointerX!=null){
+      const target=pointerX;
+      const diff=target-player.x;
+      player.vx=Math.max(-MAX_VX,Math.min(MAX_VX,diff*0.18));
+    } else {
+      if(keys.left) player.vx=Math.max(player.vx-ACCEL*dt, -MAX_VX);
+      else if(keys.right) player.vx=Math.min(player.vx+ACCEL*dt, MAX_VX);
+      else player.vx*=Math.pow(FRICTION,dt);
+    }
+    if(Math.abs(player.vx)>0.4) player.facing=player.vx>0?1:-1;
+    player.x+=player.vx*dt;
+    if(player.x<-PLAYER_W/2) player.x=W+PLAYER_W/2;
+    if(player.x>W+PLAYER_W/2) player.x=-PLAYER_W/2;
+
+    // física vertical
+    player.vy=Math.min(player.vy+G*dt, 16);
+    player.y+=player.vy*dt;
+    player.squash+=((player.vy>0?1.08:0.94)-player.squash)*0.2;
+
+    // cámara: sólo sube, nunca retrocede
+    const desiredScroll=player.y-H*0.42;
+    if(desiredScroll<scrollY) scrollY=desiredScroll;
+
+    score=Math.max(score, Math.floor(-scrollY/9));
+    scoreEl.textContent=score;
+    const spd=1+Math.min(score,200)/200*1.6;
+    speedTagEl.textContent=spd.toFixed(1)+'×';
+
+    // plataformas móviles
+    for(const p of platforms){
+      if(p.type==='moving' && p.state!=='broken'){
+        p.phase+=p.mvSpeed*dt;
+        p.x=Math.max(p.w/2, Math.min(W-p.w/2, p.baseX+Math.sin(p.phase)*p.amp));
+      }
+      if(p.state==='breaking'){
+        p.breakT+=dt;
+        if(p.breakT>18) p.state='broken';
+      }
+    }
+
+    // colisión sólo cayendo
+    if(player.vy>0){
+      for(const p of platforms){
+        if(p.state==='broken') continue;
+        const footY=player.y+PLAYER_H/2;
+        const prevFootY=footY-player.vy*dt;
+        const withinX=player.x+PLAYER_W*0.32>p.x-p.w/2 && player.x-PLAYER_W*0.32<p.x+p.w/2;
+        if(withinX && prevFootY<=p.y && footY>=p.y){
+          player.y=p.y-PLAYER_H/2;
+          player.vy = p.type==='spring' ? SPRING_BOUNCE : BOUNCE;
+          player.squash=1.35;
+          if(p.type==='break'){
+            p.state='breaking'; p.breakT=0;
+            addBurst(p.x,p.y,'#ff5470',10,3);
+          } else if(p.type==='spring'){
+            addBurst(p.x,p.y,'#39ff9e',16,4.5);
+          } else {
+            addBurst(player.x,footY,p.hue,7,2);
+          }
+        }
+      }
+    }
+
+    // generar plataformas nuevas hacia arriba
+    while(topGenY>scrollY-80){
+      const gap=gapForScore(score);
+      topGenY-=gap;
+      addPlatform(topGenY,score);
+    }
+    // eliminar las que quedaron muy abajo
+    for(let i=platforms.length-1;i>=0;i--){
+      if(platforms[i].y-scrollY>H+80) platforms.splice(i,1);
+    }
+
+    for(let i=particles.length-1;i>=0;i--){
+      const pt=particles[i];
+      pt.x+=pt.vx*dt; pt.y+=pt.vy*dt; pt.vy+=0.06*dt; pt.life-=0.035*dt;
+      if(pt.life<=0) particles.splice(i,1);
+    }
+
+    if(shake>0) shake*=0.9;
+
+    // game over: cayó por debajo de la pantalla visible
+    if(player.y-scrollY>H+50){
+      addBurst(player.x,H,'#ff5470',20,3.5);
+      gameOver();
+    }
+  }
+
+  function drawPlatform(p){
+    const y=p.y-scrollY;
+    if(y<-30||y>H+30) return;
+    ctx.save();
+    let alpha=1;
+    if(p.state==='breaking') alpha=Math.max(0,1-p.breakT/18);
+    if(p.state==='broken') return;
+    ctx.globalAlpha=alpha;
+    ctx.shadowColor=p.type==='spring'?'#39ff9e':(p.type==='break'?'#ff5470':p.hue);
+    ctx.shadowBlur=14;
+    ctx.strokeStyle=ctx.shadowColor;
+    ctx.lineWidth=2.5;
+    ctx.fillStyle='rgba(10,14,30,.85)';
+    const x=p.x-p.w/2, w=p.w, h=12;
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x,y-h/2,w,h,6); else ctx.rect(x,y-h/2,w,h);
+    ctx.fill(); ctx.stroke();
+    if(p.type==='spring'){
+      ctx.strokeStyle='#39ff9e'; ctx.lineWidth=2.4;
+      ctx.beginPath();
+      for(let i=0;i<3;i++){
+        const sx=p.x-8+i*8;
+        ctx.moveTo(sx,y-h/2);
+        ctx.lineTo(sx,y-h/2-9);
+      }
+      ctx.stroke();
+    }
+    if(p.type==='break'){
+      ctx.strokeStyle='rgba(255,84,112,.9)'; ctx.lineWidth=1.4;
+      ctx.beginPath();
+      ctx.moveTo(x+w*0.3,y-h/2); ctx.lineTo(x+w*0.45,y+h/2);
+      ctx.moveTo(x+w*0.7,y-h/2); ctx.lineTo(x+w*0.55,y+h/2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawPlayer(){
+    const y=player.y-scrollY;
+    const drawAt=(px)=>{
+      ctx.save();
+      ctx.translate(px,y);
+      const sx=1/Math.sqrt(player.squash), sy=player.squash;
+      ctx.scale(sx*player.facing<0?-sx:sx, sy);
+      // piernas
+      ctx.strokeStyle='#8a4bff'; ctx.lineWidth=3.5; ctx.lineCap='round';
+      ctx.shadowColor='#8a4bff'; ctx.shadowBlur=8;
+      ctx.beginPath();
+      ctx.moveTo(-8,PLAYER_H*0.28); ctx.lineTo(-9,PLAYER_H*0.55);
+      ctx.moveTo(8,PLAYER_H*0.28); ctx.lineTo(9,PLAYER_H*0.55);
+      ctx.stroke();
+      // cuerpo
+      ctx.fillStyle='#27e8ff'; ctx.shadowColor='#27e8ff'; ctx.shadowBlur=18;
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(-PLAYER_W/2,-PLAYER_H/2,PLAYER_W,PLAYER_H,10); else ctx.rect(-PLAYER_W/2,-PLAYER_H/2,PLAYER_W,PLAYER_H);
+      ctx.fill();
+      // visor
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#ff2bd6';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(-PLAYER_W*0.32,-PLAYER_H*0.12,PLAYER_W*0.64,PLAYER_H*0.32,4); else ctx.rect(-PLAYER_W*0.32,-PLAYER_H*0.12,PLAYER_W*0.64,PLAYER_H*0.32);
+      ctx.fill();
+      // antena
+      ctx.strokeStyle='#39ff9e'; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.moveTo(0,-PLAYER_H/2); ctx.lineTo(0,-PLAYER_H/2-8); ctx.stroke();
+      ctx.fillStyle='#39ff9e'; ctx.shadowColor='#39ff9e'; ctx.shadowBlur=10;
+      ctx.beginPath(); ctx.arc(0,-PLAYER_H/2-8,2.6,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    };
+    drawAt(player.x);
+    if(player.x<PLAYER_W) drawAt(player.x+W);
+    if(player.x>W-PLAYER_W) drawAt(player.x-W);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    if(shake>0.4){
+      ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
+    }
+
+    // grilla de fondo que se mueve con la cámara
+    ctx.strokeStyle='rgba(232,246,255,.05)'; ctx.lineWidth=1;
+    const off=(-scrollY*0.5)%40;
+    for(let yy=off-40; yy<H; yy+=40){
+      ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke();
+    }
+    for(let x=0;x<W;x+=40){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+
+    for(const p of platforms) drawPlatform(p);
+    drawPlayer();
+
+    for(const pt of particles){
+      ctx.globalAlpha=Math.max(pt.life,0);
+      ctx.fillStyle=pt.color;
+      ctx.fillRect(pt.x-2, pt.y-scrollY-2, 4, 4);
+    }
+    ctx.globalAlpha=1;
+
+    ctx.restore();
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!paused){
+      const dt=Math.min(2.2,(ts-last)/16.6);
+      last=ts;
+      update(dt);
+      if(running) draw();
+    }else{
+      last=ts;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function togglePause(){
+    if(!started||!running) return;
+    paused=!paused;
+    if(!paused){ last=performance.now(); }
+  }
+
+  function canvasX(clientX){
+    const rect=canvas.getBoundingClientRect();
+    return (clientX-rect.left)/rect.width*W;
+  }
+
+  // controles
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){ keys.left=true; dragging=false; }
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){ keys.right=true; dragging=false; }
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+  window.addEventListener('keyup',e=>{
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') keys.left=false;
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') keys.right=false;
+  });
+  canvas.addEventListener('mousedown',e=>{ dragging=true; pointerX=canvasX(e.clientX); });
+  window.addEventListener('mousemove',e=>{ if(dragging) pointerX=canvasX(e.clientX); });
+  window.addEventListener('mouseup',()=>{ dragging=false; });
+  canvas.addEventListener('touchstart',e=>{ e.preventDefault(); dragging=true; pointerX=canvasX(e.touches[0].clientX); },{passive:false});
+  canvas.addEventListener('touchmove',e=>{ e.preventDefault(); if(dragging) pointerX=canvasX(e.touches[0].clientX); },{passive:false});
+  canvas.addEventListener('touchend',e=>{ e.preventDefault(); dragging=false; },{passive:false});
+  startBtn.addEventListener('click',start);
+
+  // dibujo estático inicial
+  reset();
+  draw();
+})();
+</script>
+</body>
+</html>

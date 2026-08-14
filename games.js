@@ -235,6 +235,13 @@
       desc: "Estilo flappy: tocá para aletear y pasá entre las torres de neón. El hueco se achica y la velocidad sube con cada punto.",
       controles: "Click, espacio o toque", fecha: "2026-08-13",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "salto-infinito", titulo: "Salto Infinito", archivo: "salto-infinito.html",
+      emoji: "🦘", categoria: "reflejos", tags: ["plataformas", "doodle jump", "resortes", "altura"],
+      desc: "Rebotá de plataforma en plataforma hacia arriba sin caerte. Plataformas móviles, resortes y otras que se rompen al pisarlas.",
+      controles: "Flechas / A D, o arrastrá", fecha: "2026-08-14",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
