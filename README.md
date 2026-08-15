@@ -36,6 +36,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🔍 El Impostor | [`el-impostor.html`](el-impostor.html) | Encontrá la figura que gira distinto en la grilla antes de que se acabe el tiempo. Cada ronda la diferencia es más sutil y la grilla crece, con vidas y récord guardado. |
 | 🚁 Alas Neón | [`alas-neon.html`](alas-neon.html) | Estilo flappy: tocá para aletear y pasá entre las torres de neón. El hueco se achica y la velocidad sube con cada punto, con récord guardado. |
 | 🦘 Salto Infinito | [`salto-infinito.html`](salto-infinito.html) | Rebotá de plataforma en plataforma hacia arriba sin caerte. Plataformas móviles, resortes que impulsan más alto y otras que se rompen al pisarlas. |
+| 🔨 Topos Neón | [`topos-neon.html`](topos-neon.html) | Whack-a-mole: golpeá los topos que se asoman de sus pozos antes de que se escondan y evitá las bombas. Combo por aciertos seguidos, contra reloj de 45 segundos. |
 
 ## Sopa de Letras
 

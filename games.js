@@ -242,6 +242,13 @@
       desc: "Rebotá de plataforma en plataforma hacia arriba sin caerte. Plataformas móviles, resortes y otras que se rompen al pisarlas.",
       controles: "Flechas / A D, o arrastrá", fecha: "2026-08-14",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "topos-neon", titulo: "Topos Neón", archivo: "topos-neon.html",
+      emoji: "🔨", categoria: "reflejos", tags: ["whack-a-mole", "topos", "bombas", "combo"],
+      desc: "Whack-a-mole: golpeá los topos que se asoman de sus pozos antes de que se escondan y evitá las bombas. Combo por aciertos seguidos, contra reloj.",
+      controles: "Click / toque, o teclado 1-9", fecha: "2026-08-15",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

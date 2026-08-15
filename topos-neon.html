@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TOPOS NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:420px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(26px,6.6vw,46px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--green),var(--purple),var(--cyan));
+    background-size:400% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(39,232,255,.35));
+  }
+  @keyframes shine{to{background-position:400% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; min-width:78px; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:20px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.life b{color:var(--red); font-size:16px;}
+  .hud .box.time b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(138,75,255,.07); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:22px;
+    background:rgba(5,7,15,.88); backdrop-filter:blur(3px); gap:13px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,32px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(39,232,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:320px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--pink)); box-shadow:0 8px 24px rgba(39,232,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(39,232,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; text-align:center;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  footer{margin-top:18px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">TOPOS NEÓN</div>
+      <div class="sub">R E F L E J O S &nbsp; · &nbsp; W H A C K</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">PUNTOS<b id="score">0</b></div>
+      <div class="box life">VIDAS<b id="lives">❤❤❤</b></div>
+      <div class="box time">TIEMPO<b id="time">45</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="400" height="440"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">TOPOS NEÓN</h2>
+        <p id="ovText">Golpeá los topos que se asoman de sus pozos antes de que se escondan. ¡Cuidado con las bombas: te cuestan una vida!</p>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Tocá o hacé clic sobre el pozo con el topo. Combo por aciertos seguidos.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint"><b>Toque</b> / <b>clic</b> sobre el topo · teclado <b>1-9</b> por pozo · <b>P</b> pausa.</div>
+    </div>
+
+    <footer>NEON ARCADE · Topos Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const scoreEl=document.getElementById('score');
+  const livesEl=document.getElementById('lives');
+  const timeEl=document.getElementById('time');
+  const bestEl=document.getElementById('best');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const startBtn=document.getElementById('startBtn');
+
+  const BEST_KEY='neon-topos-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  const COLS=3, ROWS=3, HOLE_COUNT=COLS*ROWS;
+  const MARGIN_X=44, MARGIN_Y=34;
+  const CELL_W=(W-MARGIN_X*2)/COLS;
+  const CELL_H=(H-MARGIN_Y*2)/ROWS;
+  const HOLE_R=46;
+  const ROUND_TIME=45; // segundos
+
+  let holes, particles, rings, score, lives, combo, best_combo_mult, running, paused, started;
+  let elapsed, timeLeft, spawnCooldown, shake, flash;
+
+  function makeHoles(){
+    const arr=[];
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        arr.push({
+          cx: MARGIN_X+CELL_W*(c+0.5),
+          cy: MARGIN_Y+CELL_H*(r+0.5)+10,
+          phase:'idle', // idle | rise | hold | sink | hit
+          type:null,    // mole | gold | bomb
+          riseT:0,
+          timer:0
+        });
+      }
+    }
+    return arr;
+  }
+
+  function reset(){
+    holes=makeHoles();
+    particles=[]; rings=[];
+    score=0; lives=3; combo=0;
+    elapsed=0; timeLeft=ROUND_TIME; spawnCooldown=700; shake=0; flash=0;
+    scoreEl.textContent='0';
+    livesEl.textContent='❤❤❤';
+    timeEl.textContent=String(ROUND_TIME);
+  }
+
+  function difficulty(){
+    // 0 al empezar -> 1 cerca del final: acelera aparición y esconde más rápido
+    return Math.min(1, elapsed/ROUND_TIME);
+  }
+
+  function maxActive(){
+    const d=difficulty();
+    if(d>0.66) return 3;
+    if(d>0.33) return 2;
+    return 1;
+  }
+
+  function pickType(){
+    const r=Math.random();
+    if(r<0.18) return 'bomb';
+    if(r<0.28) return 'gold';
+    return 'mole';
+  }
+
+  function upDuration(){
+    const d=difficulty();
+    return 1150-d*600+Math.random()*220; // ms visible
+  }
+
+  function trySpawn(dt){
+    spawnCooldown-=dt;
+    if(spawnCooldown>0) return;
+    const activeCount=holes.filter(h=>h.phase!=='idle').length;
+    if(activeCount>=maxActive()){ spawnCooldown=120; return; }
+    const idle=holes.filter(h=>h.phase==='idle');
+    if(!idle.length){ spawnCooldown=120; return; }
+    const h=idle[Math.floor(Math.random()*idle.length)];
+    h.type=pickType();
+    h.phase='rise';
+    h.riseT=0;
+    h.timer=upDuration();
+    const d=difficulty();
+    spawnCooldown=(650-d*350)+Math.random()*(500-d*250);
+  }
+
+  function addBurst(x,y,color,n,spread){
+    spread=spread||3;
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=1+Math.random()*spread;
+      particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color});
+    }
+  }
+
+  function addRing(x,y,color){
+    rings.push({x,y,r:6,life:1,color});
+  }
+
+  function comboMult(){
+    return 1+Math.min(4,Math.floor(combo/5));
+  }
+
+  function hitHole(h){
+    if(h.phase!=='hold' && h.phase!=='rise') return false;
+    if(h.type==='bomb'){
+      lives--;
+      combo=0;
+      shake=12; flash=10;
+      livesEl.textContent='❤'.repeat(Math.max(lives,0))+'♡'.repeat(3-Math.max(lives,0));
+      addBurst(h.cx,h.cy-20,'#ff5470',20,4);
+      h.phase='hit'; h.timer=180;
+      if(lives<=0){ gameOver('vidas'); }
+      return true;
+    }
+    const pts=(h.type==='gold'?50:10)*comboMult();
+    score+=pts;
+    combo++;
+    scoreEl.textContent=String(score);
+    addBurst(h.cx,h.cy-20,h.type==='gold'?'#ffd23b':'#39ff9e',16,3.2);
+    addRing(h.cx,h.cy-16,h.type==='gold'?'#ffd23b':'#27e8ff');
+    h.phase='hit'; h.timer=180;
+    return true;
+  }
+
+  function whiffAt(x,y){
+    let nearest=null, best=1e9;
+    for(const h of holes){
+      const dx=x-h.cx, dy=y-(h.cy-16);
+      const d=dx*dx+dy*dy;
+      if(d<best){ best=d; nearest=h; }
+    }
+    if(nearest && best<HOLE_R*HOLE_R*1.3){
+      if(nearest.phase==='idle'){ combo=0; }
+    }
+  }
+
+  function pointerHit(x,y){
+    let bestH=null, bestD=1e9;
+    for(const h of holes){
+      if(h.phase!=='hold' && h.phase!=='rise') continue;
+      const dx=x-h.cx, dy=y-(h.cy-16);
+      const d=dx*dx+dy*dy;
+      if(d<bestD){ bestD=d; bestH=h; }
+    }
+    if(bestH && bestD<HOLE_R*HOLE_R*1.15){
+      hitHole(bestH);
+    } else {
+      whiffAt(x,y);
+    }
+  }
+
+  function hitByIndex(i){
+    if(i<0||i>=holes.length) return;
+    const h=holes[i];
+    if(h.phase==='hold'||h.phase==='rise') hitHole(h);
+    else whiffAt(h.cx,h.cy-16);
+  }
+
+  function gameOver(reason){
+    running=false; started=false;
+    const isRec = score>0 && score>=best;
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    ovTitle.textContent='GAME OVER';
+    const motivo = reason==='vidas' ? 'Te quedaste sin vidas.' : '¡Se acabó el tiempo!';
+    ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span><br>`+
+      `<span style="font-size:12.5px;">${motivo}</span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Encadená golpes seguidos para subir el multiplicador de combo.';
+    overlay.classList.remove('hidden');
+  }
+
+  function start(){
+    reset();
+    started=true; running=true; paused=false;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  let last=0;
+  function update(dtMs){
+    elapsed+=dtMs/1000;
+    timeLeft=Math.max(0, ROUND_TIME-elapsed);
+    timeEl.textContent=String(Math.ceil(timeLeft));
+
+    trySpawn(dtMs);
+
+    for(const h of holes){
+      if(h.phase==='rise'){
+        h.riseT=Math.min(1,h.riseT+dtMs/160);
+        if(h.riseT>=1) h.phase='hold';
+      } else if(h.phase==='hold'){
+        h.timer-=dtMs;
+        if(h.timer<=0){
+          if(h.type==='bomb'){
+            h.phase='sink'; h.riseT=1;
+          } else {
+            combo=0;
+            h.phase='sink'; h.riseT=1;
+          }
+        }
+      } else if(h.phase==='sink'){
+        h.riseT=Math.max(0,h.riseT-dtMs/150);
+        if(h.riseT<=0){ h.phase='idle'; h.type=null; }
+      } else if(h.phase==='hit'){
+        h.timer-=dtMs;
+        h.riseT=Math.max(0,h.riseT-dtMs/180);
+        if(h.timer<=0 || h.riseT<=0){ h.phase='idle'; h.type=null; h.riseT=0; }
+      }
+    }
+
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.14; p.life-=0.035;
+      if(p.life<=0) particles.splice(i,1);
+    }
+    for(let i=rings.length-1;i>=0;i--){
+      const r=rings[i];
+      r.r+=1.6; r.life-=0.045;
+      if(r.life<=0) rings.splice(i,1);
+    }
+
+    if(shake>0) shake*=0.88;
+    if(flash>0) flash*=0.85;
+
+    if(timeLeft<=0 && running){ gameOver('tiempo'); }
+  }
+
+  function drawHole(h){
+    ctx.save();
+    ctx.globalAlpha=1;
+    // pozo (elipse oscura con anillo neón)
+    ctx.beginPath();
+    ctx.ellipse(h.cx,h.cy,HOLE_R,HOLE_R*0.42,0,0,Math.PI*2);
+    ctx.fillStyle='#020308';
+    ctx.fill();
+    ctx.lineWidth=2.5;
+    ctx.strokeStyle='rgba(138,75,255,.55)';
+    ctx.shadowColor='#8a4bff'; ctx.shadowBlur=10;
+    ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.restore();
+
+    if(h.phase==='idle') return;
+
+    // clip: sólo se ve lo que está por encima de la línea del pozo
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(h.cx-HOLE_R-6, h.cy-90, HOLE_R*2+12, 90);
+    ctx.clip();
+
+    const bodyR=30;
+    const hiddenY=h.cy+bodyR*0.9;
+    const shownY=h.cy-bodyR*0.55;
+    const cy=hiddenY+(shownY-hiddenY)*h.riseT;
+
+    if(h.type==='bomb'){
+      ctx.save();
+      ctx.shadowColor='#ff5470'; ctx.shadowBlur=18;
+      ctx.fillStyle='#1a0810';
+      ctx.beginPath(); ctx.arc(h.cx,cy,bodyR*0.82,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#ff5470'; ctx.lineWidth=2.5; ctx.stroke();
+      // mecha
+      ctx.strokeStyle='#ffd23b'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(h.cx+8,cy-bodyR*0.7); ctx.quadraticCurveTo(h.cx+18,cy-bodyR*1.05,h.cx+6,cy-bodyR*1.25); ctx.stroke();
+      ctx.fillStyle='#ffd23b'; ctx.shadowColor='#ffd23b'; ctx.shadowBlur=12;
+      ctx.beginPath(); ctx.arc(h.cx+6,cy-bodyR*1.25,3.4,0,Math.PI*2); ctx.fill();
+      // cara de peligro
+      ctx.shadowBlur=0; ctx.fillStyle='#ff5470';
+      ctx.beginPath(); ctx.arc(h.cx-8,cy-4,3,0,Math.PI*2); ctx.arc(h.cx+8,cy-4,3,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    } else {
+      const gold=h.type==='gold';
+      const main=gold?'#ffd23b':'#27e8ff';
+      const belly=gold?'#fff3b0':'#dff7ff';
+      ctx.save();
+      ctx.shadowColor=main; ctx.shadowBlur=gold?22:16;
+      ctx.fillStyle=main;
+      ctx.beginPath(); ctx.arc(h.cx,cy,bodyR,0,Math.PI*2); ctx.fill();
+      // orejas
+      ctx.beginPath(); ctx.arc(h.cx-bodyR*0.62,cy-bodyR*0.68,bodyR*0.28,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(h.cx+bodyR*0.62,cy-bodyR*0.68,bodyR*0.28,0,Math.PI*2); ctx.fill();
+      // pancita
+      ctx.shadowBlur=0;
+      ctx.fillStyle=belly;
+      ctx.beginPath(); ctx.ellipse(h.cx,cy+bodyR*0.28,bodyR*0.5,bodyR*0.38,0,0,Math.PI*2); ctx.fill();
+      // ojos
+      ctx.fillStyle='#05070f';
+      ctx.beginPath(); ctx.arc(h.cx-bodyR*0.32,cy-bodyR*0.12,3.4,0,Math.PI*2); ctx.arc(h.cx+bodyR*0.32,cy-bodyR*0.12,3.4,0,Math.PI*2); ctx.fill();
+      // nariz
+      ctx.fillStyle='#ff2bd6';
+      ctx.beginPath(); ctx.arc(h.cx,cy+bodyR*0.08,3,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    if(shake>0.4){
+      ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+    }
+
+    // suelo con textura sutil
+    ctx.strokeStyle='rgba(232,246,255,.04)'; ctx.lineWidth=1;
+    for(let x=0;x<W;x+=28){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+
+    for(const h of holes) drawHole(h);
+
+    for(const r of rings){
+      ctx.globalAlpha=Math.max(r.life,0);
+      ctx.strokeStyle=r.color; ctx.lineWidth=2.4;
+      ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+
+    for(const p of particles){
+      ctx.globalAlpha=Math.max(p.life,0);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(p.x-2,p.y-2,4,4);
+    }
+    ctx.globalAlpha=1;
+
+    // combo
+    if(combo>=5){
+      ctx.textAlign='center';
+      ctx.font='900 15px "Segoe UI",sans-serif';
+      ctx.fillStyle='#ffd23b';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=10;
+      ctx.fillText('COMBO x'+comboMult()+'  ('+combo+')', W/2, 22);
+      ctx.shadowBlur=0;
+    }
+
+    ctx.restore();
+
+    if(flash>0.5){
+      ctx.fillStyle=`rgba(255,84,112,${flash*0.035})`;
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!paused){
+      const dt=Math.min(40,ts-last);
+      last=ts;
+      update(dt);
+      if(running) draw();
+    } else {
+      last=ts;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function togglePause(){
+    if(!started||!running) return;
+    paused=!paused;
+    if(!paused){ last=performance.now(); }
+  }
+
+  function canvasPoint(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+    return {x:(clientX-rect.left)*sx, y:(clientY-rect.top)*sy};
+  }
+
+  canvas.addEventListener('mousedown',e=>{
+    if(!started||!running||paused) return;
+    const p=canvasPoint(e.clientX,e.clientY);
+    pointerHit(p.x,p.y);
+  });
+  canvas.addEventListener('touchstart',e=>{
+    if(!started||!running||paused){ return; }
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      const p=canvasPoint(t.clientX,t.clientY);
+      pointerHit(p.x,p.y);
+    }
+  },{passive:false});
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='p'||e.key==='P'){ togglePause(); return; }
+    const n=parseInt(e.key,10);
+    if(!isNaN(n) && n>=1 && n<=9 && started && running && !paused){
+      hitByIndex(n-1);
+    }
+  });
+  startBtn.addEventListener('click',start);
+
+  // dibujo estático inicial
+  holes=makeHoles(); particles=[]; rings=[]; shake=0; flash=0; combo=0;
+  draw();
+})();
+</script>
+</body>
+</html>

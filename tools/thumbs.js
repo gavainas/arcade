@@ -56,6 +56,9 @@ const OVERRIDES = {
   "asteroides": { wait: 2600 },
   "serpiente-neon": { wait: 3000 },
   "bloques-neon": { wait: 3600 },
+  // A los 2.2s por defecto el primer topo ya se escondió: agarramos el instante
+  // en que está arriba para que la miniatura no sea una grilla de pozos vacíos.
+  "topos-neon": { steps: ["#startBtn"], wait: 950 },
   // Apilamos un par de bloques para que la miniatura no sea una torre vacía.
   "torre": {
     steps: ["#startBtn", { canvas: [0.5, 0.5] }, { canvas: [0.5, 0.5] }],

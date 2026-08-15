@@ -55,7 +55,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 |---|-------|-------|---------|--------|--------------------|--------|
 | 22 | 🚁 | Alas Neón | `alas-neon.html` | Reflejos | Estilo flappy: tocá para aletear y pasá entre las torres de neón. | ✅ 2026-08-13 |
 | 23 | 🦘 | Salto Infinito | `salto-infinito.html` | Plataformas | Saltá de plataforma en plataforma hacia arriba, sin caerte (inclinación/flechas). | ✅ 2026-08-14 |
-| 24 | 🔨 | Topos Neón | `topos-neon.html` | Reflejos | Whack-a-mole: golpeá los topos que se asoman, evitá las bombas. | ⏳ Pendiente |
+| 24 | 🔨 | Topos Neón | `topos-neon.html` | Reflejos | Whack-a-mole: golpeá los topos que se asoman, evitá las bombas. | ✅ 2026-08-15 |
 | 25 | 🏎️ | Ruta Neón | `ruta-neon.html` | Carreras | Carrera top-down esquivando tráfico, juntando combustible y turbo. | ⏳ Pendiente |
 | 26 | 📐 | Geometría Imposible | `geometria-imposible.html` | Runner rítmico | Estilo geometry dash: saltá pinchos al ritmo, con checkpoints. | ⏳ Pendiente |
 | 27 | 🛡️ | Defensa Neón | `defensa-neon.html` | Tower defense | Colocá torretas para frenar oleadas de invasores en un camino serpenteante. | ⏳ Pendiente |
