@@ -37,6 +37,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🚁 Alas Neón | [`alas-neon.html`](alas-neon.html) | Estilo flappy: tocá para aletear y pasá entre las torres de neón. El hueco se achica y la velocidad sube con cada punto, con récord guardado. |
 | 🦘 Salto Infinito | [`salto-infinito.html`](salto-infinito.html) | Rebotá de plataforma en plataforma hacia arriba sin caerte. Plataformas móviles, resortes que impulsan más alto y otras que se rompen al pisarlas. |
 | 🔨 Topos Neón | [`topos-neon.html`](topos-neon.html) | Whack-a-mole: golpeá los topos que se asoman de sus pozos antes de que se escondan y evitá las bombas. Combo por aciertos seguidos, contra reloj de 45 segundos. |
+| 🏎️ Ruta Neón | [`ruta-neon.html`](ruta-neon.html) | Carrera top-down: esquivá el tráfico, juntá bidones de combustible antes de quedarte tirado y agarrá los rayos de turbo para acelerar a fondo. |
 
 ## Sopa de Letras
 

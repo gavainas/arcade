@@ -53,6 +53,7 @@ const OVERRIDES = {
   "tipeo-turbo": { wait: 3400 },
   "cruza-la-avenida": { wait: 2600 },
   "invasion-neon": { wait: 2600 },
+  "ruta-neon": { wait: 2600 },
   "asteroides": { wait: 2600 },
   "serpiente-neon": { wait: 3000 },
   "bloques-neon": { wait: 3600 },

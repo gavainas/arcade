@@ -249,6 +249,13 @@
       desc: "Whack-a-mole: golpeá los topos que se asoman de sus pozos antes de que se escondan y evitá las bombas. Combo por aciertos seguidos, contra reloj.",
       controles: "Click / toque, o teclado 1-9", fecha: "2026-08-15",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "ruta-neon", titulo: "Ruta Neón", archivo: "ruta-neon.html",
+      emoji: "🏎️", categoria: "deportes", tags: ["carreras", "top-down", "trafico", "combustible", "turbo"],
+      desc: "Carrera top-down: esquivá el tráfico, juntá bidones de combustible antes de quedarte tirado y agarrá los rayos de turbo para acelerar a fondo.",
+      controles: "Flechas / A D, o arrastrá el dedo", fecha: "2026-08-16",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
