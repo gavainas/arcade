@@ -38,6 +38,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🦘 Salto Infinito | [`salto-infinito.html`](salto-infinito.html) | Rebotá de plataforma en plataforma hacia arriba sin caerte. Plataformas móviles, resortes que impulsan más alto y otras que se rompen al pisarlas. |
 | 🔨 Topos Neón | [`topos-neon.html`](topos-neon.html) | Whack-a-mole: golpeá los topos que se asoman de sus pozos antes de que se escondan y evitá las bombas. Combo por aciertos seguidos, contra reloj de 45 segundos. |
 | 🏎️ Ruta Neón | [`ruta-neon.html`](ruta-neon.html) | Carrera top-down: esquivá el tráfico, juntá bidones de combustible antes de quedarte tirado y agarrá los rayos de turbo para acelerar a fondo. |
+| 📐 Geometría Imposible | [`geometria-imposible.html`](geometria-imposible.html) | Runner rítmico estilo geometry dash: saltá los pinchos sin frenar. Las banderas doradas son checkpoints que te devuelven una vida. |
 
 ## Sopa de Letras
 

@@ -256,6 +256,13 @@
       desc: "Carrera top-down: esquivá el tráfico, juntá bidones de combustible antes de quedarte tirado y agarrá los rayos de turbo para acelerar a fondo.",
       controles: "Flechas / A D, o arrastrá el dedo", fecha: "2026-08-16",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "geometria-imposible", titulo: "Geometría Imposible", archivo: "geometria-imposible.html",
+      emoji: "📐", categoria: "reflejos", tags: ["geometry dash", "runner", "pinchos", "checkpoints", "ritmo"],
+      desc: "Runner rítmico estilo geometry dash: saltá los pinchos sin frenar. Las banderas doradas son checkpoints que te devuelven una vida.",
+      controles: "Click, espacio o toque", fecha: "2026-08-17",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
