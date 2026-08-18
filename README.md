@@ -39,6 +39,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🔨 Topos Neón | [`topos-neon.html`](topos-neon.html) | Whack-a-mole: golpeá los topos que se asoman de sus pozos antes de que se escondan y evitá las bombas. Combo por aciertos seguidos, contra reloj de 45 segundos. |
 | 🏎️ Ruta Neón | [`ruta-neon.html`](ruta-neon.html) | Carrera top-down: esquivá el tráfico, juntá bidones de combustible antes de quedarte tirado y agarrá los rayos de turbo para acelerar a fondo. |
 | 📐 Geometría Imposible | [`geometria-imposible.html`](geometria-imposible.html) | Runner rítmico estilo geometry dash: saltá los pinchos sin frenar. Las banderas doradas son checkpoints que te devuelven una vida. |
+| 🛡️ Defensa Neón | [`defensa-neon.html`](defensa-neon.html) | Tower defense: colocá torretas junto al camino serpenteante para frenar oleadas de invasores cada vez más duras. Mejorá tus torretas con el oro que ganás. |
 
 ## Sopa de Letras
 

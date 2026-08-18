@@ -263,6 +263,13 @@
       desc: "Runner rítmico estilo geometry dash: saltá los pinchos sin frenar. Las banderas doradas son checkpoints que te devuelven una vida.",
       controles: "Click, espacio o toque", fecha: "2026-08-17",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "defensa-neon", titulo: "Defensa Neón", archivo: "defensa-neon.html",
+      emoji: "🛡️", categoria: "logica", tags: ["tower defense", "torretas", "oleadas", "estrategia"],
+      desc: "Tower defense: colocá torretas junto al camino serpenteante para frenar oleadas de invasores cada vez más duras. Mejorá tus torretas con el oro que ganás.",
+      controles: "Click / toque, 1-3 elige torreta, espacio inicia oleada", fecha: "2026-08-18",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
