@@ -59,7 +59,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | 25 | 🏎️ | Ruta Neón | `ruta-neon.html` | Carreras | Carrera top-down esquivando tráfico, juntando combustible y turbo. | ✅ 2026-08-16 |
 | 26 | 📐 | Geometría Imposible | `geometria-imposible.html` | Runner rítmico | Estilo geometry dash: saltá pinchos al ritmo, con checkpoints. | ✅ 2026-08-17 |
 | 27 | 🛡️ | Defensa Neón | `defensa-neon.html` | Tower defense | Colocá torretas para frenar oleadas de invasores en un camino serpenteante. | ✅ 2026-08-18 |
-| 28 | 🎯 | Rebote Estelar | `rebote-estelar.html` | Física | Estilo Peggle: dispará la bola y encadená rebotes para limpiar las clavijas. | ⏳ Pendiente |
+| 28 | 🎯 | Rebote Estelar | `rebote-estelar.html` | Física | Estilo Peggle: dispará la bola y encadená rebotes para limpiar las clavijas. | ✅ 2026-08-19 |
 
 ## Extras · A pedido
 

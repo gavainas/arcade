@@ -40,6 +40,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🏎️ Ruta Neón | [`ruta-neon.html`](ruta-neon.html) | Carrera top-down: esquivá el tráfico, juntá bidones de combustible antes de quedarte tirado y agarrá los rayos de turbo para acelerar a fondo. |
 | 📐 Geometría Imposible | [`geometria-imposible.html`](geometria-imposible.html) | Runner rítmico estilo geometry dash: saltá los pinchos sin frenar. Las banderas doradas son checkpoints que te devuelven una vida. |
 | 🛡️ Defensa Neón | [`defensa-neon.html`](defensa-neon.html) | Tower defense: colocá torretas junto al camino serpenteante para frenar oleadas de invasores cada vez más duras. Mejorá tus torretas con el oro que ganás. |
+| 🎯 Rebote Estelar | [`rebote-estelar.html`](rebote-estelar.html) | Estilo Peggle: apuntá y disparás la bola para encadenar rebotes en las clavijas y limpiar todo el tablero. Atrapala en la cesta para no gastarla y sumá bolas extra con las clavijas doradas. |
 
 ## Sopa de Letras
 

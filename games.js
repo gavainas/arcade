@@ -270,6 +270,13 @@
       desc: "Tower defense: colocá torretas junto al camino serpenteante para frenar oleadas de invasores cada vez más duras. Mejorá tus torretas con el oro que ganás.",
       controles: "Click / toque, 1-3 elige torreta, espacio inicia oleada", fecha: "2026-08-18",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "rebote-estelar", titulo: "Rebote Estelar", archivo: "rebote-estelar.html",
+      emoji: "🎯", categoria: "reflejos", tags: ["peggle", "fisica", "clavijas", "rebotes", "combos"],
+      desc: "Estilo Peggle: apuntá y disparás la bola para encadenar rebotes en las clavijas y limpiar todo el tablero. Atrapala en la cesta para no gastarla y sumá bolas extra con las clavijas doradas.",
+      controles: "Mouse / arrastrá el dedo apunta, click o toque dispara", fecha: "2026-08-19",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
