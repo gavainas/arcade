@@ -277,6 +277,13 @@
       desc: "Estilo Peggle: apuntá y disparás la bola para encadenar rebotes en las clavijas y limpiar todo el tablero. Atrapala en la cesta para no gastarla y sumá bolas extra con las clavijas doradas.",
       controles: "Mouse / arrastrá el dedo apunta, click o toque dispara", fecha: "2026-08-19",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "gemas-neon", titulo: "Gemas Neón", archivo: "gemas-neon.html",
+      emoji: "💎", categoria: "puzzle", tags: ["match-3", "gemas", "combos", "bombas", "cascadas"],
+      desc: "Match-3 neón: intercambiá gemas vecinas para armar líneas de 3 o más y llegar al puntaje meta antes de quedarte sin movimientos. Las líneas de 4 crean bombas que explotan al combinarse.",
+      controles: "Click / toque para elegir y swapear, o arrastrá; flechas + Enter con teclado", fecha: "2026-08-20",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

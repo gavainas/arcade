@@ -41,6 +41,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 📐 Geometría Imposible | [`geometria-imposible.html`](geometria-imposible.html) | Runner rítmico estilo geometry dash: saltá los pinchos sin frenar. Las banderas doradas son checkpoints que te devuelven una vida. |
 | 🛡️ Defensa Neón | [`defensa-neon.html`](defensa-neon.html) | Tower defense: colocá torretas junto al camino serpenteante para frenar oleadas de invasores cada vez más duras. Mejorá tus torretas con el oro que ganás. |
 | 🎯 Rebote Estelar | [`rebote-estelar.html`](rebote-estelar.html) | Estilo Peggle: apuntá y disparás la bola para encadenar rebotes en las clavijas y limpiar todo el tablero. Atrapala en la cesta para no gastarla y sumá bolas extra con las clavijas doradas. |
+| 💎 Gemas Neón | [`gemas-neon.html`](gemas-neon.html) | Match-3 neón: intercambiá gemas vecinas para armar líneas de 3 o más y llegar al puntaje meta antes de quedarte sin movimientos. Las líneas de 4 crean bombas que explotan al combinarse, con combos por cascadas encadenadas. |
 
 ## Sopa de Letras
 

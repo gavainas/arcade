@@ -66,6 +66,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
 |---|-------|-------|---------|--------|--------------------|--------|
 | E1 | 🌀 | Cambio de Color | `cambio-color.html` | Reflejos | Un botón: saltá y cruzá aros que giran pasando sólo por el color de tu bolita; estrellas que cambian tu color. | ✅ 2026-07-22 |
+| E2 | 💎 | Gemas Neón | `gemas-neon.html` | Puzzle de combinación | Match-3: intercambiá gemas vecinas para armar líneas de 3+ antes de quedarte sin movimientos; las líneas de 4 crean bombas y las cascadas suman combo. | ✅ 2026-08-20 |
 
 ## Reglas para el juego del día
 
