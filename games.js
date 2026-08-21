@@ -284,6 +284,13 @@
       desc: "Match-3 neón: intercambiá gemas vecinas para armar líneas de 3 o más y llegar al puntaje meta antes de quedarte sin movimientos. Las líneas de 4 crean bombas que explotan al combinarse.",
       controles: "Click / toque para elegir y swapear, o arrastrá; flechas + Enter con teclado", fecha: "2026-08-20",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "burbujas-neon", titulo: "Burbujas Neón", archivo: "burbujas-neon.html",
+      emoji: "🫧", categoria: "puzzle", tags: ["bubble shooter", "puntería", "colores", "cadenas"],
+      desc: "Bubble shooter: apuntá y disparás burbujas de colores para juntar 3 o más iguales y hacerlas estallar. Las que quedan sin conexión al techo también caen, y cada tantos disparos baja una fila nueva.",
+      controles: "Mouse o dedo apunta, click/soltar dispara; flechas + espacio con teclado", fecha: "2026-08-21",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

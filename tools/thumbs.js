@@ -64,6 +64,12 @@ const OVERRIDES = {
   "torre": {
     steps: ["#startBtn", { canvas: [0.5, 0.5] }, { canvas: [0.5, 0.5] }],
     wait: 1200
+  },
+  // Disparamos una burbuja hacia arriba para que la miniatura no sea sólo
+  // el tablero inicial con medio canvas vacío abajo del cañón.
+  "burbujas-neon": {
+    steps: ["#startBtn", { canvas: [0.5, 0.42] }],
+    wait: 900
   }
 };
 
