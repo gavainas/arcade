@@ -291,6 +291,13 @@
       desc: "Bubble shooter: apuntá y disparás burbujas de colores para juntar 3 o más iguales y hacerlas estallar. Las que quedan sin conexión al techo también caen, y cada tantos disparos baja una fila nueva.",
       controles: "Mouse o dedo apunta, click/soltar dispara; flechas + espacio con teclado", fecha: "2026-08-21",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "bodega-neon", titulo: "Bodega Neón", archivo: "bodega-neon.html",
+      emoji: "📦", categoria: "logica", tags: ["sokoban", "cajas", "empujar", "niveles"],
+      desc: "Sokoban neón: empujá las cajas hasta las plataformas doradas sin trabarte en un rincón. 8 niveles con dificultad creciente, deshacer y contador de movidas.",
+      controles: "Flechas / WASD o deslizá el dedo; cruceta táctil y deshacer en pantalla", fecha: "2026-08-22",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

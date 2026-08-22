@@ -39,6 +39,7 @@ const OVERRIDES = {
   // El botón JUGAR arranca oculto hasta que elegís dificultad.
   "4-en-linea": { steps: ['[data-diff="facil"]', "#startBtn"], wait: 1400 },
   "nonograma": { steps: [".lvl-card"], wait: 1600 },
+  "bodega-neon": { steps: [".lvl-card"], wait: 900 },
   "sopa-letras": { steps: ["#playBtn"], wait: 2600 },
   "head-soccer": { steps: [".btn"], wait: 3200 },
   "vector-pilot": { steps: [".btn"], wait: 2200 },
