@@ -298,6 +298,13 @@
       desc: "Sokoban neón: empujá las cajas hasta las plataformas doradas sin trabarte en un rincón. 8 niveles con dificultad creciente, deshacer y contador de movidas.",
       controles: "Flechas / WASD o deslizá el dedo; cruceta táctil y deshacer en pantalla", fecha: "2026-08-22",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "pinball-neon", titulo: "Pinball Neón", archivo: "pinball-neon.html",
+      emoji: "🕹️", categoria: "arcade", tags: ["pinball", "flippers", "fisica", "bumpers", "combos"],
+      desc: "Pinball con flippers y lanzador de resorte: metela en juego, encadená bumpers y slingshots para sumar combo, y encendé los 3 bumpers en la misma bola para ganar una bola extra. 3 bolas por partida.",
+      controles: "Flechas / A D mueven los flippers, mantené ESPACIO para cargar el lanzador; botones en pantalla en mobile", fecha: "2026-08-23",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

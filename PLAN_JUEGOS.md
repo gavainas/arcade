@@ -69,6 +69,7 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | E2 | 💎 | Gemas Neón | `gemas-neon.html` | Puzzle de combinación | Match-3: intercambiá gemas vecinas para armar líneas de 3+ antes de quedarte sin movimientos; las líneas de 4 crean bombas y las cascadas suman combo. | ✅ 2026-08-20 |
 | E3 | 🫧 | Burbujas Neón | `burbujas-neon.html` | Puzzle de puntería | Bubble shooter: apuntá y disparás burbujas de colores para juntar 3+ iguales y hacerlas estallar; las que quedan sin conexión al techo caen, y cada tantos disparos baja una fila nueva. | ✅ 2026-08-21 |
 | E4 | 📦 | Bodega Neón | `bodega-neon.html` | Puzzle de lógica | Sokoban: empujá las cajas (nunca se tiran) hasta las plataformas doradas; 8 niveles de dificultad creciente, con deshacer y contador de movidas. | ✅ 2026-08-22 |
+| E5 | 🕹️ | Pinball Neón | `pinball-neon.html` | Física | Pinball con flippers y lanzador de resorte: encadená bumpers y slingshots en combo, encendé los 3 bumpers en la misma bola para ganar una extra. 3 bolas por partida. | ✅ 2026-08-23 |
 
 ## Reglas para el juego del día
 
