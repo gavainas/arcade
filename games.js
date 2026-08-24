@@ -305,6 +305,13 @@
       desc: "Pinball con flippers y lanzador de resorte: metela en juego, encadená bumpers y slingshots para sumar combo, y encendé los 3 bumpers en la misma bola para ganar una bola extra. 3 bolas por partida.",
       controles: "Flechas / A D mueven los flippers, mantené ESPACIO para cargar el lanzador; botones en pantalla en mobile", fecha: "2026-08-23",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "duelo-tanques", titulo: "Duelo de Tanques", archivo: "duelo-tanques.html",
+      emoji: "💥", categoria: "accion", tags: ["artilleria", "tanques", "turnos", "viento", "terreno destructible"],
+      desc: "Duelo de artillería por turnos: ajustá ángulo y potencia, tené en cuenta el viento y volále el tanque a la CPU antes de que te vuele a vos. El terreno se destruye con cada impacto y hay un misil especial por ronda.",
+      controles: "Flechas / botones ajustan ángulo y potencia; ESPACIO o DISPARAR tira; E arma el misil especial", fecha: "2026-08-24",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

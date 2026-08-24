@@ -45,6 +45,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🫧 Burbujas Neón | [`burbujas-neon.html`](burbujas-neon.html) | Bubble shooter: apuntá y disparás burbujas de colores para juntar 3 o más iguales y hacerlas estallar. Las que quedan sin conexión al techo también caen, y cada tantos disparos baja una fila nueva desde arriba. |
 | 📦 Bodega Neón | [`bodega-neon.html`](bodega-neon.html) | Sokoban neón: empujá las cajas hasta las plataformas doradas sin trabarte en un rincón. 8 niveles con dificultad creciente, deshacer y contador de movidas. |
 | 🕹️ Pinball Neón | [`pinball-neon.html`](pinball-neon.html) | Pinball con flippers y lanzador de resorte: metela en juego, encadená bumpers y slingshots para sumar combo, y encendé los 3 bumpers en la misma bola para ganar una bola extra. 3 bolas por partida. |
+| 💥 Duelo de Tanques | [`duelo-tanques.html`](duelo-tanques.html) | Duelo de artillería por turnos: ajustá ángulo y potencia, tené en cuenta el viento y volále el tanque a la CPU antes de que te vuele a vos. Terreno destructible y un misil especial por ronda. |
 
 ## Sopa de Letras
 
