@@ -71,7 +71,10 @@ const OVERRIDES = {
   "burbujas-neon": {
     steps: ["#startBtn", { canvas: [0.5, 0.42] }],
     wait: 900
-  }
+  },
+  // A los 2.2s por defecto suele haber apenas una figura en pantalla: esperamos
+  // más para que la miniatura muestre varias figuras (y alguna bomba) en vuelo.
+  "corte-neon": { wait: 3200 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

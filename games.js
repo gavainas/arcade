@@ -312,6 +312,13 @@
       desc: "Duelo de artillería por turnos: ajustá ángulo y potencia, tené en cuenta el viento y volále el tanque a la CPU antes de que te vuele a vos. El terreno se destruye con cada impacto y hay un misil especial por ronda.",
       controles: "Flechas / botones ajustan ángulo y potencia; ESPACIO o DISPARAR tira; E arma el misil especial", fecha: "2026-08-24",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "corte-neon", titulo: "Corte Neón", archivo: "corte-neon.html",
+      emoji: "🔪", categoria: "reflejos", tags: ["fruit ninja", "corte", "combo", "bombas"],
+      desc: "Fruit Ninja neón: arrastrá el dedo o el mouse para cortar las figuras que vuelan por el aire antes de que caigan, encadená combos cortando varias en el mismo trazo y evitá las bombas: cortar una termina la partida.",
+      controles: "Arrastrá el dedo o el mouse; o flechas/WASD para moverte y ESPACIO para cortar", fecha: "2026-08-25",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

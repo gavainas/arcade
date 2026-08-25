@@ -72,6 +72,15 @@ inventar juegos por su cuenta (siguiendo el espíritu de las semanas temáticas)
 | E5 | 🕹️ | Pinball Neón | `pinball-neon.html` | Física | Pinball con flippers y lanzador de resorte: encadená bumpers y slingshots en combo, encendé los 3 bumpers en la misma bola para ganar una extra. 3 bolas por partida. | ✅ 2026-08-23 |
 | E6 | 💥 | Duelo de Tanques | `duelo-tanques.html` | Estrategia por turnos | Duelo de artillería por turnos: ajustá ángulo y potencia, tené en cuenta el viento y volále el tanque a la CPU antes de que te vuele a vos; terreno destructible y un misil especial por ronda. | ✅ 2026-08-24 |
 
+## Semana 5 · Inventados por la rutina
+
+La tabla se quedó sin pendientes, así que Claude empieza a inventar juegos nuevos por su
+cuenta (mecánicas que no se repiten con las de arriba), como indica la regla del principio.
+
+| # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
+|---|-------|-------|---------|--------|--------------------|--------|
+| 29 | 🔪 | Corte Neón | `corte-neon.html` | Reflejos | Fruit Ninja neón: arrastrá para cortar las figuras geométricas que vuelan por el aire antes de que caigan, encadená combos cortando varias en el mismo trazo y evitá las bombas (cortar una termina la partida). | ✅ 2026-08-25 |
+
 ## Reglas para el juego del día
 
 - Registrar el juego en `games.js` (una entrada en `NEON_GAMES`) y correr
