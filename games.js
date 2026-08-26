@@ -319,6 +319,13 @@
       desc: "Fruit Ninja neón: arrastrá el dedo o el mouse para cortar las figuras que vuelan por el aire antes de que caigan, encadená combos cortando varias en el mismo trazo y evitá las bombas: cortar una termina la partida.",
       controles: "Arrastrá el dedo o el mouse; o flechas/WASD para moverte y ESPACIO para cortar", fecha: "2026-08-25",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "frascos-neon", titulo: "Frascos Neón", archivo: "frascos-neon.html",
+      emoji: "🧪", categoria: "logica", tags: ["water sort", "frascos", "colores", "ordenar"],
+      desc: "Water sort: tocá un frasco para elegirlo y otro para verter, sólo si coincide el color de arriba o está vacío. Ordená cada color en su propio frasco. 8 niveles generados al azar, siempre resolubles, con deshacer y contador de movidas.",
+      controles: "Click / toque para elegir y verter; flechas + Enter con teclado", fecha: "2026-08-26",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

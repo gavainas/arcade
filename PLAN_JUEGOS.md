@@ -80,6 +80,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | # | Emoji | Juego | Archivo | Género | Mecánica principal | Estado |
 |---|-------|-------|---------|--------|--------------------|--------|
 | 29 | 🔪 | Corte Neón | `corte-neon.html` | Reflejos | Fruit Ninja neón: arrastrá para cortar las figuras geométricas que vuelan por el aire antes de que caigan, encadená combos cortando varias en el mismo trazo y evitá las bombas (cortar una termina la partida). | ✅ 2026-08-25 |
+| 30 | 🧪 | Frascos Neón | `frascos-neon.html` | Puzzle de lógica | Water sort: tocá un frasco para elegirlo y otro para verter, sólo si coincide el color de arriba o está vacío; ordená cada color en su propio frasco. 8 niveles generados al azar (siempre resolubles), con deshacer y contador de movidas. | ✅ 2026-08-26 |
 
 ## Reglas para el juego del día
 

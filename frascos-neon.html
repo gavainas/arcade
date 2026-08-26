@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FRASCOS NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:620px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .levels{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:26px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .name{margin-top:6px; font-size:14px; font-weight:800;}
+  .lvl-card .meta{margin-top:4px; font-size:11px; color:var(--muted); letter-spacing:.5px;}
+  .lvl-card .best{margin-top:6px; font-size:11.5px; color:var(--gold); font-weight:700; min-height:14px;}
+  .lvl-card.done{border-color:var(--green);}
+  .lvl-card.done .name::after{content:" ✓"; color:var(--green);}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.moves b{color:var(--pink);}
+  .hud .box.tubes b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:18px 14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    overflow-x:auto;
+  }
+  .tubes-wrap{display:flex; flex-wrap:wrap; justify-content:center; gap:16px 12px; touch-action:manipulation; user-select:none;}
+  .tube{width:44px; display:flex; flex-direction:column; align-items:center; cursor:pointer;}
+  .tube .neck{width:20px; height:8px; background:rgba(232,246,255,.08); border:2px solid rgba(138,75,255,.4); border-bottom:none; border-radius:5px 5px 0 0;}
+  .tube .glass{
+    width:44px; height:152px; border:2.5px solid rgba(138,75,255,.4); border-top:none; border-radius:0 0 16px 16px;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01));
+    display:flex; flex-direction:column-reverse; padding:3px; gap:3px;
+    box-shadow:inset 0 0 12px rgba(0,0,0,.5), 0 4px 14px rgba(0,0,0,.35);
+    transition:box-shadow .15s ease, border-color .15s ease, transform .12s ease;
+  }
+  .tube.selected .glass{border-color:var(--cyan); box-shadow:0 0 18px rgba(39,232,255,.65), inset 0 0 12px rgba(0,0,0,.4); transform:translateY(-6px);}
+  .tube.focused .glass{outline:2px dashed rgba(232,246,255,.55); outline-offset:2px;}
+  .tube.done .glass{border-color:var(--green); box-shadow:0 0 16px rgba(57,255,158,.55), inset 0 0 12px rgba(0,0,0,.4);}
+  .tube.shake .glass{animation:shakeX .3s ease;}
+  @keyframes shakeX{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+  .unit{flex:1; border-radius:5px; animation:pop .16s ease;}
+  .unit.empty{background:transparent; box-shadow:none; animation:none;}
+  @keyframes pop{from{transform:scaleY(.25); opacity:.2;} to{transform:scaleY(1); opacity:1;}}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">FRASCOS NEÓN</div>
+      <div class="sub">W A T E R &nbsp; S O R T</div>
+    </header>
+
+    <!-- Level select -->
+    <section id="menu">
+      <p class="hint" style="margin-bottom:6px;">Tocá un frasco para elegirlo y tocá otro para verter: sólo si el color de arriba coincide o el frasco de destino está vacío. Dejá cada frasco con un solo color. Elegí un nivel:</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <!-- Game -->
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box lvl">NIVEL<b id="hudLevel">-</b></div>
+        <div class="box moves">MOVIDAS<b id="hudMoves">0</b></div>
+        <div class="box tubes">LISTOS<b id="hudTubes">0/0</b></div>
+      </div>
+      <div class="panel">
+        <div class="tubes-wrap" id="board"></div>
+
+        <div class="overlay hidden" id="winOverlay">
+          <div class="picture">🧪</div>
+          <h2>¡TODO ORDENADO!</h2>
+          <div class="final">Movidas: <b id="winMoves">0</b></div>
+          <div class="newrec hidden" id="winRecord">⭐ ¡NUEVO RÉCORD!</div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn ghost" id="btnRetry">REINTENTAR</button>
+            <button class="btn" id="btnNext">SIGUIENTE ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="btnrow">
+          <button class="mini" id="btnLevels">☰ Niveles</button>
+          <button class="mini" id="btnUndo">↶ Deshacer</button>
+          <button class="mini" id="btnReset">↺ Reiniciar</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Click / toque para elegir y verter · Flechas ◄► mueven el foco, Enter/espacio elige o vierte · Deshacer con retroceso, reiniciar con R.</p>
+    </section>
+
+    <footer>Neon Arcade · Water sort hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CAPACITY = 4;
+  var COLORS = [
+    "#27e8ff", "#ff2bd6", "#8a4bff", "#39ff9e", "#ffd23b",
+    "#ff5470", "#ff9838", "#4b7bff", "#b6ff3b", "#0be0c4", "#d68cff"
+  ];
+  var EMOJIS = ["🧪", "⚗️", "🔬", "💧", "✨", "🌈", "🧫", "🔮"];
+
+  var LEVELS = [
+    { id:"l1", name:"Primeros frascos", colors:4, empty:2 },
+    { id:"l2", name:"Manos firmes", colors:5, empty:2 },
+    { id:"l3", name:"Que no se mezclen", colors:6, empty:2 },
+    { id:"l4", name:"Estantería llena", colors:7, empty:2 },
+    { id:"l5", name:"Laboratorio neón", colors:8, empty:2 },
+    { id:"l6", name:"Colores por todos lados", colors:9, empty:2 },
+    { id:"l7", name:"Casi imposible", colors:10, empty:2 },
+    { id:"l8", name:"El gran desafío", colors:11, empty:2 }
+  ];
+
+  // ---------- Persistence ----------
+  var LS_BEST = "frascos-neon-best";
+  var LS_DONE = "frascos-neon-done";
+  function loadBest(){ try{ return JSON.parse(localStorage.getItem(LS_BEST))||{}; }catch(e){ return {}; } }
+  function saveBest(o){ try{ localStorage.setItem(LS_BEST, JSON.stringify(o)); }catch(e){} }
+  function loadDone(){ try{ return JSON.parse(localStorage.getItem(LS_DONE))||{}; }catch(e){ return {}; } }
+  function saveDone(o){ try{ localStorage.setItem(LS_DONE, JSON.stringify(o)); }catch(e){} }
+
+  // ---------- Puzzle generation ----------
+  // Un frasco es un array de índices de color, de abajo hacia arriba.
+  function cloneTubes(tubes){ return tubes.map(function(t){ return t.slice(); }); }
+
+  function runLengthTop(tube){
+    if(!tube.length) return 0;
+    var c = tube[tube.length-1], n = 1;
+    for(var k=tube.length-2; k>=0; k--){
+      if(tube[k] === c) n++; else break;
+    }
+    return n;
+  }
+
+  function isSolved(tubes, capacity){
+    return tubes.every(function(t){
+      if(t.length === 0) return true;
+      if(t.length !== capacity) return false;
+      return t.every(function(c){ return c === t[0]; });
+    });
+  }
+
+  function isTubeDone(tube, capacity){
+    return tube.length === capacity && tube.every(function(c){ return c === tube[0]; });
+  }
+
+  function canPour(tubes, i, j, capacity){
+    if(i === j) return false;
+    if(!tubes[i].length) return false;
+    if(tubes[j].length >= capacity) return false;
+    if(tubes[j].length && tubes[j][tubes[j].length-1] !== tubes[i][tubes[i].length-1]) return false;
+    return true;
+  }
+
+  function pour(tubes, i, j, capacity){
+    var run = runLengthTop(tubes[i]);
+    var capRem = capacity - tubes[j].length;
+    var amount = Math.min(run, capRem);
+    var moved = tubes[i].splice(tubes[i].length - amount, amount);
+    tubes[j] = tubes[j].concat(moved);
+  }
+
+  function tubeKey(tubes){ return tubes.map(function(t){ return t.join(","); }).join("|"); }
+
+  // Resolvedor DFS voraz: prioriza vertidos que completan o consolidan un
+  // color. Con esa heurística encuentra una solución (si existe) explorando
+  // muy pocos estados, así que sirve para VERIFICAR que un tablero al azar
+  // sea resoluble antes de mostrárselo al jugador.
+  function isSolvable(tubes, capacity, nodeBudget){
+    var visited = new Set();
+    var nodes = 0;
+    function rec(cur){
+      nodes++;
+      if(nodes > nodeBudget) return null;
+      if(isSolved(cur, capacity)) return true;
+      var k = tubeKey(cur);
+      if(visited.has(k)) return false;
+      visited.add(k);
+      var firstEmpty = -1;
+      for(var e=0; e<cur.length; e++){ if(!cur[e].length){ firstEmpty = e; break; } }
+      var moves = [];
+      for(var i=0; i<cur.length; i++){
+        if(!cur[i].length || isTubeDone(cur[i], capacity)) continue;
+        var run = runLengthTop(cur[i]);
+        for(var j=0; j<cur.length; j++){
+          if(i === j) continue;
+          if(!cur[j].length){
+            if(j !== firstEmpty || run === cur[i].length) continue;
+            moves.push({ i:i, j:j, priority:1 });
+            continue;
+          }
+          if(!canPour(cur, i, j, capacity)) continue;
+          var completes = (cur[j].length + Math.min(run, capacity-cur[j].length)) === capacity;
+          moves.push({ i:i, j:j, priority: completes ? 3 : 2 });
+        }
+      }
+      moves.sort(function(a,b){ return b.priority - a.priority; });
+      for(var m=0; m<moves.length; m++){
+        var next = cloneTubes(cur);
+        pour(next, moves[m].i, moves[m].j, capacity);
+        var res = rec(next);
+        if(res === null) return null;
+        if(res === true) return true;
+      }
+      return false;
+    }
+    return rec(tubes);
+  }
+
+  function randomFill(colorCount, emptyCount, capacity){
+    var pool = [];
+    for(var c=0; c<colorCount; c++){
+      for(var u=0; u<capacity; u++) pool.push(c);
+    }
+    for(var i=pool.length-1; i>0; i--){
+      var r = Math.floor(Math.random() * (i+1));
+      var tmp = pool[i]; pool[i] = pool[r]; pool[r] = tmp;
+    }
+    var tubes = [];
+    for(var t=0; t<colorCount; t++) tubes.push(pool.slice(t*capacity, (t+1)*capacity));
+    for(var e=0; e<emptyCount; e++) tubes.push([]);
+    return tubes;
+  }
+
+  // Genera frascos al azar y los verifica con el resolvedor antes de
+  // devolverlos: si un reparto no tiene solución (o el resolvedor no llega
+  // a probarlo dentro del presupuesto), se descarta y se prueba de nuevo.
+  function generateLevel(colorCount, emptyCount, capacity){
+    var attempts = 60;
+    var lastTubes = null;
+    for(var a=0; a<attempts; a++){
+      var tubes = randomFill(colorCount, emptyCount, capacity);
+      lastTubes = tubes;
+      if(isSolved(tubes, capacity)) continue;
+      if(isSolvable(cloneTubes(tubes), capacity, 25000) === true) return tubes;
+    }
+    return lastTubes;
+  }
+
+  function lighten(hex, amt){
+    amt = amt === undefined ? 0.4 : amt;
+    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    r = Math.round(r + (255-r)*amt); g = Math.round(g + (255-g)*amt); b = Math.round(b + (255-b)*amt);
+    return "rgb(" + r + "," + g + "," + b + ")";
+  }
+
+  // ---------- State ----------
+  var els = {
+    menu: document.getElementById("menu"),
+    game: document.getElementById("game"),
+    levelGrid: document.getElementById("levelGrid"),
+    board: document.getElementById("board"),
+    hudLevel: document.getElementById("hudLevel"),
+    hudMoves: document.getElementById("hudMoves"),
+    hudTubes: document.getElementById("hudTubes"),
+    winOverlay: document.getElementById("winOverlay"),
+    winMoves: document.getElementById("winMoves"),
+    winRecord: document.getElementById("winRecord"),
+    btnUndo: document.getElementById("btnUndo"),
+    btnReset: document.getElementById("btnReset")
+  };
+
+  var current = null;    // { def, capacity, tubes, initialTubes }
+  var levelIndex = -1;
+  var history = [];      // stack of tube snapshots
+  var moves = 0;
+  var won = false;
+  var selected = -1;
+  var focusIdx = 0;
+  var shakeIdx = -1;
+  var shakeTimer = null;
+
+  function loadLevel(idx){
+    levelIndex = idx;
+    var def = LEVELS[idx];
+    var tubes = generateLevel(def.colors, def.empty, CAPACITY);
+    current = { def: def, capacity: CAPACITY, tubes: tubes, initialTubes: cloneTubes(tubes) };
+    history = [];
+    moves = 0;
+    won = false;
+    selected = -1;
+    focusIdx = 0;
+    shakeIdx = -1;
+    els.winOverlay.classList.add("hidden");
+    updateHud();
+    renderBoard();
+  }
+
+  function resetLevel(){
+    if(!current) return;
+    current.tubes = cloneTubes(current.initialTubes);
+    history = [];
+    moves = 0;
+    won = false;
+    selected = -1;
+    els.winOverlay.classList.add("hidden");
+    updateHud();
+    renderBoard();
+  }
+
+  function undo(){
+    if(won || !history.length) return;
+    current.tubes = history.pop();
+    moves = Math.max(0, moves - 1);
+    selected = -1;
+    updateHud();
+    renderBoard();
+  }
+
+  function flashInvalid(idx){
+    shakeIdx = idx;
+    renderBoard();
+    if(shakeTimer) clearTimeout(shakeTimer);
+    shakeTimer = setTimeout(function(){ shakeIdx = -1; renderBoard(); }, 300);
+  }
+
+  function onTubeAction(idx){
+    if(won || !current) return;
+    focusIdx = idx;
+    if(selected < 0){
+      if(current.tubes[idx].length) selected = idx;
+      renderBoard();
+      return;
+    }
+    if(selected === idx){
+      selected = -1;
+      renderBoard();
+      return;
+    }
+    if(canPour(current.tubes, selected, idx, current.capacity)){
+      history.push(cloneTubes(current.tubes));
+      pour(current.tubes, selected, idx, current.capacity);
+      moves++;
+      selected = -1;
+      updateHud();
+      renderBoard();
+      if(isSolved(current.tubes, current.capacity)) onWin();
+    } else {
+      flashInvalid(idx);
+    }
+  }
+
+  function onWin(){
+    won = true;
+    var best = loadBest();
+    var prevBest = best[current.def.id];
+    var isNew = (prevBest === undefined || moves < prevBest);
+    if(isNew){ best[current.def.id] = moves; saveBest(best); }
+    var doneMap = loadDone();
+    doneMap[current.def.id] = true;
+    saveDone(doneMap);
+    els.winMoves.textContent = moves;
+    els.winRecord.classList.toggle("hidden", !isNew);
+    document.getElementById("btnNext").classList.toggle("hidden", levelIndex >= LEVELS.length-1);
+    els.winOverlay.classList.remove("hidden");
+  }
+
+  function updateHud(){
+    els.hudLevel.textContent = (levelIndex+1) + "/" + LEVELS.length;
+    els.hudMoves.textContent = moves;
+    var done = current.tubes.filter(function(t){ return isTubeDone(t, current.capacity); }).length;
+    els.hudTubes.textContent = done + "/" + current.def.colors;
+    els.btnUndo.disabled = !history.length;
+  }
+
+  function renderBoard(){
+    var wrap = els.board;
+    wrap.innerHTML = "";
+    current.tubes.forEach(function(tube, idx){
+      var t = document.createElement("div");
+      var cls = "tube";
+      if(idx === selected) cls += " selected";
+      if(idx === focusIdx) cls += " focused";
+      if(idx === shakeIdx) cls += " shake";
+      if(isTubeDone(tube, current.capacity)) cls += " done";
+      t.className = cls;
+
+      var neck = document.createElement("div");
+      neck.className = "neck";
+      t.appendChild(neck);
+
+      var glass = document.createElement("div");
+      glass.className = "glass";
+      for(var s=0; s<current.capacity; s++){
+        var unit = document.createElement("div");
+        if(s < tube.length){
+          var hex = COLORS[tube[s] % COLORS.length];
+          unit.className = "unit";
+          unit.style.background = "linear-gradient(160deg," + lighten(hex) + "," + hex + ")";
+          unit.style.boxShadow = "inset 0 0 6px rgba(255,255,255,.3), 0 0 8px " + hex + "aa";
+        } else {
+          unit.className = "unit empty";
+        }
+        glass.appendChild(unit);
+      }
+      t.appendChild(glass);
+      t.addEventListener("click", (function(i){ return function(){ onTubeAction(i); }; })(idx));
+      wrap.appendChild(t);
+    });
+  }
+
+  function renderMenu(){
+    var best = loadBest();
+    var doneMap = loadDone();
+    els.levelGrid.innerHTML = "";
+    LEVELS.forEach(function(lvl, i){
+      var card = document.createElement("div");
+      card.className = "lvl-card" + (doneMap[lvl.id] ? " done" : "");
+      var b = best[lvl.id];
+      card.innerHTML =
+        '<div class="glyph">' + EMOJIS[i % EMOJIS.length] + '</div>' +
+        '<div class="name">' + (i+1) + ". " + lvl.name + '</div>' +
+        '<div class="meta">' + lvl.colors + ' colores · ' + lvl.empty + ' vacío' + (lvl.empty===1?'':'s') + '</div>' +
+        '<div class="best">' + (b !== undefined ? ("Mejor: " + b + " movidas") : "") + '</div>';
+      card.addEventListener("click", function(){
+        els.menu.classList.add("hidden");
+        els.game.classList.remove("hidden");
+        loadLevel(i);
+      });
+      els.levelGrid.appendChild(card);
+    });
+  }
+
+  function goMenu(){
+    els.game.classList.add("hidden");
+    els.menu.classList.remove("hidden");
+    renderMenu();
+  }
+
+  // ---------- Input ----------
+  document.addEventListener("keydown", function(e){
+    if(els.game.classList.contains("hidden") || !current) return;
+    var n = current.tubes.length;
+    var k = e.key;
+    if(k === "ArrowRight"){ focusIdx = (focusIdx+1) % n; renderBoard(); e.preventDefault(); }
+    else if(k === "ArrowLeft"){ focusIdx = (focusIdx-1+n) % n; renderBoard(); e.preventDefault(); }
+    else if(k === "Enter" || k === " "){ onTubeAction(focusIdx); e.preventDefault(); }
+    else if(k === "Escape"){ selected = -1; renderBoard(); }
+    else if(k === "Backspace" || k === "u" || k === "U"){ undo(); e.preventDefault(); }
+    else if(k === "r" || k === "R"){ resetLevel(); }
+    else if(/^[1-9]$/.test(k)){
+      var idx = parseInt(k, 10) - 1;
+      if(idx < n) onTubeAction(idx);
+    }
+  });
+
+  document.getElementById("btnLevels").addEventListener("click", goMenu);
+  document.getElementById("btnMenu").addEventListener("click", goMenu);
+  els.btnUndo.addEventListener("click", undo);
+  els.btnReset.addEventListener("click", resetLevel);
+  document.getElementById("btnRetry").addEventListener("click", resetLevel);
+  document.getElementById("btnNext").addEventListener("click", function(){
+    if(levelIndex < LEVELS.length-1) loadLevel(levelIndex+1);
+    else goMenu();
+  });
+
+  renderMenu();
+})();
+</script>
+</body>
+</html>
