@@ -48,6 +48,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 💥 Duelo de Tanques | [`duelo-tanques.html`](duelo-tanques.html) | Duelo de artillería por turnos: ajustá ángulo y potencia, tené en cuenta el viento y volále el tanque a la CPU antes de que te vuele a vos. Terreno destructible y un misil especial por ronda. |
 | 🔪 Corte Neón | [`corte-neon.html`](corte-neon.html) | Fruit Ninja neón: arrastrá para cortar las figuras que vuelan por el aire antes de que caigan, encadená combos cortando varias en un mismo trazo y evitá las bombas: cortar una termina la partida. |
 | 🧪 Frascos Neón | [`frascos-neon.html`](frascos-neon.html) | Water sort: tocá un frasco para elegirlo y otro para verter, sólo si coincide el color de arriba o está vacío. Ordená cada color en su propio frasco. 8 niveles generados al azar, siempre resolubles, con deshacer y contador de movidas. |
+| 🧩 Sudoku Neón | [`sudoku-neon.html`](sudoku-neon.html) | Sudoku clásico: completá la grilla 9×9 sin repetir números en fila, columna o cuadrante. 4 dificultades generadas al azar con solución única, modo lápiz para anotar candidatos y pistas limitadas. |
 
 ## Sopa de Letras
 

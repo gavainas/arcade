@@ -326,6 +326,13 @@
       desc: "Water sort: tocá un frasco para elegirlo y otro para verter, sólo si coincide el color de arriba o está vacío. Ordená cada color en su propio frasco. 8 niveles generados al azar, siempre resolubles, con deshacer y contador de movidas.",
       controles: "Click / toque para elegir y verter; flechas + Enter con teclado", fecha: "2026-08-26",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "sudoku-neon", titulo: "Sudoku Neón", archivo: "sudoku-neon.html",
+      emoji: "🧩", categoria: "logica", tags: ["sudoku", "numeros", "logica", "grilla"],
+      desc: "Sudoku clásico: completá la grilla 9×9 sin repetir números en ninguna fila, columna o cuadrante. 4 dificultades generadas al azar (siempre con solución única), modo lápiz para anotar candidatos y pistas limitadas.",
+      controles: "Click / toque en una celda + numpad en pantalla; flechas y teclas 1-9 con teclado, N para notas", fecha: "2026-08-27",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
