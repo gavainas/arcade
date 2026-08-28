@@ -333,6 +333,13 @@
       desc: "Sudoku clásico: completá la grilla 9×9 sin repetir números en ninguna fila, columna o cuadrante. 4 dificultades generadas al azar (siempre con solución única), modo lápiz para anotar candidatos y pistas limitadas.",
       controles: "Click / toque en una celda + numpad en pantalla; flechas y teclas 1-9 con teclado, N para notas", fecha: "2026-08-27",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "solitario-neon", titulo: "Solitario Neón", archivo: "solitario-neon.html",
+      emoji: "♠️", categoria: "logica", tags: ["solitario", "klondike", "cartas", "mazo"],
+      desc: "Solitario Klondike con mazo de 52 cartas: armá las 4 fundaciones por palo desde el As y movés secuencias descendentes de colores alternados entre las 7 columnas. Robo de a una carta con reciclado del descarte, deshacer, cronómetro y autocompletar cuando ya no quedan cartas boca abajo.",
+      controles: "Click / toque para elegir y jugar, doble toque manda una carta al palo; flechas + Enter con teclado", fecha: "2026-08-28",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

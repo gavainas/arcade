@@ -82,6 +82,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 29 | 🔪 | Corte Neón | `corte-neon.html` | Reflejos | Fruit Ninja neón: arrastrá para cortar las figuras geométricas que vuelan por el aire antes de que caigan, encadená combos cortando varias en el mismo trazo y evitá las bombas (cortar una termina la partida). | ✅ 2026-08-25 |
 | 30 | 🧪 | Frascos Neón | `frascos-neon.html` | Puzzle de lógica | Water sort: tocá un frasco para elegirlo y otro para verter, sólo si coincide el color de arriba o está vacío; ordená cada color en su propio frasco. 8 niveles generados al azar (siempre resolubles), con deshacer y contador de movidas. | ✅ 2026-08-26 |
 | 31 | 🧩 | Sudoku Neón | `sudoku-neon.html` | Lógica | Sudoku clásico: completá la grilla 9×9 sin repetir números en fila, columna o cuadrante. 4 dificultades generadas al azar con solución única garantizada, modo lápiz para anotar candidatos, pistas limitadas y 3 errores permitidos. | ✅ 2026-08-27 |
+| 32 | ♠️ | Solitario Neón | `solitario-neon.html` | Cartas | Solitario Klondike: mazo de 52 cartas, armá las 4 fundaciones por palo desde el As y movés secuencias descendentes de colores alternados entre las 7 columnas. Robo de a una del mazo con reciclado del descarte, deshacer, cronómetro y autocompletar cuando ya no quedan cartas boca abajo. | ✅ 2026-08-28 |
 
 ## Reglas para el juego del día
 
