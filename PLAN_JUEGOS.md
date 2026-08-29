@@ -83,6 +83,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 30 | 🧪 | Frascos Neón | `frascos-neon.html` | Puzzle de lógica | Water sort: tocá un frasco para elegirlo y otro para verter, sólo si coincide el color de arriba o está vacío; ordená cada color en su propio frasco. 8 niveles generados al azar (siempre resolubles), con deshacer y contador de movidas. | ✅ 2026-08-26 |
 | 31 | 🧩 | Sudoku Neón | `sudoku-neon.html` | Lógica | Sudoku clásico: completá la grilla 9×9 sin repetir números en fila, columna o cuadrante. 4 dificultades generadas al azar con solución única garantizada, modo lápiz para anotar candidatos, pistas limitadas y 3 errores permitidos. | ✅ 2026-08-27 |
 | 32 | ♠️ | Solitario Neón | `solitario-neon.html` | Cartas | Solitario Klondike: mazo de 52 cartas, armá las 4 fundaciones por palo desde el As y movés secuencias descendentes de colores alternados entre las 7 columnas. Robo de a una del mazo con reciclado del descarte, deshacer, cronómetro y autocompletar cuando ya no quedan cartas boca abajo. | ✅ 2026-08-28 |
+| 33 | ⛳ | Golf Neón | `golf-neon.html` | Deportes / Física | Minigolf de 6 hoyos: arrastrá desde la bola como una honda para apuntar y soltá para pegarle, con fricción real y rebotes en los muros. Arena que frena la bola, agua que penaliza y te devuelve al último lugar, postes elásticos y un obstáculo que se mueve solo en el último hoyo. Golpes por hoyo y total, con etiquetas de hoyo en uno/águila/birdie/par/bogey y mejor puntaje guardado. | ✅ 2026-08-29 |
 
 ## Reglas para el juego del día
 

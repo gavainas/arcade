@@ -76,7 +76,10 @@ const OVERRIDES = {
   // A los 2.2s por defecto suele haber apenas una figura en pantalla: esperamos
   // más para que la miniatura muestre varias figuras (y alguna bomba) en vuelo.
   "corte-neon": { wait: 3200 },
-  "frascos-neon": { steps: [".lvl-card"], wait: 700 }
+  "frascos-neon": { steps: [".lvl-card"], wait: 700 },
+  // Un click justo sobre la bola dispara un tiro con el apunte por defecto
+  // (recto, potencia media): la agarramos a mitad de camino hacia el hoyo.
+  "golf-neon": { steps: ["#startBtn", { canvas: [0.5, 0.14] }], wait: 280 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

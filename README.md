@@ -50,6 +50,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🧪 Frascos Neón | [`frascos-neon.html`](frascos-neon.html) | Water sort: tocá un frasco para elegirlo y otro para verter, sólo si coincide el color de arriba o está vacío. Ordená cada color en su propio frasco. 8 niveles generados al azar, siempre resolubles, con deshacer y contador de movidas. |
 | 🧩 Sudoku Neón | [`sudoku-neon.html`](sudoku-neon.html) | Sudoku clásico: completá la grilla 9×9 sin repetir números en fila, columna o cuadrante. 4 dificultades generadas al azar con solución única, modo lápiz para anotar candidatos y pistas limitadas. |
 | ♠️ Solitario Neón | [`solitario-neon.html`](solitario-neon.html) | Solitario Klondike: armá las 4 fundaciones por palo desde el As y movés secuencias descendentes de colores alternados entre las 7 columnas. Robo de a una carta, deshacer, cronómetro y autocompletar. |
+| ⛳ Golf Neón | [`golf-neon.html`](golf-neon.html) | Minigolf de 6 hoyos: arrastrá desde la bola como una honda para apuntar y soltá para pegarle. Arena que frena, agua que penaliza, muros, postes elásticos y un obstáculo que se mueve solo. |
 
 ## Sopa de Letras
 

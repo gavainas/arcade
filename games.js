@@ -340,6 +340,13 @@
       desc: "Solitario Klondike con mazo de 52 cartas: armá las 4 fundaciones por palo desde el As y movés secuencias descendentes de colores alternados entre las 7 columnas. Robo de a una carta con reciclado del descarte, deshacer, cronómetro y autocompletar cuando ya no quedan cartas boca abajo.",
       controles: "Click / toque para elegir y jugar, doble toque manda una carta al palo; flechas + Enter con teclado", fecha: "2026-08-28",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "golf-neon", titulo: "Golf Neón", archivo: "golf-neon.html",
+      emoji: "⛳", categoria: "deportes", tags: ["minigolf", "fisica", "punteria", "hoyos"],
+      desc: "Minigolf de 6 hoyos: arrastrá desde la bola como una honda para apuntar y soltá para pegarle. Arena que frena, agua que penaliza, muros, postes elásticos y hasta un obstáculo que se mueve solo.",
+      controles: "Arrastrá el dedo o el mouse desde la bola; flechas ajustan y ESPACIO pega con teclado", fecha: "2026-08-29",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
