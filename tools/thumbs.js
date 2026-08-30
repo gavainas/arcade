@@ -79,7 +79,10 @@ const OVERRIDES = {
   "frascos-neon": { steps: [".lvl-card"], wait: 700 },
   // Un click justo sobre la bola dispara un tiro con el apunte por defecto
   // (recto, potencia media): la agarramos a mitad de camino hacia el hoyo.
-  "golf-neon": { steps: ["#startBtn", { canvas: [0.5, 0.14] }], wait: 280 }
+  "golf-neon": { steps: ["#startBtn", { canvas: [0.5, 0.14] }], wait: 280 },
+  // Un click en el centro de la grilla enemiga deja un disparo marcado (agua o
+  // tocado) para que la miniatura no sea sólo el mar vacío.
+  "batalla-naval": { steps: ["#startBtn", { canvas: [0.5, 0.62] }], wait: 300 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

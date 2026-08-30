@@ -51,6 +51,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🧩 Sudoku Neón | [`sudoku-neon.html`](sudoku-neon.html) | Sudoku clásico: completá la grilla 9×9 sin repetir números en fila, columna o cuadrante. 4 dificultades generadas al azar con solución única, modo lápiz para anotar candidatos y pistas limitadas. |
 | ♠️ Solitario Neón | [`solitario-neon.html`](solitario-neon.html) | Solitario Klondike: armá las 4 fundaciones por palo desde el As y movés secuencias descendentes de colores alternados entre las 7 columnas. Robo de a una carta, deshacer, cronómetro y autocompletar. |
 | ⛳ Golf Neón | [`golf-neon.html`](golf-neon.html) | Minigolf de 6 hoyos: arrastrá desde la bola como una honda para apuntar y soltá para pegarle. Arena que frena, agua que penaliza, muros, postes elásticos y un obstáculo que se mueve solo. |
+| 🚢 Batalla Naval Neón | [`batalla-naval.html`](batalla-naval.html) | Batalla naval por turnos: disparale al mar enemigo para hundir sus 5 barcos antes de que hundan los tuyos. Flotas nuevas al azar en cada partida, 3 dificultades de CPU y récord de menos disparos para ganar. |
 
 ## Sopa de Letras
 

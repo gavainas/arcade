@@ -347,6 +347,13 @@
       desc: "Minigolf de 6 hoyos: arrastrá desde la bola como una honda para apuntar y soltá para pegarle. Arena que frena, agua que penaliza, muros, postes elásticos y hasta un obstáculo que se mueve solo.",
       controles: "Arrastrá el dedo o el mouse desde la bola; flechas ajustan y ESPACIO pega con teclado", fecha: "2026-08-29",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "batalla-naval", titulo: "Batalla Naval Neón", archivo: "batalla-naval.html",
+      emoji: "🚢", categoria: "logica", tags: ["batalla naval", "estrategia", "turnos", "flota", "deduccion"],
+      desc: "Batalla naval por turnos: disparale al mar enemigo para hundir su flota antes de que hundan la tuya. Flotas nuevas al azar en cada partida, 3 niveles de dificultad de la CPU (la difícil caza en línea tras cada acierto) y récord de menos disparos para ganar.",
+      controles: "Click / toque en el mar enemigo para disparar; flechas + ESPACIO con teclado", fecha: "2026-08-30",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
