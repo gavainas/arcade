@@ -354,6 +354,13 @@
       desc: "Batalla naval por turnos: disparale al mar enemigo para hundir su flota antes de que hundan la tuya. Flotas nuevas al azar en cada partida, 3 niveles de dificultad de la CPU (la difícil caza en línea tras cada acierto) y récord de menos disparos para ganar.",
       controles: "Click / toque en el mar enemigo para disparar; flechas + ESPACIO con teclado", fecha: "2026-08-30",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "damas-neon", titulo: "Damas Neón", archivo: "damas-neon.html",
+      emoji: "⚫", categoria: "logica", tags: ["damas", "checkers", "tablero", "cpu", "2 jugadores", "estrategia"],
+      desc: "Damas clásicas: movés en diagonal y capturás saltando las fichas rivales (captura obligatoria, en cadena); llegá al fondo para coronar dama y moverte en las 4 diagonales. Contra una CPU con 3 dificultades (minimax con poda alfa-beta) o de a dos en el mismo dispositivo.",
+      controles: "Click / toque para elegir ficha y destino; flechas + Enter con teclado", fecha: "2026-08-31",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

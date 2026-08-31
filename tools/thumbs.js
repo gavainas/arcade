@@ -82,7 +82,14 @@ const OVERRIDES = {
   "golf-neon": { steps: ["#startBtn", { canvas: [0.5, 0.14] }], wait: 280 },
   // Un click en el centro de la grilla enemiga deja un disparo marcado (agua o
   // tocado) para que la miniatura no sea sólo el mar vacío.
-  "batalla-naval": { steps: ["#startBtn", { canvas: [0.5, 0.62] }], wait: 300 }
+  "batalla-naval": { steps: ["#startBtn", { canvas: [0.5, 0.62] }], wait: 300 },
+  // Elegimos dificultad antes de que aparezca JUGAR, y seleccionamos una ficha
+  // propia para que la miniatura muestre el tablero con fichas y el resaltado
+  // de selección, no sólo la pantalla de modos.
+  "damas-neon": {
+    steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.3125, 0.6875] }],
+    wait: 500
+  }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];
