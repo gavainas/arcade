@@ -361,6 +361,13 @@
       desc: "Damas clásicas: movés en diagonal y capturás saltando las fichas rivales (captura obligatoria, en cadena); llegá al fondo para coronar dama y moverte en las 4 diagonales. Contra una CPU con 3 dificultades (minimax con poda alfa-beta) o de a dos en el mismo dispositivo.",
       controles: "Click / toque para elegir ficha y destino; flechas + Enter con teclado", fecha: "2026-08-31",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "otelo-neon", titulo: "Otelo Neón", archivo: "otelo-neon.html",
+      emoji: "🟢", categoria: "logica", tags: ["otelo", "reversi", "othello", "tablero", "cpu", "2 jugadores", "estrategia"],
+      desc: "Otelo (Reversi) clásico en tablero 8×8: colocá una ficha para encerrar fichas rivales entre la tuya y otra propia (en línea o diagonal) y volteá todas las que quedan en el medio. Sin movimientos posibles, pasás el turno; gana quien tenga más fichas al llenarse el tablero. Contra una CPU con 3 dificultades (minimax con poda alfa-beta) o de a dos en el mismo dispositivo.",
+      controles: "Click / toque en una casilla resaltada; flechas + Enter con teclado", fecha: "2026-09-01",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

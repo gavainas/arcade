@@ -89,6 +89,12 @@ const OVERRIDES = {
   "damas-neon": {
     steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.3125, 0.6875] }],
     wait: 500
+  },
+  // Jugamos una apertura válida para que la miniatura muestre fichas volteadas
+  // y no sólo el tablero inicial de 4 discos.
+  "otelo-neon": {
+    steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.4375, 0.3125] }],
+    wait: 900
   }
 };
 

@@ -53,6 +53,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ⛳ Golf Neón | [`golf-neon.html`](golf-neon.html) | Minigolf de 6 hoyos: arrastrá desde la bola como una honda para apuntar y soltá para pegarle. Arena que frena, agua que penaliza, muros, postes elásticos y un obstáculo que se mueve solo. |
 | 🚢 Batalla Naval Neón | [`batalla-naval.html`](batalla-naval.html) | Batalla naval por turnos: disparale al mar enemigo para hundir sus 5 barcos antes de que hundan los tuyos. Flotas nuevas al azar en cada partida, 3 dificultades de CPU y récord de menos disparos para ganar. |
 | ⚫ Damas Neón | [`damas-neon.html`](damas-neon.html) | Damas clásicas: movés en diagonal y capturás saltando las fichas rivales (captura obligatoria, en cadena); llegá al fondo para coronar dama y moverte en las 4 diagonales. Contra una CPU con 3 dificultades (minimax con poda alfa-beta) o de a dos en el mismo dispositivo. |
+| 🟢 Otelo Neón | [`otelo-neon.html`](otelo-neon.html) | Otelo (Reversi) clásico: colocá una ficha para encerrar fichas rivales entre la tuya y otra propia, en línea o diagonal, y volteá todas las que quedan en el medio. Sin movimientos posibles pasás el turno; gana quien tenga más fichas al llenarse el tablero. Contra una CPU con 3 dificultades o de a dos en el mismo dispositivo. |
 
 ## Sopa de Letras
 
