@@ -95,7 +95,8 @@ const OVERRIDES = {
   "otelo-neon": {
     steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.4375, 0.3125] }],
     wait: 900
-  }
+  },
+  "embotellamiento-neon": { steps: [".lvl-card"], wait: 800 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

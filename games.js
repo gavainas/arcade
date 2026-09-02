@@ -368,6 +368,13 @@
       desc: "Otelo (Reversi) clásico en tablero 8×8: colocá una ficha para encerrar fichas rivales entre la tuya y otra propia (en línea o diagonal) y volteá todas las que quedan en el medio. Sin movimientos posibles, pasás el turno; gana quien tenga más fichas al llenarse el tablero. Contra una CPU con 3 dificultades (minimax con poda alfa-beta) o de a dos en el mismo dispositivo.",
       controles: "Click / toque en una casilla resaltada; flechas + Enter con teclado", fecha: "2026-09-01",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "embotellamiento-neon", titulo: "Embotellamiento Neón", archivo: "embotellamiento-neon.html",
+      emoji: "🚗", categoria: "logica", tags: ["rush hour", "autos", "deslizar", "trafico", "niveles"],
+      desc: "Rush Hour neón: deslizá los autos y camiones por la grilla de 6×6 (cada uno sólo en su sentido, horizontal o vertical) para abrirle paso al auto rojo hasta la salida. 8 niveles generados al azar y siempre resolubles, con deshacer y contador de movidas.",
+      controles: "Arrastrá un vehículo, o tocalo/elegí su número y usá las flechas", fecha: "2026-09-02",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
