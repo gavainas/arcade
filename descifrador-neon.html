@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DESCIFRADOR NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(22px,6.2vw,36px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:17px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.lvl b{color:var(--purple); font-size:13px;}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    min-height:420px; display:flex; flex-direction:column;
+  }
+
+  .history{flex:1; min-height:180px; max-height:44vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding:2px 2px 8px;}
+  .history::-webkit-scrollbar{width:5px;}
+  .history::-webkit-scrollbar-thumb{background:rgba(138,75,255,.4); border-radius:4px;}
+  .hrow{display:flex; align-items:center; gap:8px; background:rgba(5,7,15,.5); border:1px solid rgba(138,75,255,.18); border-radius:10px; padding:6px 8px;}
+  .hrow .num{font-size:10px; color:var(--muted); width:16px; flex:none; text-align:center;}
+  .hrow .pegs{display:flex; gap:5px; flex:1;}
+  .hrow .fb{display:grid; grid-template-columns:repeat(3,7px); gap:3px; flex:none; width:27px;}
+
+  .peg{width:26px; height:26px; border-radius:50%; flex:none; box-shadow:inset 0 -3px 6px rgba(0,0,0,.35), 0 0 8px currentColor;}
+  .peg.empty{background:rgba(255,255,255,.06); box-shadow:inset 0 0 0 1px rgba(255,255,255,.12); }
+  .hrow .peg{width:18px; height:18px;}
+
+  .fbdot{width:7px; height:7px; border-radius:50%;}
+  .fbdot.b{background:var(--cyan); box-shadow:0 0 5px var(--cyan);}
+  .fbdot.w{background:transparent; border:1.5px solid var(--ink);}
+  .fbdot.n{background:rgba(255,255,255,.08);}
+
+  .builder{border-top:1px solid rgba(138,75,255,.25); padding-top:10px; margin-top:6px;}
+  .slots{display:flex; justify-content:center; gap:10px; margin-bottom:12px;}
+  .slots.reveal{margin:6px 0 2px;}
+  .slot-wrap{position:relative;}
+  .slot-wrap.active .peg{box-shadow:inset 0 -3px 6px rgba(0,0,0,.35), 0 0 0 2px var(--cyan), 0 0 10px var(--cyan);}
+
+  .palette{display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin-bottom:12px;}
+  .swatch{width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,.15); cursor:pointer;
+    box-shadow:0 0 10px currentColor; transition:transform .1s ease;}
+  .swatch:active{transform:scale(.88);}
+
+  .actions{display:flex; gap:10px; justify-content:center;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 28px; font-size:14px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn:disabled{opacity:.35; cursor:not-allowed; transform:none; box-shadow:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none; border-radius:12px;}
+  .btn.ghost.active{border-color:var(--cyan); color:var(--cyan); background:rgba(39,232,255,.14);}
+  .diffrow{display:flex; gap:8px; width:100%; max-width:320px;}
+  .diffrow .btn{flex:1; padding:10px 6px; font-size:12px;}
+  .diffLbl{font-size:11px; letter-spacing:2px; color:var(--muted); margin-top:2px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:10px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(19px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .overlay p b{color:var(--ink);}
+  .final{font-size:14.5px; color:var(--ink);} .final b{color:var(--gold); font-size:20px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  .newrec.hidden{display:none;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  @media (max-width:360px){
+    .peg{width:22px; height:22px;}
+    .swatch{width:30px; height:30px;}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">◄ Volver al arcade</a>
+  <header>
+    <div class="logo">DESCIFRADOR NEÓN</div>
+    <div class="sub">ROMPÉ EL CÓDIGO SECRETO</div>
+  </header>
+
+  <div class="hud">
+    <div class="box"><span>INTENTOS</span><b id="hudTries">0/10</b></div>
+    <div class="box rec"><span>RÉCORD</span><b id="hudBest">—</b></div>
+    <div class="box lvl"><span>NIVEL</span><b id="hudLvl">NORMAL</b></div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="history" id="history"></div>
+
+    <div class="builder">
+      <div class="slots" id="slots"></div>
+      <div class="palette" id="palette"></div>
+      <div class="actions">
+        <button id="btnClear" class="btn ghost">BORRAR</button>
+        <button id="btnConfirm" class="btn" disabled>CONFIRMAR</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="ovStart">
+      <h2>DESCIFRADOR NEÓN</h2>
+      <p>La máquina generó un código secreto de colores (se pueden repetir). Adivinalo antes de quedarte sin intentos.</p>
+      <p><b style="color:var(--cyan)">●</b> clavija llena = color y posición correctos &nbsp; <b>○</b> clavija hueca = color correcto, posición equivocada.</p>
+      <div class="diffLbl">DIFICULTAD</div>
+      <div class="diffrow">
+        <button class="btn ghost" data-diff="facil">FÁCIL</button>
+        <button class="btn ghost active" data-diff="normal">NORMAL</button>
+        <button class="btn ghost" data-diff="dificil">DIFÍCIL</button>
+      </div>
+      <button id="btnStart" class="btn">JUGAR</button>
+    </div>
+
+    <div class="overlay hidden" id="ovEnd">
+      <h2 id="endTitle">¡GANASTE!</h2>
+      <p class="final" id="endMsg"></p>
+      <div class="slots reveal" id="endCode"></div>
+      <div class="newrec hidden" id="newRec">¡NUEVO RÉCORD!</div>
+      <button id="btnAgain" class="btn">JUGAR DE NUEVO</button>
+      <button id="btnMenu" class="btn ghost">MENÚ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var COLORS = [
+    {hex:'#27e8ff', name:'cian'},
+    {hex:'#ff2bd6', name:'magenta'},
+    {hex:'#8a4bff', name:'violeta'},
+    {hex:'#39ff9e', name:'verde'},
+    {hex:'#ffd23b', name:'dorado'},
+    {hex:'#ff9838', name:'naranja'},
+    {hex:'#ff5470', name:'rojo'},
+    {hex:'#4b7bff', name:'azul'}
+  ];
+
+  var DIFFS = {
+    facil:   {label:'FÁCIL',   colors:6, length:4, tries:10},
+    normal:  {label:'NORMAL',  colors:6, length:5, tries:10},
+    dificil: {label:'DIFÍCIL', colors:8, length:5, tries:8}
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var elHistory = $('history'), elSlots = $('slots'), elPalette = $('palette'),
+      elBtnClear = $('btnClear'), elBtnConfirm = $('btnConfirm'),
+      elHudTries = $('hudTries'), elHudBest = $('hudBest'), elHudLvl = $('hudLvl'),
+      ovStart = $('ovStart'), ovEnd = $('ovEnd'),
+      endTitle = $('endTitle'), endMsg = $('endMsg'), endCode = $('endCode'), newRec = $('newRec');
+
+  var diff = 'normal';
+  var cfg = DIFFS[diff];
+  var secret = [];
+  var guess = [];
+  var attempts = 0;
+  var over = false;
+  var audioCtx = null;
+
+  function ensureAudio(){
+    if(!audioCtx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
+    }
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  function beep(freq, dur, type){
+    if(!audioCtx) return;
+    var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur/1000);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur/1000 + 0.02);
+  }
+
+  function bestKey(d){ return 'neon_descifrador_best_' + d; }
+  function loadBest(d){
+    var v = localStorage.getItem(bestKey(d));
+    return v ? parseInt(v, 10) : null;
+  }
+  function saveBest(d, tries){
+    localStorage.setItem(bestKey(d), String(tries));
+  }
+  function refreshHud(){
+    elHudTries.textContent = attempts + '/' + cfg.tries;
+    var b = loadBest(diff);
+    elHudBest.textContent = b ? (b + ' int.') : '—';
+    elHudLvl.textContent = cfg.label;
+  }
+
+  function randInt(n){ return Math.floor(Math.random() * n); }
+
+  function makeSecret(){
+    var s = [];
+    for(var i = 0; i < cfg.length; i++) s.push(randInt(cfg.colors));
+    return s;
+  }
+
+  function makePeg(colorIdx, extraClass){
+    var d = document.createElement('div');
+    d.className = 'peg' + (extraClass ? ' ' + extraClass : '');
+    if(colorIdx === null || colorIdx === undefined){
+      d.classList.add('empty');
+    } else {
+      d.style.background = COLORS[colorIdx].hex;
+      d.style.color = COLORS[colorIdx].hex;
+    }
+    return d;
+  }
+
+  function renderSlots(){
+    elSlots.innerHTML = '';
+    for(var i = 0; i < cfg.length; i++){
+      var wrap = document.createElement('div');
+      wrap.className = 'slot-wrap';
+      wrap.appendChild(makePeg(guess[i]));
+      elSlots.appendChild(wrap);
+    }
+    var full = guess.every(function(v){ return v !== null; });
+    elBtnConfirm.disabled = !full || over;
+  }
+
+  function renderPalette(){
+    elPalette.innerHTML = '';
+    for(var i = 0; i < cfg.colors; i++){
+      (function(idx){
+        var sw = document.createElement('div');
+        sw.className = 'swatch';
+        sw.style.background = COLORS[idx].hex;
+        sw.style.color = COLORS[idx].hex;
+        sw.title = COLORS[idx].name;
+        sw.addEventListener('click', function(){ pickColor(idx); });
+        elPalette.appendChild(sw);
+      })(i);
+    }
+  }
+
+  function pickColor(idx){
+    if(over) return;
+    ensureAudio();
+    var pos = guess.indexOf(null);
+    if(pos === -1) pos = guess.length - 1;
+    guess[pos] = idx;
+    beep(320 + idx * 40, 70, 'square');
+    renderSlots();
+  }
+
+  function clearGuess(){
+    guess = new Array(cfg.length).fill(null);
+    renderSlots();
+  }
+
+  function evaluate(g, s){
+    var black = 0;
+    var gLeft = [], sLeft = [];
+    for(var i = 0; i < s.length; i++){
+      if(g[i] === s[i]) black++;
+      else { gLeft.push(g[i]); sLeft.push(s[i]); }
+    }
+    var white = 0;
+    var used = new Array(sLeft.length).fill(false);
+    for(var a = 0; a < gLeft.length; a++){
+      for(var b = 0; b < sLeft.length; b++){
+        if(!used[b] && gLeft[a] === sLeft[b]){ used[b] = true; white++; break; }
+      }
+    }
+    return {black: black, white: white};
+  }
+
+  function addHistoryRow(g, fb, num){
+    var row = document.createElement('div');
+    row.className = 'hrow';
+
+    var n = document.createElement('div');
+    n.className = 'num';
+    n.textContent = num;
+    row.appendChild(n);
+
+    var pegs = document.createElement('div');
+    pegs.className = 'pegs';
+    for(var i = 0; i < g.length; i++) pegs.appendChild(makePeg(g[i]));
+    row.appendChild(pegs);
+
+    var fbGrid = document.createElement('div');
+    fbGrid.className = 'fb';
+    var total = g.length;
+    for(var k = 0; k < total; k++){
+      var dot = document.createElement('div');
+      if(k < fb.black) dot.className = 'fbdot b';
+      else if(k < fb.black + fb.white) dot.className = 'fbdot w';
+      else dot.className = 'fbdot n';
+      fbGrid.appendChild(dot);
+    }
+    row.appendChild(fbGrid);
+
+    elHistory.appendChild(row);
+    elHistory.scrollTop = elHistory.scrollHeight;
+  }
+
+  function confirmGuess(){
+    if(over) return;
+    if(guess.some(function(v){ return v === null; })) return;
+    ensureAudio();
+    attempts++;
+    var fb = evaluate(guess, secret);
+    addHistoryRow(guess.slice(), fb, attempts);
+    refreshHud();
+
+    if(fb.black === cfg.length){
+      win();
+      return;
+    }
+    if(attempts >= cfg.tries){
+      lose();
+      return;
+    }
+    beep(200, 90, 'triangle');
+    clearGuess();
+  }
+
+  function renderEndCode(){
+    endCode.innerHTML = '';
+    for(var i = 0; i < secret.length; i++) endCode.appendChild(makePeg(secret[i]));
+  }
+
+  function win(){
+    over = true;
+    elBtnConfirm.disabled = true;
+    beep(660, 120, 'sine'); setTimeout(function(){ beep(880, 160, 'sine'); }, 130);
+    var best = loadBest(diff);
+    var isRec = !best || attempts < best;
+    if(isRec) saveBest(diff, attempts);
+    refreshHud();
+
+    endTitle.textContent = '¡GANASTE!';
+    endMsg.innerHTML = 'Descifraste el código en <b>' + attempts + '</b> intento' + (attempts === 1 ? '' : 's') + '.';
+    renderEndCode();
+    newRec.classList.toggle('hidden', !isRec);
+    ovEnd.classList.remove('hidden');
+  }
+
+  function lose(){
+    over = true;
+    elBtnConfirm.disabled = true;
+    beep(160, 220, 'sawtooth');
+    endTitle.textContent = 'SE ACABARON LOS INTENTOS';
+    endMsg.innerHTML = 'El código secreto era:';
+    renderEndCode();
+    newRec.classList.add('hidden');
+    ovEnd.classList.remove('hidden');
+  }
+
+  function newGame(){
+    cfg = DIFFS[diff];
+    secret = makeSecret();
+    guess = new Array(cfg.length).fill(null);
+    attempts = 0;
+    over = false;
+    elHistory.innerHTML = '';
+    renderPalette();
+    renderSlots();
+    refreshHud();
+    ovEnd.classList.add('hidden');
+    ovStart.classList.add('hidden');
+  }
+
+  elBtnClear.addEventListener('click', clearGuess);
+  elBtnConfirm.addEventListener('click', confirmGuess);
+
+  $('btnStart').addEventListener('click', function(){ ensureAudio(); newGame(); });
+  $('btnAgain').addEventListener('click', function(){ newGame(); });
+  $('btnMenu').addEventListener('click', function(){
+    ovEnd.classList.add('hidden');
+    ovStart.classList.remove('hidden');
+    refreshHud();
+  });
+
+  var diffButtons = document.querySelectorAll('.diffrow .btn');
+  diffButtons.forEach(function(b){
+    b.addEventListener('click', function(){
+      diffButtons.forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      diff = b.getAttribute('data-diff');
+      cfg = DIFFS[diff];
+      refreshHud();
+    });
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(!ovStart.classList.contains('hidden') || !ovEnd.classList.contains('hidden')){
+      if(e.key === 'Enter' && !ovStart.classList.contains('hidden')){ ensureAudio(); newGame(); }
+      return;
+    }
+    if(over) return;
+    if(e.key >= '1' && e.key <= '8'){
+      var idx = parseInt(e.key, 10) - 1;
+      if(idx < cfg.colors) pickColor(idx);
+    } else if(e.key === 'Backspace'){
+      var lastFilled = -1;
+      for(var i = guess.length - 1; i >= 0; i--){ if(guess[i] !== null){ lastFilled = i; break; } }
+      if(lastFilled !== -1){ guess[lastFilled] = null; renderSlots(); }
+    } else if(e.key === 'Enter'){
+      confirmGuess();
+    }
+  });
+
+  cfg = DIFFS[diff];
+  guess = new Array(cfg.length).fill(null);
+  renderPalette();
+  renderSlots();
+  refreshHud();
+})();
+</script>
+</body>
+</html>

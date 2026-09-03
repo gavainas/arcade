@@ -96,7 +96,19 @@ const OVERRIDES = {
     steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.4375, 0.3125] }],
     wait: 900
   },
-  "embotellamiento-neon": { steps: [".lvl-card"], wait: 800 }
+  "embotellamiento-neon": { steps: [".lvl-card"], wait: 800 },
+  // Elegimos dificultad, arrancamos y cargamos algunas clavijas de colores para
+  // que la miniatura muestre la mecánica en vez de la pantalla de inicio vacía.
+  "descifrador-neon": {
+    steps: [
+      '[data-diff="normal"]',
+      "#btnStart",
+      ".palette .swatch:nth-child(1)",
+      ".palette .swatch:nth-child(3)",
+      ".palette .swatch:nth-child(5)"
+    ],
+    wait: 400
+  }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

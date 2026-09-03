@@ -55,6 +55,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ⚫ Damas Neón | [`damas-neon.html`](damas-neon.html) | Damas clásicas: movés en diagonal y capturás saltando las fichas rivales (captura obligatoria, en cadena); llegá al fondo para coronar dama y moverte en las 4 diagonales. Contra una CPU con 3 dificultades (minimax con poda alfa-beta) o de a dos en el mismo dispositivo. |
 | 🟢 Otelo Neón | [`otelo-neon.html`](otelo-neon.html) | Otelo (Reversi) clásico: colocá una ficha para encerrar fichas rivales entre la tuya y otra propia, en línea o diagonal, y volteá todas las que quedan en el medio. Sin movimientos posibles pasás el turno; gana quien tenga más fichas al llenarse el tablero. Contra una CPU con 3 dificultades o de a dos en el mismo dispositivo. |
 | 🚗 Embotellamiento Neón | [`embotellamiento-neon.html`](embotellamiento-neon.html) | Rush Hour: grilla de 6×6 con autos y camiones que sólo se mueven en su sentido (horizontal o vertical) y nunca se cruzan; deslizalos para abrirle camino al auto rojo hasta la salida. 8 niveles generados al azar y siempre resolubles, con deshacer y contador de movidas. |
+| 🔓 Descifrador Neón | [`descifrador-neon.html`](descifrador-neon.html) | Mastermind neón: la máquina esconde un código de colores (con repetidos) y vos lo descifrás a fuerza de intentos, guiado por clavijas de pista (llena = color y posición correctos, hueca = color correcto en el lugar equivocado). 3 dificultades, con récord de menos intentos para ganar. |
 
 ## Sopa de Letras
 

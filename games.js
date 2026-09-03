@@ -375,6 +375,13 @@
       desc: "Rush Hour neón: deslizá los autos y camiones por la grilla de 6×6 (cada uno sólo en su sentido, horizontal o vertical) para abrirle paso al auto rojo hasta la salida. 8 niveles generados al azar y siempre resolubles, con deshacer y contador de movidas.",
       controles: "Arrastrá un vehículo, o tocalo/elegí su número y usá las flechas", fecha: "2026-09-02",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "descifrador-neon", titulo: "Descifrador Neón", archivo: "descifrador-neon.html",
+      emoji: "🔓", categoria: "logica", tags: ["mastermind", "codigo", "deduccion", "colores"],
+      desc: "Mastermind neón: la máquina esconde un código de colores (con repetidos) y vos lo descifrás a fuerza de intentos. Cada clavija llena marca color y posición correctos, cada clavija hueca marca color correcto en el lugar equivocado. 3 dificultades, con récord de menos intentos para ganar.",
+      controles: "Click / toque en la paleta de colores; teclado 1-8 elige color, Enter confirma, Backspace borra", fecha: "2026-09-03",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
