@@ -96,7 +96,8 @@ const OVERRIDES = {
     steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.4375, 0.3125] }],
     wait: 900
   },
-  "embotellamiento-neon": { steps: [".lvl-card"], wait: 800 }
+  "embotellamiento-neon": { steps: [".lvl-card"], wait: 800 },
+  "mahjong-neon": { steps: [".lvl-card"], wait: 700 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

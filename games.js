@@ -375,6 +375,13 @@
       desc: "Rush Hour neón: deslizá los autos y camiones por la grilla de 6×6 (cada uno sólo en su sentido, horizontal o vertical) para abrirle paso al auto rojo hasta la salida. 8 niveles generados al azar y siempre resolubles, con deshacer y contador de movidas.",
       controles: "Arrastrá un vehículo, o tocalo/elegí su número y usá las flechas", fecha: "2026-09-02",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "mahjong-neon", titulo: "Mahjong Neón", archivo: "mahjong-neon.html",
+      emoji: "🀄", categoria: "logica", tags: ["mahjong", "fichas", "parejas", "capas", "solitario"],
+      desc: "Mahjong solitario: fichas apiladas en varias capas, sólo se levantan las que están libres (nada encima y un costado abierto). Tocá dos iguales para sacarlas y limpiá todo el tablero. 4 niveles con capas crecientes, siempre resolubles, con deshacer, pista y barajar.",
+      controles: "Click / toque para elegir y emparejar; flechas + Enter con teclado", fecha: "2026-09-04",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

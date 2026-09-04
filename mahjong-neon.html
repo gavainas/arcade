@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MAHJONG NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:640px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .levels{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:26px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .name{margin-top:6px; font-size:14px; font-weight:800;}
+  .lvl-card .meta{margin-top:4px; font-size:11px; color:var(--muted); letter-spacing:.5px;}
+  .lvl-card .best{margin-top:6px; font-size:11.5px; color:var(--gold); font-weight:700; min-height:14px;}
+  .lvl-card.done{border-color:var(--green);}
+  .lvl-card.done .name::after{content:" ✓"; color:var(--green);}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted); flex-wrap:wrap;}
+  .hud .box{flex:1; min-width:70px; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.pairs b{color:var(--pink);}
+  .hud .box.left b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:18px 14px 26px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    overflow-x:auto; display:flex; justify-content:center;
+  }
+  .board{position:relative; touch-action:manipulation; user-select:none;}
+  .tile{
+    position:absolute; width:40px; height:54px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-size:21px; font-weight:900;
+    background:linear-gradient(180deg, rgba(26,34,66,.95), rgba(10,14,30,.95));
+    border:1.5px solid rgba(138,75,255,.32); box-shadow:0 4px 10px rgba(0,0,0,.5);
+    cursor:pointer; transition:transform .12s ease, box-shadow .15s ease, border-color .15s ease, opacity .15s ease;
+  }
+  .tile.blocked{opacity:.38; filter:grayscale(.5); cursor:default;}
+  .tile.free{border-color:rgba(255,255,255,.22);}
+  .tile.selected{border-color:var(--cyan); transform:translateY(-5px); box-shadow:0 0 20px rgba(39,232,255,.75), 0 4px 10px rgba(0,0,0,.5); z-index:99999 !important;}
+  .tile.focused{outline:2px dashed rgba(232,246,255,.6); outline-offset:2px;}
+  .tile.hint{animation:hintPulse .55s ease-in-out infinite alternate; z-index:99998 !important;}
+  @keyframes hintPulse{from{box-shadow:0 0 6px currentColor, 0 4px 10px rgba(0,0,0,.5);} to{box-shadow:0 0 24px currentColor, 0 4px 10px rgba(0,0,0,.5);}}
+  .tile.shake{animation:shakeX .3s ease;}
+  @keyframes shakeX{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+  .tile.pop{animation:popOut .24s ease forwards; pointer-events:none;}
+  @keyframes popOut{to{transform:scale(.15) translateY(-8px); opacity:0;}}
+
+  .banner{text-align:center; font-size:12px; color:var(--gold); min-height:16px; margin-top:8px; letter-spacing:.5px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 13px; font-size:12.5px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">MAHJONG NEÓN</div>
+      <div class="sub">F I C H A S &nbsp; E N &nbsp; C A P A S</div>
+    </header>
+
+    <!-- Level select -->
+    <section id="menu">
+      <p class="hint" style="margin-bottom:6px;">Tocá dos fichas iguales para sacarlas: sólo podés levantar las que están libres (nada apilado encima y con un costado abierto). Limpiá todas las capas. Elegí un nivel:</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <!-- Game -->
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box time">TIEMPO<b id="hudTime">00:00</b></div>
+        <div class="box pairs">PARES<b id="hudPairs">0/0</b></div>
+        <div class="box left">FICHAS<b id="hudLeft">0</b></div>
+      </div>
+      <div class="panel">
+        <div class="board" id="board"></div>
+
+        <div class="overlay hidden" id="winOverlay">
+          <div class="picture">🀄</div>
+          <h2>¡TABLERO LIMPIO!</h2>
+          <div class="final">Tiempo: <b id="winTime">00:00</b></div>
+          <div class="newrec hidden" id="winRecord">⭐ ¡NUEVO RÉCORD!</div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn ghost" id="btnRetry">REINTENTAR</button>
+            <button class="btn" id="btnNext">SIGUIENTE ▶</button>
+          </div>
+        </div>
+      </div>
+      <div class="banner" id="banner"></div>
+
+      <div class="controls">
+        <div class="btnrow">
+          <button class="mini" id="btnLevels">☰ Niveles</button>
+          <button class="mini" id="btnUndo">↶ Deshacer</button>
+          <button class="mini" id="btnHint">💡 Pista</button>
+          <button class="mini" id="btnShuffle">🔀 Barajar</button>
+          <button class="mini" id="btnReset">↺ Reiniciar</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Click / toque elige y empareja · Flechas mueven el foco entre fichas libres, Enter/espacio elige · Deshacer con retroceso, reiniciar con R, pista con H, barajar con B.</p>
+    </section>
+
+    <footer>Neon Arcade · Mahjong solitario hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var COMBOS = [
+    { g:"★", c:"#27e8ff" }, { g:"◆", c:"#ff2bd6" }, { g:"●", c:"#8a4bff" }, { g:"▲", c:"#39ff9e" },
+    { g:"✦", c:"#ffd23b" }, { g:"❖", c:"#ff5470" }, { g:"⬢", c:"#ff9838" }, { g:"✚", c:"#4b7bff" },
+    { g:"☘", c:"#b6ff3b" }, { g:"❄", c:"#0be0c4" }, { g:"☯", c:"#d68cff" }, { g:"♦", c:"#ff6bcb" },
+    { g:"⚡", c:"#ffe066" }, { g:"✺", c:"#7bffea" }
+  ];
+
+  var STEP_X = 44, STEP_Y = 58, LAYER_SHIFT = 6, TILE_MARGIN = 4;
+  var EMOJIS = ["🀄", "🎴", "🧩", "🀅"];
+
+  var LEVELS = [
+    { id:"l1", name:"Fichas iniciales", layers:[{rows:6,cols:8},{rows:2,cols:2}] },
+    { id:"l2", name:"Capas dobles", layers:[{rows:8,cols:8},{rows:4,cols:4}] },
+    { id:"l3", name:"Triple altura", layers:[{rows:8,cols:10},{rows:6,cols:6},{rows:2,cols:2}] },
+    { id:"l4", name:"Pirámide neón", layers:[{rows:10,cols:10},{rows:6,cols:8},{rows:4,cols:4},{rows:2,cols:2}] }
+  ];
+
+  // ---------- Persistence ----------
+  var LS_BEST = "mahjong-neon-best";
+  var LS_DONE = "mahjong-neon-done";
+  function loadBest(){ try{ return JSON.parse(localStorage.getItem(LS_BEST))||{}; }catch(e){ return {}; } }
+  function saveBest(o){ try{ localStorage.setItem(LS_BEST, JSON.stringify(o)); }catch(e){} }
+  function loadDone(){ try{ return JSON.parse(localStorage.getItem(LS_DONE))||{}; }catch(e){ return {}; } }
+  function saveDone(o){ try{ localStorage.setItem(LS_DONE, JSON.stringify(o)); }catch(e){} }
+
+  function fmtTime(sec){
+    var m = Math.floor(sec/60), s = sec%60;
+    return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+  }
+
+  // ---------- Board layout ----------
+  // Arma la lista de posiciones (capa z, fila r, columna c) de un nivel,
+  // centrando cada capa sobre la capa base (z=0) para que se apilen en pirámide.
+  function buildPositions(def){
+    var rows0 = def.layers[0].rows, cols0 = def.layers[0].cols;
+    var list = [];
+    def.layers.forEach(function(layer, z){
+      var offR = Math.floor((rows0 - layer.rows) / 2);
+      var offC = Math.floor((cols0 - layer.cols) / 2);
+      for(var r=0; r<layer.rows; r++){
+        for(var c=0; c<layer.cols; c++){
+          var rr = r + offR, cc = c + offC;
+          list.push({ id: z+"_"+rr+"_"+cc, z: z, r: rr, c: cc });
+        }
+      }
+    });
+    if(list.length % 2 === 1) list.pop();
+    return list;
+  }
+
+  // Precalcula, para cada ficha, quién la bloquea desde arriba (mismo r,c en
+  // una capa superior) y quiénes son sus vecinas de izquierda/derecha en su
+  // propia capa. Estos vínculos no cambian durante la partida.
+  function computeAdjacency(positions){
+    var byKey = {};
+    positions.forEach(function(p){ byKey[p.z+"_"+p.r+"_"+p.c] = p.id; });
+    var byId = {};
+    positions.forEach(function(p){ byId[p.id] = p; });
+    positions.forEach(function(p){
+      p.topBlockers = positions.filter(function(q){ return q.r===p.r && q.c===p.c && q.z>p.z; }).map(function(q){ return q.id; });
+      p.leftId = byKey[p.z+"_"+p.r+"_"+(p.c-1)] || null;
+      p.rightId = byKey[p.z+"_"+p.r+"_"+(p.c+1)] || null;
+    });
+    return byId;
+  }
+
+  function shuffleArr(a){
+    for(var i=a.length-1; i>0; i--){
+      var r = Math.floor(Math.random()*(i+1));
+      var t = a[i]; a[i]=a[r]; a[r]=t;
+    }
+    return a;
+  }
+
+  function isFree(byId, S, id){
+    var p = byId[id];
+    var topBlocked = p.topBlockers.some(function(bid){ return S.has(bid); });
+    if(topBlocked) return false;
+    var leftOpen = !(p.leftId && S.has(p.leftId));
+    var rightOpen = !(p.rightId && S.has(p.rightId));
+    return leftOpen || rightOpen;
+  }
+
+  function freeSet(byId, S){
+    var out = [];
+    S.forEach(function(id){ if(isFree(byId, S, id)) out.push(id); });
+    return out;
+  }
+
+  // Arma un orden de pares (a,b) tal que, jugando exactamente en ese orden
+  // desde el tablero lleno, cada par estaba libre en el momento de sacarlo:
+  // eso garantiza que el tablero generado siempre tiene solución.
+  //
+  // Si en algún paso queda una sola ficha libre (por ejemplo dos fichas
+  // apiladas justo una sobre la otra como único resto, que nunca pueden
+  // liberarse "a la vez"), ese intento es un callejón sin salida: se
+  // descarta entero y se prueba de nuevo con otro orden al azar.
+  function tryBuildPairing(byId, ids){
+    var S = new Set(ids);
+    var pairs = [];
+    while(S.size > 0){
+      var free = freeSet(byId, S);
+      if(free.length < 2) return null;
+      shuffleArr(free);
+      var a = free[0], b = free[1];
+      pairs.push([a, b]);
+      S.delete(a); S.delete(b);
+    }
+    return pairs;
+  }
+
+  function buildPairing(byId, ids){
+    for(var i=0; i<2000; i++){
+      var pairs = tryBuildPairing(byId, ids);
+      if(pairs) return pairs;
+    }
+    // No debería llegar acá jamás con estas formas de tablero (en pruebas,
+    // unos pocos reintentos siempre alcanzan); como red de seguridad final,
+    // se sigue intentando hasta lograrlo.
+    var pairs2;
+    do { pairs2 = tryBuildPairing(byId, ids); } while(!pairs2);
+    return pairs2;
+  }
+
+  // ---------- State ----------
+  var els = {
+    menu: document.getElementById("menu"),
+    game: document.getElementById("game"),
+    levelGrid: document.getElementById("levelGrid"),
+    board: document.getElementById("board"),
+    banner: document.getElementById("banner"),
+    hudTime: document.getElementById("hudTime"),
+    hudPairs: document.getElementById("hudPairs"),
+    hudLeft: document.getElementById("hudLeft"),
+    winOverlay: document.getElementById("winOverlay"),
+    winTime: document.getElementById("winTime"),
+    winRecord: document.getElementById("winRecord"),
+    btnUndo: document.getElementById("btnUndo"),
+    btnHint: document.getElementById("btnHint"),
+    btnShuffle: document.getElementById("btnShuffle"),
+    btnReset: document.getElementById("btnReset")
+  };
+
+  var current = null;   // { def, positions, byId, combo:{id->comboIdx}, remaining:Set, totalPairs }
+  var levelIndex = -1;
+  var history = [];     // stack of { remaining:Set, pairsFound }
+  var pairsFound = 0;
+  var selected = null;
+  var focusId = null;
+  var shakeId = null, shakeTimer = null;
+  var hintIds = [], hintTimer = null;
+  var popIds = [];
+  var won = false;
+  var startTime = 0, elapsed = 0, timerHandle = null;
+
+  function assignCombos(pairs){
+    var map = {};
+    pairs.forEach(function(pair, i){
+      var combo = i % COMBOS.length;
+      map[pair[0]] = combo;
+      map[pair[1]] = combo;
+    });
+    return map;
+  }
+
+  function loadLevel(idx){
+    levelIndex = idx;
+    var def = LEVELS[idx];
+    var positions = buildPositions(def);
+    var byId = computeAdjacency(positions);
+    var ids = positions.map(function(p){ return p.id; });
+    var pairs = buildPairing(byId, ids);
+    var combo = assignCombos(pairs);
+
+    current = {
+      def: def, positions: positions, byId: byId, combo: combo,
+      remaining: new Set(ids), totalPairs: ids.length / 2
+    };
+    history = [];
+    pairsFound = 0;
+    selected = null;
+    focusId = null;
+    hintIds = []; popIds = [];
+    won = false;
+    startTime = Date.now(); elapsed = 0;
+    startTimer();
+    els.winOverlay.classList.add("hidden");
+    updateHud();
+    layoutBoard();
+    renderBoard();
+    checkStuck();
+  }
+
+  function startTimer(){
+    stopTimer();
+    timerHandle = setInterval(function(){
+      if(won) return;
+      elapsed = Math.floor((Date.now() - startTime) / 1000);
+      els.hudTime.textContent = fmtTime(elapsed);
+    }, 500);
+  }
+  function stopTimer(){ if(timerHandle){ clearInterval(timerHandle); timerHandle = null; } }
+
+  function resetLevel(){
+    if(!current) return;
+    loadLevel(levelIndex);
+  }
+
+  function snapshot(){
+    return { remaining: new Set(current.remaining), pairsFound: pairsFound };
+  }
+
+  function undo(){
+    if(won || !history.length) return;
+    var snap = history.pop();
+    current.remaining = snap.remaining;
+    pairsFound = snap.pairsFound;
+    selected = null;
+    updateHud();
+    renderBoard();
+    checkStuck();
+  }
+
+  function flashInvalid(id){
+    shakeId = id;
+    renderBoard();
+    if(shakeTimer) clearTimeout(shakeTimer);
+    shakeTimer = setTimeout(function(){ shakeId = null; renderBoard(); }, 300);
+  }
+
+  function layoutBoard(){
+    var maxR = 0, maxC = 0;
+    current.positions.forEach(function(p){
+      if(p.r+1 > maxR) maxR = p.r+1;
+      if(p.c+1 > maxC) maxC = p.c+1;
+    });
+    var layers = current.def.layers.length;
+    els.board.style.width = (maxC*STEP_X + (layers-1)*LAYER_SHIFT + TILE_MARGIN) + "px";
+    els.board.style.height = (maxR*STEP_Y + (layers-1)*LAYER_SHIFT + TILE_MARGIN) + "px";
+  }
+
+  function onTileAction(id){
+    if(won || !current || !current.remaining.has(id)) return;
+    var free = isFree(current.byId, current.remaining, id);
+    focusId = id;
+    if(!free){ flashInvalid(id); return; }
+
+    if(!selected){
+      selected = id;
+      renderBoard();
+      return;
+    }
+    if(selected === id){
+      selected = null;
+      renderBoard();
+      return;
+    }
+    if(current.combo[selected] === current.combo[id]){
+      doMatch(selected, id);
+    } else {
+      selected = id; // cambia la selección a la nueva ficha libre
+      renderBoard();
+    }
+  }
+
+  function doMatch(a, b){
+    history.push(snapshot());
+    popIds = [a, b];
+    selected = null;
+    renderBoard();
+    setTimeout(function(){
+      current.remaining.delete(a);
+      current.remaining.delete(b);
+      popIds = [];
+      pairsFound++;
+      updateHud();
+      renderBoard();
+      if(current.remaining.size === 0) onWin();
+      else checkStuck();
+    }, 240);
+  }
+
+  function findHintPair(){
+    var free = freeSet(current.byId, current.remaining);
+    var byCombo = {};
+    for(var i=0; i<free.length; i++){
+      var cb = current.combo[free[i]];
+      if(!byCombo[cb]) byCombo[cb] = [];
+      byCombo[cb].push(free[i]);
+      if(byCombo[cb].length >= 2) return byCombo[cb].slice(0, 2);
+    }
+    return null;
+  }
+
+  function checkStuck(){
+    var pair = findHintPair();
+    els.banner.textContent = pair ? "" : "Sin movidas disponibles — probá 🔀 Barajar";
+  }
+
+  function hint(){
+    if(won) return;
+    var pair = findHintPair();
+    if(!pair){ checkStuck(); return; }
+    hintIds = pair;
+    renderBoard();
+    if(hintTimer) clearTimeout(hintTimer);
+    hintTimer = setTimeout(function(){ hintIds = []; renderBoard(); }, 1400);
+  }
+
+  function shuffle(){
+    if(won || !current) return;
+    var ids = Array.from(current.remaining);
+    if(ids.length < 2) return;
+    var pairs = buildPairing(current.byId, ids);
+    current.combo = assignCombos(pairs);
+    selected = null;
+    renderBoard();
+    checkStuck();
+  }
+
+  function onWin(){
+    won = true;
+    stopTimer();
+    var best = loadBest();
+    var prevBest = best[current.def.id];
+    var isNew = (prevBest === undefined || elapsed < prevBest);
+    if(isNew){ best[current.def.id] = elapsed; saveBest(best); }
+    var doneMap = loadDone();
+    doneMap[current.def.id] = true;
+    saveDone(doneMap);
+    els.winTime.textContent = fmtTime(elapsed);
+    els.winRecord.classList.toggle("hidden", !isNew);
+    document.getElementById("btnNext").classList.toggle("hidden", levelIndex >= LEVELS.length-1);
+    els.winOverlay.classList.remove("hidden");
+  }
+
+  function updateHud(){
+    els.hudTime.textContent = fmtTime(elapsed);
+    els.hudPairs.textContent = pairsFound + "/" + current.totalPairs;
+    els.hudLeft.textContent = current.remaining.size;
+    els.btnUndo.disabled = !history.length;
+  }
+
+  function renderBoard(){
+    var wrap = els.board;
+    wrap.innerHTML = "";
+    var layers = current.def.layers.length;
+    current.positions.forEach(function(p){
+      if(!current.remaining.has(p.id) && popIds.indexOf(p.id) < 0) return;
+      var free = isFree(current.byId, current.remaining, p.id);
+      var cb = COMBOS[current.combo[p.id] % COMBOS.length];
+      var el = document.createElement("div");
+      var cls = "tile " + (free ? "free" : "blocked");
+      if(p.id === selected) cls += " selected";
+      if(p.id === focusId) cls += " focused";
+      if(p.id === shakeId) cls += " shake";
+      if(hintIds.indexOf(p.id) >= 0) cls += " hint";
+      if(popIds.indexOf(p.id) >= 0) cls += " pop";
+      el.className = cls;
+      el.style.left = (p.c*STEP_X + p.z*LAYER_SHIFT) + "px";
+      el.style.top = (p.r*STEP_Y - p.z*LAYER_SHIFT + (layers-1)*LAYER_SHIFT) + "px";
+      el.style.zIndex = String(p.z*100000 + p.r*100 + p.c);
+      el.style.color = cb.c;
+      el.style.textShadow = "0 0 8px " + cb.c + "cc";
+      if(free) el.style.setProperty("--glow", cb.c);
+      el.textContent = cb.g;
+      el.addEventListener("click", (function(id){ return function(){ onTileAction(id); }; })(p.id));
+      wrap.appendChild(el);
+    });
+  }
+
+  function renderMenu(){
+    var best = loadBest();
+    var doneMap = loadDone();
+    els.levelGrid.innerHTML = "";
+    LEVELS.forEach(function(lvl, i){
+      var tiles = buildPositions(lvl).length;
+      var card = document.createElement("div");
+      card.className = "lvl-card" + (doneMap[lvl.id] ? " done" : "");
+      var b = best[lvl.id];
+      card.innerHTML =
+        '<div class="glyph">' + EMOJIS[i % EMOJIS.length] + '</div>' +
+        '<div class="name">' + (i+1) + ". " + lvl.name + '</div>' +
+        '<div class="meta">' + lvl.layers.length + ' capas · ' + tiles + ' fichas</div>' +
+        '<div class="best">' + (b !== undefined ? ("Mejor: " + fmtTime(b)) : "") + '</div>';
+      card.addEventListener("click", function(){
+        els.menu.classList.add("hidden");
+        els.game.classList.remove("hidden");
+        loadLevel(i);
+      });
+      els.levelGrid.appendChild(card);
+    });
+  }
+
+  function goMenu(){
+    stopTimer();
+    els.game.classList.add("hidden");
+    els.menu.classList.remove("hidden");
+    renderMenu();
+  }
+
+  // ---------- Input ----------
+  function freeIdsOrdered(){
+    if(!current) return [];
+    return freeSet(current.byId, current.remaining).sort(function(x,y){
+      var px = current.byId[x], py = current.byId[y];
+      return (px.z-py.z) || (px.r-py.r) || (px.c-py.c);
+    });
+  }
+
+  document.addEventListener("keydown", function(e){
+    if(els.game.classList.contains("hidden") || !current || won) return;
+    var k = e.key;
+    if(k === "ArrowRight" || k === "ArrowDown"){
+      var list = freeIdsOrdered();
+      if(!list.length) return;
+      var idx = Math.max(0, list.indexOf(focusId));
+      focusId = list[(idx+1) % list.length];
+      renderBoard(); e.preventDefault();
+    } else if(k === "ArrowLeft" || k === "ArrowUp"){
+      var list2 = freeIdsOrdered();
+      if(!list2.length) return;
+      var idx2 = Math.max(0, list2.indexOf(focusId));
+      focusId = list2[(idx2-1+list2.length) % list2.length];
+      renderBoard(); e.preventDefault();
+    } else if(k === "Enter" || k === " "){
+      if(focusId) onTileAction(focusId);
+      e.preventDefault();
+    } else if(k === "Escape"){
+      selected = null; renderBoard();
+    } else if(k === "Backspace" || k === "u" || k === "U"){
+      undo(); e.preventDefault();
+    } else if(k === "r" || k === "R"){
+      resetLevel();
+    } else if(k === "h" || k === "H"){
+      hint();
+    } else if(k === "b" || k === "B"){
+      shuffle();
+    }
+  });
+
+  document.getElementById("btnLevels").addEventListener("click", goMenu);
+  document.getElementById("btnMenu").addEventListener("click", goMenu);
+  els.btnUndo.addEventListener("click", undo);
+  els.btnHint.addEventListener("click", hint);
+  els.btnShuffle.addEventListener("click", shuffle);
+  els.btnReset.addEventListener("click", resetLevel);
+  document.getElementById("btnRetry").addEventListener("click", resetLevel);
+  document.getElementById("btnNext").addEventListener("click", function(){
+    if(levelIndex < LEVELS.length-1){
+      els.menu.classList.add("hidden");
+      els.game.classList.remove("hidden");
+      loadLevel(levelIndex+1);
+    } else goMenu();
+  });
+
+  renderMenu();
+})();
+</script>
+</body>
+</html>
