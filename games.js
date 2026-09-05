@@ -382,6 +382,13 @@
       desc: "Mahjong solitario: fichas apiladas en varias capas, sólo se levantan las que están libres (nada encima y un costado abierto). Tocá dos iguales para sacarlas y limpiá todo el tablero. 4 niveles con capas crecientes, siempre resolubles, con deshacer, pista y barajar.",
       controles: "Click / toque para elegir y emparejar; flechas + Enter con teclado", fecha: "2026-09-04",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "apagon-neon", titulo: "Apagón Neón", archivo: "apagon-neon.html",
+      emoji: "💡", categoria: "logica", tags: ["lights out", "luces", "grilla", "logica"],
+      desc: "Lights Out neón: tocá una luz para prenderla/apagarla a ella y a sus vecinas (arriba, abajo, izquierda, derecha) y apagá todo el panel para ganar. 8 niveles con grillas crecientes (3×3 a 7×7) generados al azar y siempre resolubles, con deshacer y contador de movidas.",
+      controles: "Click / toque; flechas + Enter con teclado", fecha: "2026-09-05",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
