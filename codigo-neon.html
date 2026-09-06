@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CÓDIGO NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:560px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+
+  .levels{display:grid; grid-template-columns:repeat(1,1fr); gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px 16px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease; display:flex; align-items:center; gap:14px;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:28px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .info{flex:1;}
+  .lvl-card .name{font-size:15px; font-weight:800;}
+  .lvl-card .meta{margin-top:3px; font-size:11.5px; color:var(--muted); letter-spacing:.5px;}
+  .lvl-card .best{margin-top:5px; font-size:11.5px; color:var(--gold); font-weight:700; min-height:14px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.attempt b{color:var(--pink);}
+  .hud .box.best b{color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:16px 14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+
+  .history{max-height:260px; overflow-y:auto; display:flex; flex-direction:column-reverse; gap:8px; padding-right:2px; margin-bottom:12px;}
+  .history::-webkit-scrollbar{width:6px;}
+  .history::-webkit-scrollbar-thumb{background:rgba(138,75,255,.4); border-radius:4px;}
+  .hrow{display:flex; align-items:center; gap:10px; background:rgba(232,246,255,.03); border:1px solid rgba(138,75,255,.18); border-radius:12px; padding:7px 10px;}
+  .hrow .num{font-size:11px; color:var(--muted); font-weight:800; width:18px; flex-shrink:0;}
+  .hrow .dots{display:flex; gap:5px; flex:1; flex-wrap:wrap;}
+  .hrow .dot{width:22px; height:22px; border-radius:50%; box-shadow:inset 0 0 6px rgba(0,0,0,.5), 0 0 8px currentColor; flex-shrink:0;}
+  .hrow .pegs{display:grid; grid-template-columns:repeat(2,7px); gap:3px; flex-shrink:0;}
+  .hrow .peg{width:7px; height:7px; border-radius:50%; background:rgba(232,246,255,.12);}
+  .hrow .peg.exact{background:var(--green); box-shadow:0 0 5px var(--green);}
+  .hrow .peg.partial{background:var(--gold); box-shadow:0 0 5px var(--gold);}
+  .empty-hist{text-align:center; color:var(--muted); font-size:12px; padding:10px 0;}
+
+  .guessRow{display:flex; justify-content:center; gap:10px; margin-bottom:16px;}
+  .slot{width:42px; height:42px; border-radius:50%; border:2px dashed rgba(138,75,255,.4); background:rgba(232,246,255,.04); cursor:pointer; transition:transform .1s ease, border-color .15s ease;}
+  .slot:active{transform:scale(.92);}
+  .slot.filled{border-style:solid; box-shadow:inset 0 0 8px rgba(0,0,0,.5), 0 0 14px currentColor;}
+  .slot.next{border-color:var(--cyan);}
+
+  .palette{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+  .swatch{width:38px; height:38px; border-radius:50%; cursor:pointer; border:2px solid rgba(255,255,255,.15); box-shadow:0 0 10px currentColor, inset 0 0 6px rgba(0,0,0,.4); transition:transform .1s ease;}
+  .swatch:hover{transform:translateY(-3px);}
+  .swatch:active{transform:scale(.9);}
+  .swatch .num{display:block; text-align:center; line-height:38px; font-size:11px; font-weight:800; color:rgba(3,16,24,.65);}
+
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn:disabled{opacity:.35; cursor:default; transform:none; box-shadow:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:11px 18px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+
+  .overlay{position:absolute; inset:10px; border-radius:14px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.96); backdrop-filter:blur(3px); gap:12px; z-index:2;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .secretRow{display:flex; gap:8px; justify-content:center; margin-top:2px;}
+  .secretRow .dot{width:28px; height:28px; border-radius:50%; box-shadow:inset 0 0 6px rgba(0,0,0,.5), 0 0 10px currentColor;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">CÓDIGO NEÓN</div>
+      <div class="sub">M A S T E R M I N D</div>
+    </header>
+
+    <!-- Difficulty select -->
+    <section id="menu">
+      <p class="hint" style="margin-bottom:6px;">La máquina esconde un código de colores. Proponé combinaciones y usá las pistas para descifrarlo antes de quedarte sin intentos. Elegí dificultad:</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <!-- Game -->
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box diff">NIVEL<b id="hudDiff">-</b></div>
+        <div class="box attempt">INTENTO<b id="hudAttempt">1/10</b></div>
+        <div class="box best">RÉCORD<b id="hudBest">-</b></div>
+      </div>
+
+      <div class="panel">
+        <div class="history" id="history"></div>
+
+        <div class="guessRow" id="guessRow"></div>
+        <div class="palette" id="palette"></div>
+        <div class="btnrow">
+          <button class="mini" id="btnClear">↶ BORRAR</button>
+          <button class="btn" id="btnConfirm" disabled>CONFIRMAR</button>
+        </div>
+
+        <div class="overlay hidden" id="endOverlay">
+          <div class="picture" id="endPicture">🏆</div>
+          <h2 id="endTitle">¡DESCIFRADO!</h2>
+          <div class="final" id="endBody">Intentos: <b id="endAttempts">0</b></div>
+          <div class="secretRow" id="secretReveal"></div>
+          <div class="newrec hidden" id="newRecord">⭐ ¡NUEVO RÉCORD!</div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn" id="btnRetry">JUGAR DE NUEVO</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint" style="margin-top:10px;">Teclas 1-8 eligen color · Enter confirma · Backspace borra el último.<br>🟢 pista = color y posición correctos · 🟡 pista = color correcto, posición equivocada.</p>
+    </section>
+
+    <footer>Neon Arcade · Código Neón hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var COLORS = [
+    { name:"cian",    hex:"#27e8ff" },
+    { name:"rosa",    hex:"#ff2bd6" },
+    { name:"violeta", hex:"#8a4bff" },
+    { name:"verde",   hex:"#39ff9e" },
+    { name:"oro",     hex:"#ffd23b" },
+    { name:"rojo",    hex:"#ff5470" },
+    { name:"naranja", hex:"#ff9838" },
+    { name:"azul",    hex:"#4b7bff" }
+  ];
+
+  var DIFFS = [
+    { id:"facil",   name:"Fácil",   glyph:"🟢", length:4, colors:6, attempts:10 },
+    { id:"normal",  name:"Normal",  glyph:"🟡", length:5, colors:6, attempts:10 },
+    { id:"dificil", name:"Difícil", glyph:"🔴", length:5, colors:8, attempts:8  }
+  ];
+
+  // ---------- Persistence ----------
+  var LS_BEST = "codigo-neon-best";
+  function loadBest(){ try{ return JSON.parse(localStorage.getItem(LS_BEST))||{}; }catch(e){ return {}; } }
+  function saveBest(o){ try{ localStorage.setItem(LS_BEST, JSON.stringify(o)); }catch(e){} }
+
+  // ---------- Game logic ----------
+  function makeSecret(length, colorCount){
+    var arr = [];
+    for(var i=0;i<length;i++) arr.push(Math.floor(Math.random()*colorCount));
+    return arr;
+  }
+
+  // Cuenta clavijas exactas (color y posición) y parciales (color presente,
+  // posición equivocada), tratando bien los colores repetidos.
+  function evaluate(secret, guess){
+    var n = secret.length, exact = 0;
+    var secretLeft = [], guessLeft = [];
+    for(var i=0;i<n;i++){
+      if(guess[i] === secret[i]) exact++;
+      else{ secretLeft.push(secret[i]); guessLeft.push(guess[i]); }
+    }
+    var counts = {};
+    secretLeft.forEach(function(c){ counts[c] = (counts[c]||0) + 1; });
+    var partial = 0;
+    guessLeft.forEach(function(c){
+      if(counts[c] > 0){ partial++; counts[c]--; }
+    });
+    return { exact: exact, partial: partial };
+  }
+
+  // ---------- State ----------
+  var els = {
+    menu: document.getElementById("menu"),
+    game: document.getElementById("game"),
+    levelGrid: document.getElementById("levelGrid"),
+    hudDiff: document.getElementById("hudDiff"),
+    hudAttempt: document.getElementById("hudAttempt"),
+    hudBest: document.getElementById("hudBest"),
+    history: document.getElementById("history"),
+    guessRow: document.getElementById("guessRow"),
+    palette: document.getElementById("palette"),
+    btnClear: document.getElementById("btnClear"),
+    btnConfirm: document.getElementById("btnConfirm"),
+    endOverlay: document.getElementById("endOverlay"),
+    endPicture: document.getElementById("endPicture"),
+    endTitle: document.getElementById("endTitle"),
+    endAttempts: document.getElementById("endAttempts"),
+    secretReveal: document.getElementById("secretReveal"),
+    newRecord: document.getElementById("newRecord")
+  };
+
+  var diff = null;
+  var secret = [];
+  var current = [];   // guess en construcción, longitud diff.length, null = vacío
+  var rows = [];       // historial: [{guess:[...], exact, partial}]
+  var over = false;
+
+  function startGame(d){
+    diff = d;
+    secret = makeSecret(d.length, d.colors);
+    current = new Array(d.length).fill(null);
+    rows = [];
+    over = false;
+    els.menu.classList.add("hidden");
+    els.game.classList.remove("hidden");
+    els.endOverlay.classList.add("hidden");
+    els.hudDiff.textContent = d.name;
+    var best = loadBest()[d.id];
+    els.hudBest.textContent = best !== undefined ? (best + " int.") : "-";
+    renderPalette();
+    renderHistory();
+    renderGuessRow();
+    updateHud();
+  }
+
+  function updateHud(){
+    els.hudAttempt.textContent = (rows.length+1 <= diff.attempts ? rows.length+1 : diff.attempts) + "/" + diff.attempts;
+    els.btnClear.disabled = current.every(function(c){ return c===null; }) || over;
+    els.btnConfirm.disabled = over || current.some(function(c){ return c===null; });
+  }
+
+  function renderPalette(){
+    els.palette.innerHTML = "";
+    for(var i=0;i<diff.colors;i++){
+      (function(idx){
+        var sw = document.createElement("div");
+        sw.className = "swatch";
+        sw.style.background = COLORS[idx].hex;
+        sw.style.color = COLORS[idx].hex;
+        sw.title = COLORS[idx].name;
+        sw.innerHTML = '<span class="num">' + (idx+1) + '</span>';
+        sw.addEventListener("click", function(){ placeColor(idx); });
+        els.palette.appendChild(sw);
+      })(i);
+    }
+  }
+
+  function placeColor(colorIdx){
+    if(over) return;
+    var freeIdx = current.indexOf(null);
+    if(freeIdx === -1) return;
+    current[freeIdx] = colorIdx;
+    renderGuessRow();
+    updateHud();
+  }
+
+  function clearSlot(idx){
+    if(over || current[idx] === null) return;
+    // saca esa ficha y corre las siguientes hacia atrás, sin dejar huecos
+    for(var i=idx;i<current.length-1;i++) current[i] = current[i+1];
+    current[current.length-1] = null;
+    renderGuessRow();
+    updateHud();
+  }
+
+  function clearLast(){
+    if(over) return;
+    var lastIdx = -1;
+    for(var i=current.length-1;i>=0;i--){ if(current[i]!==null){ lastIdx = i; break; } }
+    if(lastIdx === -1) return;
+    current[lastIdx] = null;
+    renderGuessRow();
+    updateHud();
+  }
+
+  function renderGuessRow(){
+    var nextIdx = current.indexOf(null);
+    els.guessRow.innerHTML = "";
+    current.forEach(function(c, i){
+      var slot = document.createElement("div");
+      slot.className = "slot" + (c!==null ? " filled" : "") + (i===nextIdx ? " next" : "");
+      if(c!==null){ slot.style.background = COLORS[c].hex; slot.style.color = COLORS[c].hex; }
+      slot.addEventListener("click", function(){ clearSlot(i); });
+      els.guessRow.appendChild(slot);
+    });
+  }
+
+  function renderHistory(){
+    els.history.innerHTML = "";
+    if(!rows.length){
+      var empty = document.createElement("div");
+      empty.className = "empty-hist";
+      empty.textContent = "Todavía no propusiste ningún código.";
+      els.history.appendChild(empty);
+      return;
+    }
+    rows.forEach(function(row, i){
+      var hrow = document.createElement("div");
+      hrow.className = "hrow";
+      var dots = row.guess.map(function(c){
+        return '<div class="dot" style="background:' + COLORS[c].hex + ';color:' + COLORS[c].hex + '"></div>';
+      }).join("");
+      var pegs = "";
+      for(var p=0;p<row.exact;p++) pegs += '<div class="peg exact"></div>';
+      for(var q=0;q<row.partial;q++) pegs += '<div class="peg partial"></div>';
+      var totalSlots = diff.length;
+      for(var r=row.exact+row.partial; r<totalSlots; r++) pegs += '<div class="peg"></div>';
+      hrow.innerHTML =
+        '<div class="num">' + (i+1) + '</div>' +
+        '<div class="dots">' + dots + '</div>' +
+        '<div class="pegs">' + pegs + '</div>';
+      els.history.appendChild(hrow);
+    });
+  }
+
+  function confirmGuess(){
+    if(over || current.some(function(c){ return c===null; })) return;
+    var guess = current.slice();
+    var res = evaluate(secret, guess);
+    rows.push({ guess: guess, exact: res.exact, partial: res.partial });
+    renderHistory();
+
+    if(res.exact === diff.length){
+      onWin();
+      return;
+    }
+    if(rows.length >= diff.attempts){
+      onLose();
+      return;
+    }
+    current = new Array(diff.length).fill(null);
+    renderGuessRow();
+    updateHud();
+  }
+
+  function revealSecret(){
+    els.secretReveal.innerHTML = secret.map(function(c){
+      return '<div class="dot" style="background:' + COLORS[c].hex + ';color:' + COLORS[c].hex + '"></div>';
+    }).join("");
+  }
+
+  function onWin(){
+    over = true;
+    var best = loadBest();
+    var prev = best[diff.id];
+    var isNew = (prev === undefined || rows.length < prev);
+    if(isNew){ best[diff.id] = rows.length; saveBest(best); }
+    els.endPicture.textContent = "🏆";
+    els.endTitle.textContent = "¡CÓDIGO DESCIFRADO!";
+    els.endAttempts.textContent = rows.length;
+    revealSecret();
+    els.newRecord.classList.toggle("hidden", !isNew);
+    els.endOverlay.classList.remove("hidden");
+    updateHud();
+  }
+
+  function onLose(){
+    over = true;
+    els.endPicture.textContent = "💀";
+    els.endTitle.textContent = "SIN INTENTOS";
+    els.endAttempts.textContent = rows.length;
+    revealSecret();
+    els.newRecord.classList.add("hidden");
+    els.endOverlay.classList.remove("hidden");
+    updateHud();
+  }
+
+  function renderMenu(){
+    var best = loadBest();
+    els.levelGrid.innerHTML = "";
+    DIFFS.forEach(function(d){
+      var card = document.createElement("div");
+      card.className = "lvl-card";
+      var b = best[d.id];
+      card.innerHTML =
+        '<div class="glyph">' + d.glyph + '</div>' +
+        '<div class="info">' +
+          '<div class="name">' + d.name + '</div>' +
+          '<div class="meta">' + d.length + ' espacios · ' + d.colors + ' colores · ' + d.attempts + ' intentos</div>' +
+          '<div class="best">' + (b !== undefined ? ("Mejor: " + b + " intentos") : "") + '</div>' +
+        '</div>';
+      card.addEventListener("click", function(){ startGame(d); });
+      els.levelGrid.appendChild(card);
+    });
+  }
+
+  function goMenu(){
+    els.game.classList.add("hidden");
+    els.menu.classList.remove("hidden");
+    renderMenu();
+  }
+
+  // ---------- Input ----------
+  document.addEventListener("keydown", function(e){
+    if(els.game.classList.contains("hidden") || !diff) return;
+    var k = e.key;
+    if(k >= "1" && k <= String(diff.colors)){
+      placeColor(parseInt(k,10)-1);
+      e.preventDefault();
+    } else if(k === "Backspace"){
+      clearLast();
+      e.preventDefault();
+    } else if(k === "Enter"){
+      confirmGuess();
+      e.preventDefault();
+    }
+  });
+
+  els.btnClear.addEventListener("click", clearLast);
+  els.btnConfirm.addEventListener("click", confirmGuess);
+  document.getElementById("btnMenu").addEventListener("click", goMenu);
+  document.getElementById("btnRetry").addEventListener("click", function(){ startGame(diff); });
+
+  renderMenu();
+})();
+</script>
+</body>
+</html>

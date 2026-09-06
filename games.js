@@ -389,6 +389,13 @@
       desc: "Lights Out neón: tocá una luz para prenderla/apagarla a ella y a sus vecinas (arriba, abajo, izquierda, derecha) y apagá todo el panel para ganar. 8 niveles con grillas crecientes (3×3 a 7×7) generados al azar y siempre resolubles, con deshacer y contador de movidas.",
       controles: "Click / toque; flechas + Enter con teclado", fecha: "2026-09-05",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "codigo-neon", titulo: "Código Neón", archivo: "codigo-neon.html",
+      emoji: "🔐", categoria: "logica", tags: ["mastermind", "deduccion", "colores", "codigo"],
+      desc: "Mastermind neón: la máquina esconde un código de colores y vos proponés combinaciones, usando pistas de posición y color exactos para descifrarlo antes de quedarte sin intentos. 3 dificultades con más colores y espacios.",
+      controles: "Click / toque en la paleta; teclas 1-8 + Enter con teclado", fecha: "2026-09-06",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

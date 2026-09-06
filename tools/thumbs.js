@@ -97,7 +97,13 @@ const OVERRIDES = {
     wait: 900
   },
   "embotellamiento-neon": { steps: [".lvl-card"], wait: 800 },
-  "mahjong-neon": { steps: [".lvl-card"], wait: 700 }
+  "mahjong-neon": { steps: [".lvl-card"], wait: 700 },
+  // Elegimos dificultad y tocamos un par de colores de la paleta para que la
+  // miniatura muestre fichas cargadas en la fila, no sólo el tablero vacío.
+  "codigo-neon": {
+    steps: [".lvl-card", ".swatch", ".swatch:nth-child(2)", ".swatch:nth-child(3)"],
+    wait: 400
+  }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];
