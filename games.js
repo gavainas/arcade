@@ -396,6 +396,13 @@
       desc: "Mastermind neón: la máquina esconde un código de colores y vos proponés combinaciones, usando pistas de posición y color exactos para descifrarlo antes de quedarte sin intentos. 3 dificultades con más colores y espacios.",
       controles: "Click / toque en la paleta; teclas 1-8 + Enter con teclado", fecha: "2026-09-06",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "flujo-neon", titulo: "Flujo Neón", archivo: "flujo-neon.html",
+      emoji: "🔗", categoria: "logica", tags: ["flow", "cables", "caminos", "conexion", "grilla"],
+      desc: "Flow: conectá cada par de puntos del mismo color trazando un cable sin cruzarte con otro camino. Ganás cuando cubrís todas las celdas del tablero. 8 niveles con grillas y cantidad de colores crecientes, generados al azar y siempre resolubles, con deshacer y contador de trazos.",
+      controles: "Arrastrá el dedo o el mouse desde un punto hasta su pareja; teclas 1-9 eligen color y flechas extienden el cable", fecha: "2026-09-07",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

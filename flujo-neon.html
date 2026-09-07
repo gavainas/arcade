@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FLUJO NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:600px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .levels{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:26px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .name{margin-top:6px; font-size:14px; font-weight:800;}
+  .lvl-card .meta{margin-top:4px; font-size:11px; color:var(--muted); letter-spacing:.5px;}
+  .lvl-card .best{margin-top:6px; font-size:11.5px; color:var(--gold); font-weight:700; min-height:14px;}
+  .lvl-card.done{border-color:var(--green);}
+  .lvl-card.done .name::after{content:" ✓"; color:var(--green);}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.moves b{color:var(--pink);}
+  .hud .box.fill b{color:var(--green);}
+
+  .legend{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:10px;}
+  .swatch{width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; color:#031018; border:2px solid rgba(255,255,255,.15); cursor:pointer;
+    opacity:.55; transition:opacity .12s ease, transform .12s ease, box-shadow .12s ease;}
+  .swatch.active{opacity:1; transform:scale(1.15); border-color:#fff;}
+  .swatch.done{opacity:.85;}
+  .swatch.done::after{content:"✓"; position:absolute;}
+
+  .panel{
+    position:relative; border-radius:20px; padding:18px 14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  .grid{display:grid; gap:3px; touch-action:none; user-select:none;}
+  .fcell{position:relative; border-radius:6px; background:rgba(232,246,255,.04); border:1px solid rgba(138,75,255,.18); overflow:hidden;}
+  .tube{position:absolute; border-radius:2px;}
+  .tube.up{left:32%; right:32%; top:0; bottom:46%;}
+  .tube.down{left:32%; right:32%; top:46%; bottom:0;}
+  .tube.left{top:32%; bottom:32%; left:0; right:46%;}
+  .tube.right{top:32%; bottom:32%; left:46%; right:0;}
+  .node{position:absolute; left:22%; top:22%; width:56%; height:56%; border-radius:8px;}
+  .dot{position:absolute; left:14%; top:14%; width:72%; height:72%; border-radius:50%; box-shadow:0 0 10px 2px rgba(255,255,255,.25) inset;}
+  .fcell.headcell::after{content:""; position:absolute; inset:0; border-radius:50%; box-shadow:0 0 0 2px #fff9, inset 0 0 8px rgba(255,255,255,.5); animation:pulsehead 1s ease-in-out infinite;}
+  @keyframes pulsehead{0%,100%{opacity:.4;}50%{opacity:1;}}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">FLUJO NEÓN</div>
+      <div class="sub">C O N E C T Á &nbsp; L O S &nbsp; C A B L E S</div>
+    </header>
+
+    <!-- Level select -->
+    <section id="menu">
+      <p class="hint" style="margin-bottom:6px;">Uní cada par de puntos del mismo color trazando un cable sin cruzarte con otro. Ganás cuando cubrís todas las celdas del tablero. Elegí un nivel:</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <!-- Game -->
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box lvl">NIVEL<b id="hudLevel">-</b></div>
+        <div class="box moves">TRAZOS<b id="hudMoves">0</b></div>
+        <div class="box fill">CELDAS<b id="hudFill">0/0</b></div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="panel">
+        <div class="grid" id="board"></div>
+
+        <div class="overlay hidden" id="winOverlay">
+          <div class="picture">🔗</div>
+          <h2>¡RED COMPLETA!</h2>
+          <div class="final">Trazos: <b id="winMoves">0</b></div>
+          <div class="newrec hidden" id="winRecord">⭐ ¡NUEVO RÉCORD!</div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn ghost" id="btnRetry">REINTENTAR</button>
+            <button class="btn" id="btnNext">SIGUIENTE ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="btnrow">
+          <button class="mini" id="btnLevels">☰ Niveles</button>
+          <button class="mini" id="btnUndo">↶ Deshacer</button>
+          <button class="mini" id="btnReset">↺ Reiniciar</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Arrastrá el dedo o el mouse desde un punto de color hasta su pareja · Con teclado: 1-9 elige color, flechas extienden el cable · Deshacer con retroceso, reiniciar con R.</p>
+    </section>
+
+    <footer>Neon Arcade · Flow hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LEVELS = [
+    { id:"l1", name:"Primeros cables", w:5, h:5, colors:4 },
+    { id:"l2", name:"Doble empalme", w:5, h:6, colors:5 },
+    { id:"l3", name:"Circuito medio", w:6, h:6, colors:5 },
+    { id:"l4", name:"Nudo neón", w:6, h:7, colors:6 },
+    { id:"l5", name:"Central de datos", w:7, h:7, colors:7 },
+    { id:"l6", name:"Red saturada", w:7, h:8, colors:7 },
+    { id:"l7", name:"Sobrecarga", w:8, h:8, colors:8 },
+    { id:"l8", name:"Colapso total", w:8, h:9, colors:9 }
+  ];
+  var EMOJIS = ["🔗", "🧵", "🧷", "🪢", "🔌", "🧬", "🕸️", "⚡"];
+  var PALETTE = ["#27e8ff", "#ff2bd6", "#8a4bff", "#39ff9e", "#ffd23b", "#ff5470", "#ff9838", "#4b7bff", "#ffffff"];
+
+  // ---------- Persistence ----------
+  var LS_BEST = "flujo-neon-best";
+  var LS_DONE = "flujo-neon-done";
+  function loadBest(){ try{ return JSON.parse(localStorage.getItem(LS_BEST))||{}; }catch(e){ return {}; } }
+  function saveBest(o){ try{ localStorage.setItem(LS_BEST, JSON.stringify(o)); }catch(e){} }
+  function loadDone(){ try{ return JSON.parse(localStorage.getItem(LS_DONE))||{}; }catch(e){ return {}; } }
+  function saveDone(o){ try{ localStorage.setItem(LS_DONE, JSON.stringify(o)); }catch(e){} }
+
+  // ---------- Random helpers ----------
+  function shuffle(arr){
+    for(var i=arr.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+    }
+    return arr;
+  }
+  function makeGrid(rows, cols, val){
+    var g=[];
+    for(var r=0;r<rows;r++){ var row=[]; for(var c=0;c<cols;c++) row.push(val); g.push(row); }
+    return g;
+  }
+
+  // ---------- Hamiltonian path generation (Warnsdorff heuristic) ----------
+  function neighborsOf(r, c, rows, cols){
+    var out=[];
+    var deltas=[[1,0],[-1,0],[0,1],[0,-1]];
+    for(var i=0;i<deltas.length;i++){
+      var rr=r+deltas[i][0], cc=c+deltas[i][1];
+      if(rr>=0 && rr<rows && cc>=0 && cc<cols) out.push([rr,cc]);
+    }
+    return out;
+  }
+
+  function generateHamiltonianPath(cols, rows){
+    var total = cols*rows;
+    var visited, path;
+
+    function freeDegree(r, c){
+      var opts = neighborsOf(r, c, rows, cols);
+      var n=0;
+      for(var i=0;i<opts.length;i++){ if(!visited[opts[i][0]][opts[i][1]]) n++; }
+      return n;
+    }
+
+    function step(r, c){
+      if(path.length === total) return true;
+      var opts = neighborsOf(r, c, rows, cols).filter(function(n){ return !visited[n[0]][n[1]]; });
+      if(!opts.length) return false;
+      var scored = opts.map(function(n){ return { n:n, deg: freeDegree(n[0], n[1]) }; });
+      shuffle(scored);
+      scored.sort(function(a,b){ return a.deg - b.deg; });
+      for(var i=0;i<scored.length;i++){
+        var n = scored[i].n;
+        visited[n[0]][n[1]] = true;
+        path.push(n);
+        if(step(n[0], n[1])) return true;
+        path.pop();
+        visited[n[0]][n[1]] = false;
+      }
+      return false;
+    }
+
+    for(var tries=0; tries<400; tries++){
+      visited = makeGrid(rows, cols, false);
+      var sr = Math.floor(Math.random()*rows), sc = Math.floor(Math.random()*cols);
+      visited[sr][sc] = true;
+      path = [[sr,sc]];
+      if(step(sr, sc)) return path;
+    }
+    return null;
+  }
+
+  function buildPuzzle(def){
+    var path = null, safety = 0;
+    while(!path && safety < 8){ path = generateHamiltonianPath(def.w, def.h); safety++; }
+    if(!path) return null; // extremely unlikely
+
+    var total = path.length;
+    var colorCount = Math.min(def.colors, Math.floor(total/2));
+    var sizes = [];
+    for(var i=0;i<colorCount;i++) sizes.push(2);
+    var remaining = total - colorCount*2;
+    for(var r=0;r<remaining;r++) sizes[Math.floor(Math.random()*colorCount)]++;
+
+    var segments = [], idx = 0;
+    for(var c=0;c<colorCount;c++){ segments.push(path.slice(idx, idx+sizes[c])); idx += sizes[c]; }
+
+    var dotColorGrid = makeGrid(def.h, def.w, null);
+    var dotEnds = [];
+    segments.forEach(function(seg, ci){
+      var start = seg[0], end = seg[seg.length-1];
+      dotColorGrid[start[0]][start[1]] = ci;
+      dotColorGrid[end[0]][end[1]] = ci;
+      dotEnds.push([{ r:start[0], c:start[1] }, { r:end[0], c:end[1] }]);
+    });
+
+    return { w: def.w, h: def.h, colorCount: colorCount, dotColorGrid: dotColorGrid, dotEnds: dotEnds };
+  }
+
+  // ---------- State ----------
+  var els = {
+    menu: document.getElementById("menu"),
+    game: document.getElementById("game"),
+    levelGrid: document.getElementById("levelGrid"),
+    board: document.getElementById("board"),
+    legend: document.getElementById("legend"),
+    hudLevel: document.getElementById("hudLevel"),
+    hudMoves: document.getElementById("hudMoves"),
+    hudFill: document.getElementById("hudFill"),
+    winOverlay: document.getElementById("winOverlay"),
+    winMoves: document.getElementById("winMoves"),
+    winRecord: document.getElementById("winRecord"),
+    btnUndo: document.getElementById("btnUndo"),
+    btnReset: document.getElementById("btnReset")
+  };
+
+  var current = null;    // { def, puzzle, owner, paths }
+  var levelIndex = -1;
+  var history = [];      // snapshots of {owner, paths} before each stroke
+  var moves = 0;
+  var won = false;
+  var activeColor = 0;
+  var dragging = false;
+  var lastCell = null;
+  var needsRender = false;
+
+  function cloneOwner(owner){ return owner.map(function(row){ return row.slice(); }); }
+  function clonePaths(paths){ return paths.map(function(p){ return p.map(function(cell){ return {r:cell.r, c:cell.c}; }); }); }
+
+  function freshState(puzzle){
+    var owner = makeGrid(puzzle.h, puzzle.w, null);
+    var paths = [];
+    puzzle.dotEnds.forEach(function(ends, ci){
+      owner[ends[0].r][ends[0].c] = ci;
+      paths.push([{ r:ends[0].r, c:ends[0].c }]);
+    });
+    return { owner: owner, paths: paths };
+  }
+
+  function loadLevel(idx){
+    levelIndex = idx;
+    var def = LEVELS[idx];
+    var puzzle = buildPuzzle(def);
+    var st = freshState(puzzle);
+    current = { def: def, puzzle: puzzle, owner: st.owner, paths: st.paths };
+    history = [];
+    moves = 0;
+    won = false;
+    activeColor = 0;
+    els.winOverlay.classList.add("hidden");
+    renderLegend();
+    updateHud();
+    renderBoard();
+  }
+
+  function resetLevel(){
+    if(!current) return;
+    var st = freshState(current.puzzle);
+    current.owner = st.owner;
+    current.paths = st.paths;
+    history = [];
+    moves = 0;
+    won = false;
+    activeColor = 0;
+    els.winOverlay.classList.add("hidden");
+    renderLegend();
+    updateHud();
+    renderBoard();
+  }
+
+  function pushHistory(){
+    history.push({ owner: cloneOwner(current.owner), paths: clonePaths(current.paths) });
+    if(history.length > 60) history.shift();
+  }
+
+  function undo(){
+    if(won || !history.length) return;
+    var snap = history.pop();
+    current.owner = snap.owner;
+    current.paths = snap.paths;
+    moves = Math.max(0, moves - 1);
+    updateHud();
+    renderLegend();
+    renderBoard();
+  }
+
+  // ---------- Path logic ----------
+  function findIndexInPath(path, r, c){
+    for(var i=0;i<path.length;i++){ if(path[i].r === r && path[i].c === c) return i; }
+    return -1;
+  }
+  function isAdjacent(a, b){
+    return Math.abs(a.r-b.r) + Math.abs(a.c-b.c) === 1;
+  }
+
+  function truncatePathTo(colorIdx, idx){
+    var path = current.paths[colorIdx];
+    for(var i=idx+1; i<path.length; i++) current.owner[path[i].r][path[i].c] = null;
+    path.length = idx+1;
+  }
+
+  function startStroke(colorIdx, r, c){
+    var path = current.paths[colorIdx];
+    var idx = findIndexInPath(path, r, c);
+    if(idx === -1) return false;
+    pushHistory();
+    if(idx < path.length-1) truncatePathTo(colorIdx, idx);
+    activeColor = colorIdx;
+    return true;
+  }
+
+  function extendStep(colorIdx, r, c){
+    var path = current.paths[colorIdx];
+    var head = path[path.length-1];
+    var target = { r:r, c:c };
+    if(!isAdjacent(head, target)) return false;
+
+    var idx = findIndexInPath(path, r, c);
+    if(idx !== -1){
+      if(idx === path.length-1) return false;
+      truncatePathTo(colorIdx, idx);
+      return true;
+    }
+
+    var dc = current.puzzle.dotColorGrid[r][c];
+    if(dc !== null && dc !== colorIdx) return false;
+
+    var occ = current.owner[r][c];
+    if(occ !== null && occ !== colorIdx){
+      var otherPath = current.paths[occ];
+      var oidx = findIndexInPath(otherPath, r, c);
+      if(oidx === -1) return false;
+      for(var j=oidx; j<otherPath.length; j++) current.owner[otherPath[j].r][otherPath[j].c] = null;
+      otherPath.length = oidx;
+    }
+
+    path.push(target);
+    current.owner[r][c] = colorIdx;
+    return true;
+  }
+
+  function stepToward(colorIdx, tr, tc){
+    var guard = current.puzzle.w + current.puzzle.h + 4;
+    var changed = false;
+    while(guard-- > 0){
+      var path = current.paths[colorIdx];
+      var head = path[path.length-1];
+      if(head.r === tr && head.c === tc) break;
+      var dr = tr - head.r, dc = tc - head.c;
+      var stepR = head.r, stepC = head.c;
+      if(Math.abs(dr) >= Math.abs(dc) && dr !== 0) stepR += dr > 0 ? 1 : -1;
+      else if(dc !== 0) stepC += dc > 0 ? 1 : -1;
+      else break;
+      if(!extendStep(colorIdx, stepR, stepC)) break;
+      changed = true;
+    }
+    return changed;
+  }
+
+  function countFilled(){
+    var n = 0;
+    current.owner.forEach(function(row){ row.forEach(function(v){ if(v !== null) n++; }); });
+    return n;
+  }
+
+  function isColorDone(ci){
+    var path = current.paths[ci];
+    var other = current.puzzle.dotEnds[ci][1];
+    var last = path[path.length-1];
+    return last.r === other.r && last.c === other.c;
+  }
+
+  function checkWin(){
+    var total = current.puzzle.w * current.puzzle.h;
+    if(countFilled() === total){
+      won = true;
+      var best = loadBest();
+      var prevBest = best[current.def.id];
+      var isNew = (prevBest === undefined || moves < prevBest);
+      if(isNew){ best[current.def.id] = moves; saveBest(best); }
+      var doneMap = loadDone();
+      doneMap[current.def.id] = true;
+      saveDone(doneMap);
+      els.winMoves.textContent = moves;
+      els.winRecord.classList.toggle("hidden", !isNew);
+      document.getElementById("btnNext").classList.toggle("hidden", levelIndex >= LEVELS.length-1);
+      els.winOverlay.classList.remove("hidden");
+    }
+  }
+
+  function updateHud(){
+    els.hudLevel.textContent = (levelIndex+1) + "/" + LEVELS.length;
+    els.hudMoves.textContent = moves;
+    els.hudFill.textContent = countFilled() + "/" + (current.puzzle.w * current.puzzle.h);
+    els.btnUndo.disabled = !history.length;
+  }
+
+  function renderLegend(){
+    els.legend.innerHTML = "";
+    for(var ci=0; ci<current.puzzle.colorCount; ci++){
+      var sw = document.createElement("div");
+      sw.className = "swatch" + (ci === activeColor ? " active" : "") + (isColorDone(ci) ? " done" : "");
+      sw.style.background = PALETTE[ci % PALETTE.length];
+      sw.textContent = isColorDone(ci) ? "" : String(ci+1);
+      sw.addEventListener("click", (function(idx){ return function(){ activeColor = idx; renderLegend(); }; })(ci));
+      els.legend.appendChild(sw);
+    }
+  }
+
+  // ---------- Rendering ----------
+  function cellPxFor(cols, rows){
+    var maxDim = Math.max(cols, rows);
+    if(maxDim<=5) return 58;
+    if(maxDim<=6) return 50;
+    if(maxDim<=7) return 44;
+    if(maxDim<=8) return 38;
+    return 34;
+  }
+
+  function renderBoard(){
+    var puzzle = current.puzzle;
+    var cols = puzzle.w, rows = puzzle.h;
+    var wrap = els.board;
+    wrap.style.gridTemplateColumns = "repeat(" + cols + ", minmax(0,1fr))";
+    var cellPx = cellPxFor(cols, rows);
+    wrap.innerHTML = "";
+
+    var conn = makeGrid(rows, cols, null); // per cell: {up,down,left,right,color}
+    current.paths.forEach(function(path, ci){
+      for(var i=0;i<path.length-1;i++){
+        var a = path[i], b = path[i+1];
+        markConn(conn, a, b, ci);
+        markConn(conn, b, a, ci);
+      }
+    });
+
+    var heads = current.paths.map(function(p){ return p[p.length-1]; });
+
+    for(var r=0;r<rows;r++){
+      for(var c=0;c<cols;c++){
+        var cell = document.createElement("div");
+        cell.className = "fcell";
+        cell.style.width = cellPx + "px";
+        cell.style.height = cellPx + "px";
+        cell.dataset.r = r; cell.dataset.c = c;
+
+        var owner = current.owner[r][c];
+        var dotColor = puzzle.dotColorGrid[r][c];
+
+        if(owner !== null){
+          var color = PALETTE[owner % PALETTE.length];
+          var cn = conn[r][c];
+          ["up","down","left","right"].forEach(function(dir){
+            if(cn && cn[dir]){
+              var t = document.createElement("div");
+              t.className = "tube " + dir;
+              t.style.background = color;
+              cell.appendChild(t);
+            }
+          });
+          var node = document.createElement("div");
+          node.className = "node";
+          node.style.background = color;
+          node.style.boxShadow = "0 0 8px " + color + "aa";
+          cell.appendChild(node);
+
+          if(!won && heads[owner] && heads[owner].r === r && heads[owner].c === c && !isColorDone(owner)){
+            cell.classList.add("headcell");
+          }
+        }
+
+        if(dotColor !== null){
+          var dcolor = PALETTE[dotColor % PALETTE.length];
+          var dot = document.createElement("div");
+          dot.className = "dot";
+          dot.style.background = dcolor;
+          dot.style.boxShadow = "0 0 10px " + dcolor + "cc";
+          cell.appendChild(dot);
+        }
+
+        wrap.appendChild(cell);
+      }
+    }
+  }
+
+  function markConn(conn, from, to, colorIdx){
+    if(!conn[from.r][from.c]) conn[from.r][from.c] = { up:false, down:false, left:false, right:false, color:colorIdx };
+    var dr = to.r - from.r, dc = to.c - from.c;
+    if(dr === -1) conn[from.r][from.c].up = true;
+    else if(dr === 1) conn[from.r][from.c].down = true;
+    else if(dc === -1) conn[from.r][from.c].left = true;
+    else if(dc === 1) conn[from.r][from.c].right = true;
+  }
+
+  function renderMenu(){
+    var best = loadBest();
+    var doneMap = loadDone();
+    els.levelGrid.innerHTML = "";
+    LEVELS.forEach(function(lvl, i){
+      var card = document.createElement("div");
+      card.className = "lvl-card" + (doneMap[lvl.id] ? " done" : "");
+      var b = best[lvl.id];
+      card.innerHTML =
+        '<div class="glyph">' + EMOJIS[i % EMOJIS.length] + '</div>' +
+        '<div class="name">' + (i+1) + ". " + lvl.name + '</div>' +
+        '<div class="meta">' + lvl.w + '×' + lvl.h + ' · ' + lvl.colors + ' colores</div>' +
+        '<div class="best">' + (b !== undefined ? ("Mejor: " + b + " trazos") : "") + '</div>';
+      card.addEventListener("click", function(){
+        els.menu.classList.add("hidden");
+        els.game.classList.remove("hidden");
+        loadLevel(i);
+      });
+      els.levelGrid.appendChild(card);
+    });
+  }
+
+  function goMenu(){
+    els.game.classList.add("hidden");
+    els.menu.classList.remove("hidden");
+    renderMenu();
+  }
+
+  // ---------- Frame batching ----------
+  function requestRender(){
+    needsRender = true;
+  }
+  function frameLoop(){
+    if(needsRender){
+      needsRender = false;
+      updateHud();
+      renderLegend();
+      renderBoard();
+    }
+    requestAnimationFrame(frameLoop);
+  }
+  requestAnimationFrame(frameLoop);
+
+  // ---------- Pointer input ----------
+  function cellFromPoint(x, y){
+    var el = document.elementFromPoint(x, y);
+    if(!el) return null;
+    var target = el.closest ? el.closest(".fcell") : null;
+    if(!target) return null;
+    return { r: parseInt(target.dataset.r, 10), c: parseInt(target.dataset.c, 10) };
+  }
+
+  els.board.addEventListener("pointerdown", function(e){
+    if(!current || won) return;
+    var cell = cellFromPoint(e.clientX, e.clientY);
+    if(!cell) return;
+    var owner = current.owner[cell.r][cell.c];
+    var dotColor = current.puzzle.dotColorGrid[cell.r][cell.c];
+    var colorIdx = owner !== null ? owner : dotColor;
+    if(colorIdx === null || colorIdx === undefined) return;
+    if(startStroke(colorIdx, cell.r, cell.c)){
+      dragging = true;
+      lastCell = cell;
+      moves++;
+      requestRender();
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener("pointermove", function(e){
+    if(!dragging || !current || won) return;
+    var cell = cellFromPoint(e.clientX, e.clientY);
+    if(!cell) return;
+    if(lastCell && cell.r === lastCell.r && cell.c === lastCell.c) return;
+    lastCell = cell;
+    if(stepToward(activeColor, cell.r, cell.c)) requestRender();
+  });
+
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
+    lastCell = null;
+    if(current){
+      requestRender();
+      checkWin();
+    }
+  }
+  document.addEventListener("pointerup", endDrag);
+  document.addEventListener("pointercancel", endDrag);
+
+  // ---------- Keyboard input ----------
+  document.addEventListener("keydown", function(e){
+    if(!current || els.game.classList.contains("hidden")) return;
+    var k = e.key;
+
+    if(k >= "1" && k <= "9"){
+      var idx = parseInt(k, 10) - 1;
+      if(idx < current.puzzle.colorCount){ activeColor = idx; requestRender(); }
+      return;
+    }
+
+    var dir = null;
+    if(k === "ArrowUp") dir = [-1,0];
+    else if(k === "ArrowDown") dir = [1,0];
+    else if(k === "ArrowLeft") dir = [0,-1];
+    else if(k === "ArrowRight") dir = [0,1];
+
+    if(dir && !won){
+      var path = current.paths[activeColor];
+      var head = path[path.length-1];
+      var tr = head.r + dir[0], tc = head.c + dir[1];
+      if(tr>=0 && tr<current.puzzle.h && tc>=0 && tc<current.puzzle.w){
+        pushHistory();
+        var changed = extendStep(activeColor, tr, tc);
+        if(!changed) history.pop();
+        else { moves++; requestRender(); checkWin(); }
+      }
+      e.preventDefault();
+      return;
+    }
+
+    if(k === "Backspace" || k === "u" || k === "U"){ undo(); e.preventDefault(); }
+    else if(k === "r" || k === "R"){ resetLevel(); }
+  });
+
+  document.getElementById("btnLevels").addEventListener("click", goMenu);
+  document.getElementById("btnMenu").addEventListener("click", goMenu);
+  els.btnUndo.addEventListener("click", undo);
+  els.btnReset.addEventListener("click", resetLevel);
+  document.getElementById("btnRetry").addEventListener("click", resetLevel);
+  document.getElementById("btnNext").addEventListener("click", function(){
+    if(levelIndex < LEVELS.length-1) loadLevel(levelIndex+1);
+    else goMenu();
+  });
+
+  renderMenu();
+})();
+</script>
+</body>
+</html>

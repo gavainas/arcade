@@ -58,6 +58,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🀄 Mahjong Neón | [`mahjong-neon.html`](mahjong-neon.html) | Mahjong solitario: fichas apiladas en varias capas, sólo se levantan las que están libres (nada encima y un costado abierto). Tocá dos iguales para sacarlas y limpiá todo el tablero. 4 niveles con capas crecientes, siempre resolubles, con deshacer, pista y barajar. |
 | 💡 Apagón Neón | [`apagon-neon.html`](apagon-neon.html) | Lights Out neón: tocá una luz para prenderla/apagarla a ella y a sus vecinas (arriba, abajo, izquierda, derecha) y apagá todo el panel para ganar. 8 niveles con grillas crecientes (3×3 a 7×7) generados al azar y siempre resolubles, con deshacer y contador de movidas. |
 | 🔐 Código Neón | [`codigo-neon.html`](codigo-neon.html) | Mastermind neón: la máquina esconde un código de colores y vos proponés combinaciones, usando pistas de posición y color exactos para descifrarlo antes de quedarte sin intentos. 3 dificultades con más colores y espacios. |
+| 🔗 Flujo Neón | [`flujo-neon.html`](flujo-neon.html) | Flow: conectá cada par de puntos del mismo color trazando un cable sin cruzarte con otro camino. Ganás cuando cubrís todas las celdas del tablero. 8 niveles con grillas y cantidad de colores crecientes, generados al azar y siempre resolubles, con deshacer y contador de trazos. |
 
 ## Sopa de Letras
 

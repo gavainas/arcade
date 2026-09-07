@@ -103,7 +103,8 @@ const OVERRIDES = {
   "codigo-neon": {
     steps: [".lvl-card", ".swatch", ".swatch:nth-child(2)", ".swatch:nth-child(3)"],
     wait: 400
-  }
+  },
+  "flujo-neon": { steps: [".lvl-card"], wait: 500 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];
