@@ -59,6 +59,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 💡 Apagón Neón | [`apagon-neon.html`](apagon-neon.html) | Lights Out neón: tocá una luz para prenderla/apagarla a ella y a sus vecinas (arriba, abajo, izquierda, derecha) y apagá todo el panel para ganar. 8 niveles con grillas crecientes (3×3 a 7×7) generados al azar y siempre resolubles, con deshacer y contador de movidas. |
 | 🔐 Código Neón | [`codigo-neon.html`](codigo-neon.html) | Mastermind neón: la máquina esconde un código de colores y vos proponés combinaciones, usando pistas de posición y color exactos para descifrarlo antes de quedarte sin intentos. 3 dificultades con más colores y espacios. |
 | 🔗 Flujo Neón | [`flujo-neon.html`](flujo-neon.html) | Flow: conectá cada par de puntos del mismo color trazando un cable sin cruzarte con otro camino. Ganás cuando cubrís todas las celdas del tablero. 8 niveles con grillas y cantidad de colores crecientes, generados al azar y siempre resolubles, con deshacer y contador de trazos. |
+| 🎲 Generala Neón | [`generala-neon.html`](generala-neon.html) | Generala clásica: tirá los 5 dados hasta 3 veces por turno, guardá los que te sirvan y anotá el resultado en la planilla de 10 categorías. 1 jugador contra tu propio récord, o de a dos pasando el turno en el mismo dispositivo. |
 
 ## Sopa de Letras
 

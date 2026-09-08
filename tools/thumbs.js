@@ -104,7 +104,10 @@ const OVERRIDES = {
     steps: [".lvl-card", ".swatch", ".swatch:nth-child(2)", ".swatch:nth-child(3)"],
     wait: 400
   },
-  "flujo-neon": { steps: [".lvl-card"], wait: 500 }
+  "flujo-neon": { steps: [".lvl-card"], wait: 500 },
+  // Entramos al modo 1 jugador y tiramos los dados para que la miniatura
+  // muestre la fila de dados y la planilla, no sólo el menú de modos.
+  "generala-neon": { steps: [".lvl-card", "#btnRoll"], wait: 500 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

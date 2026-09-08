@@ -403,6 +403,13 @@
       desc: "Flow: conectá cada par de puntos del mismo color trazando un cable sin cruzarte con otro camino. Ganás cuando cubrís todas las celdas del tablero. 8 niveles con grillas y cantidad de colores crecientes, generados al azar y siempre resolubles, con deshacer y contador de trazos.",
       controles: "Arrastrá el dedo o el mouse desde un punto hasta su pareja; teclas 1-9 eligen color y flechas extienden el cable", fecha: "2026-09-07",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "generala-neon", titulo: "Generala Neón", archivo: "generala-neon.html",
+      emoji: "🎲", categoria: "mental", tags: ["generala", "yahtzee", "dados", "azar", "2 jugadores"],
+      desc: "Generala clásica: tirá los 5 dados hasta 3 veces por turno, guardá los que te sirvan y anotá el resultado en la planilla de 10 categorías. 1 jugador contra tu propio récord, o de a dos pasando el turno en el mismo dispositivo.",
+      controles: "Click / toque en los dados para guardarlos y en la planilla para anotar; teclas 1-5 guardan, espacio tira", fecha: "2026-09-08",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
