@@ -410,6 +410,13 @@
       desc: "Generala clásica: tirá los 5 dados hasta 3 veces por turno, guardá los que te sirvan y anotá el resultado en la planilla de 10 categorías. 1 jugador contra tu propio récord, o de a dos pasando el turno en el mismo dispositivo.",
       controles: "Click / toque en los dados para guardarlos y en la planilla para anotar; teclas 1-5 guardan, espacio tira", fecha: "2026-09-08",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "bolos-neon", titulo: "Bolos Neón", archivo: "bolos-neon.html",
+      emoji: "🎳", categoria: "deportes", tags: ["bowling", "bolos", "carril", "chuzo", "spare"],
+      desc: "Bolos con tiro a tiempo: frenás la barra de potencia y después la de efecto para tirar la bola por el carril y buscar el chuzo. 10 frames con el sistema de puntaje real de bolos (chuzos y spares suman los tiros extra), y récord guardado.",
+      controles: "Tocá el canvas dos veces por tiro (potencia y efecto); espacio con teclado", fecha: "2026-09-09",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

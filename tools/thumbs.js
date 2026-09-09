@@ -107,7 +107,10 @@ const OVERRIDES = {
   "flujo-neon": { steps: [".lvl-card"], wait: 500 },
   // Entramos al modo 1 jugador y tiramos los dados para que la miniatura
   // muestre la fila de dados y la planilla, no sólo el menú de modos.
-  "generala-neon": { steps: [".lvl-card", "#btnRoll"], wait: 500 }
+  "generala-neon": { steps: [".lvl-card", "#btnRoll"], wait: 500 },
+  // Dos clicks en el canvas frenan potencia y efecto y tiran la bola: la
+  // agarramos a mitad de camino por el carril, con los bolos de pie.
+  "bolos-neon": { steps: ["#startBtn", { canvas: [0.5, 0.2] }, { canvas: [0.5, 0.2] }], wait: 150 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

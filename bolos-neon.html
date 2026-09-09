@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BOLOS NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(26px,7vw,44px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.lvl b{color:var(--purple);}
+  .hud .box.liv b{color:var(--pink);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,30px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:7px; font-size:12.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:14px; height:14px; border-radius:4px; flex:none; box-shadow:0 0 10px currentColor;}
+  .dot.round{border-radius:50%;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+
+  .frames{display:grid; grid-template-columns:repeat(10,1fr); gap:3px; margin-top:12px;}
+  .frame{background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.25);
+    border-radius:6px; padding:3px 1px 4px; text-align:center;}
+  .frame.active{border-color:var(--cyan); box-shadow:0 0 10px rgba(39,232,255,.4);}
+  .frame .rolls{font-size:9.5px; font-weight:800; color:var(--pink); letter-spacing:.5px; min-height:11px;}
+  .frame .score{font-size:11px; font-weight:900; color:var(--ink); margin-top:1px;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">BOLOS NEÓN</div>
+      <div class="sub">1 0 &nbsp;F R A M E S &nbsp;·&nbsp; T I R O &nbsp;A &nbsp;T I E M P O</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">FRAME<b id="frameBox">1/10</b></div>
+      <div class="box lvl">TIRO<b id="rollBox">1</b></div>
+      <div class="box liv">PUNTOS<b id="scoreBox">0</b></div>
+      <div class="box rec">RÉCORD<b id="bestBox">0</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="640"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">BOLOS NEÓN</h2>
+        <p id="ovText">Tocá una vez para frenar la barra de <b>potencia</b> y otra vez para frenar la de <b>efecto</b> (izquierda/derecha). La bola sale sola apenas frenás el efecto. 10 frames, sistema de puntaje real de bolos.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot round" style="color:var(--cyan);background:var(--cyan)"></i> Barra de potencia: cuanto más alta, más fuerte sale la bola</span>
+          <span><i class="dot round" style="color:var(--pink);background:var(--pink)"></i> Barra de efecto: al centro va recta, a los costados curva</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Pegale al medio entre el bolo 1 y 3 (o 1 y 2) para buscar el chuzo</span>
+          <span><i class="dot" style="color:var(--purple);background:var(--purple)"></i> Si la bola sale del carril cae al pozo y no derriba nada</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Tocá el canvas o tocá ESPACIO dos veces por tiro · flechas ajustan con teclado.</p>
+      </div>
+    </div>
+
+    <div class="frames" id="frames"></div>
+
+    <div class="controls">
+      <div class="hint">Tocá para frenar cada barra (o <b>ESPACIO</b>) · <b>P</b> pausa.</div>
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+
+    <footer>NEON ARCADE · Bolos Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const frameEl=document.getElementById('frameBox');
+  const rollEl=document.getElementById('rollBox');
+  const scoreEl=document.getElementById('scoreBox');
+  const bestEl=document.getElementById('bestBox');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+  const framesEl=document.getElementById('frames');
+
+  const BEST_KEY='neon-bolos-neon-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+
+  const PLAY_LEFT=44, PLAY_RIGHT=396;
+  const LANE_LEFT=76, LANE_RIGHT=364, CX=(LANE_LEFT+LANE_RIGHT)/2;
+  const BALL_START_Y=584, BALL_R=9, PIN_R=8;
+  const APEX_Y=168, ROW_GAP=32, COL_GAP=28;
+  const ROLL_END_Y=APEX_Y-3*ROW_GAP-24;
+  const MIN_SPEED=6.4, MAX_SPEED=12.6, CURVE_ACCEL=0.052;
+  const ENERGY_SCALE=2.1, TOPPLE_DECAY=3.4, TOPPLE_MIN=1.2;
+  const POWER_PERIOD=1500, CURVE_PERIOD=1250;
+
+  // Posiciones de los 10 bolos (índice 0 = bolo 1, apex).
+  const PIN_POS=[
+    {x:CX, y:APEX_Y},                                                  // 1
+    {x:CX-COL_GAP/2, y:APEX_Y-ROW_GAP}, {x:CX+COL_GAP/2, y:APEX_Y-ROW_GAP}, // 2,3
+    {x:CX-COL_GAP, y:APEX_Y-2*ROW_GAP}, {x:CX, y:APEX_Y-2*ROW_GAP}, {x:CX+COL_GAP, y:APEX_Y-2*ROW_GAP}, // 4,5,6
+    {x:CX-1.5*COL_GAP, y:APEX_Y-3*ROW_GAP}, {x:CX-0.5*COL_GAP, y:APEX_Y-3*ROW_GAP},
+    {x:CX+0.5*COL_GAP, y:APEX_Y-3*ROW_GAP}, {x:CX+1.5*COL_GAP, y:APEX_Y-3*ROW_GAP} // 7,8,9,10
+  ];
+  const ADJ_EDGES=[[0,1],[0,2],[1,2],[1,3],[1,4],[2,4],[2,5],[3,4],[4,5],[3,6],[3,7],[4,7],[4,8],[5,8],[5,9],[6,7],[7,8],[8,9]];
+  const ADJ=PIN_POS.map(()=>[]);
+  ADJ_EDGES.forEach(([a,b])=>{ ADJ[a].push(b); ADJ[b].push(a); });
+
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+  // ---- Estado de juego (frames / tiros) ----
+  let frameIdx, rollInFrame, rolls, frameStarts, pinsStanding, standingAtRollStart;
+  let phase; // 'ready' | 'power' | 'curve' | 'rolling' | 'result' | 'over'
+  let pendingGameOver;
+  let phaseTimer, lockedPower, lockedCurve;
+  let ball, guttered;
+  let msg='', msgTimer=0, tGlobal=0, holdTimer=0;
+  let running, paused, started;
+
+  function resetPins(){ pinsStanding=[true,true,true,true,true,true,true,true,true,true]; }
+
+  function newGame(){
+    frameIdx=0; rollInFrame=0; rolls=[]; frameStarts=[0];
+    resetPins();
+    phase='ready'; phaseTimer=0; lockedPower=0.7; lockedCurve=0;
+    holdTimer=0; pendingGameOver=false;
+    buildFrameBoxes();
+    updateHud();
+  }
+
+  function buildFrameBoxes(){
+    framesEl.innerHTML='';
+    for(let i=0;i<10;i++){
+      const d=document.createElement('div');
+      d.className='frame'; d.id='fr'+i;
+      d.innerHTML='<div class="rolls" id="frR'+i+'"></div><div class="score" id="frS'+i+'">-</div>';
+      framesEl.appendChild(d);
+    }
+  }
+
+  function rollLabel(i){
+    // Texto corto (X, /, número) para el tiro i dentro de un frame ya cerrado.
+    const start=frameStarts[i];
+    if(start===undefined || rolls[start]===undefined) return '';
+    if(i<9){
+      const r0=rolls[start];
+      if(r0===10) return 'X';
+      const r1=rolls[start+1];
+      if(r1===undefined) return String(r0);
+      if(r0+r1===10) return r0+' /';
+      return r0+' '+r1;
+    }
+    // frame 10: hasta 3 tiros, con los resets de pinos tras chuzo/spare
+    const r0=rolls[start], r1=rolls[start+1], r2=rolls[start+2];
+    const parts=[r0===10?'X':String(r0)];
+    if(r1===undefined) return parts.join(' ');
+    if(r0===10) parts.push(r1===10?'X':String(r1)); // reset tras chuzo: tiro libre
+    else if(r0+r1===10) parts.push('/');
+    else parts.push(String(r1));
+    if(r2===undefined) return parts.join(' ');
+    if(r0===10 && r1===10) parts.push(r2===10?'X':String(r2)); // reset tras 2do chuzo
+    else if(r0===10) parts.push((r1+r2===10)?'/':(r2===10?'X':String(r2))); // sigue sobre lo que dejó r1
+    else parts.push(r2===10?'X':String(r2)); // r0+r1 fue spare: reset, tiro libre
+    return parts.join(' ');
+  }
+
+  function frameScore(i){
+    const start=frameStarts[i];
+    if(start===undefined || rolls[start]===undefined) return null;
+    if(i<9){
+      const r0=rolls[start];
+      if(r0===10){
+        if(rolls[start+1]===undefined || rolls[start+2]===undefined) return null;
+        return 10+rolls[start+1]+rolls[start+2];
+      }
+      if(rolls[start+1]===undefined) return null;
+      if(r0+rolls[start+1]===10){
+        if(rolls[start+2]===undefined) return null;
+        return 10+rolls[start+2];
+      }
+      return r0+rolls[start+1];
+    }
+    let sum=0;
+    for(let k=start;k<rolls.length;k++) sum+=rolls[k];
+    return sum;
+  }
+
+  function refreshScoreboard(){
+    let total=0, blocked=false;
+    for(let i=0;i<10;i++){
+      const box=document.getElementById('fr'+i);
+      const rEl=document.getElementById('frR'+i);
+      const sEl=document.getElementById('frS'+i);
+      box.classList.toggle('active', i===frameIdx && phase!=='over');
+      rEl.textContent=rollLabel(i);
+      const sc=frameScore(i);
+      if(!blocked && sc!==null){ total+=sc; sEl.textContent=String(total); }
+      else { sEl.textContent='-'; blocked=true; }
+    }
+    scoreEl.textContent=String(total);
+    return total;
+  }
+
+  function updateHud(){
+    frameEl.textContent=(frameIdx+1)+'/10';
+    rollEl.textContent=String(rollInFrame+1);
+    bestEl.textContent=String(best);
+    refreshScoreboard();
+  }
+
+  function flashMsg(t){ msg=t; msgTimer=1500; }
+
+  function beginRoll(){
+    ball={x:CX,y:BALL_START_Y,vx:0,vy:0};
+    guttered=false;
+    standingAtRollStart=pinsStanding.slice();
+    phase='power'; phaseTimer=0;
+  }
+
+  function lockPower(v){
+    lockedPower=v;
+    phase='curve'; phaseTimer=0;
+  }
+
+  function lockCurveAndShoot(v){
+    lockedCurve=v;
+    const speed=MIN_SPEED+lockedPower*(MAX_SPEED-MIN_SPEED);
+    ball.vy=-speed;
+    ball.vx=0;
+    phase='rolling';
+  }
+
+  function toppleChain(idx,energy){
+    if(energy<TOPPLE_MIN) return;
+    for(const n of ADJ[idx]){
+      if(pinsStanding[n]){
+        pinsStanding[n]=false;
+        toppleChain(n,energy-TOPPLE_DECAY);
+      }
+    }
+  }
+
+  function updateRollingBall(){
+    ball.vx+=lockedCurve*CURVE_ACCEL;
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+    if(ball.x-BALL_R<PLAY_LEFT){ ball.x=PLAY_LEFT+BALL_R; ball.vx=Math.abs(ball.vx)*0.3; }
+    if(ball.x+BALL_R>PLAY_RIGHT){ ball.x=PLAY_RIGHT-BALL_R; ball.vx=-Math.abs(ball.vx)*0.3; }
+    if(ball.x<LANE_LEFT-2 || ball.x>LANE_RIGHT+2) guttered=true;
+
+    if(!guttered){
+      for(let i=0;i<10;i++){
+        if(!pinsStanding[i]) continue;
+        const p=PIN_POS[i];
+        const dx=ball.x-p.x, dy=ball.y-p.y;
+        if(dx*dx+dy*dy < (BALL_R+PIN_R)*(BALL_R+PIN_R)){
+          pinsStanding[i]=false;
+          const energy=Math.hypot(ball.vx,ball.vy)*ENERGY_SCALE;
+          toppleChain(i,energy);
+          ball.vx += dx*0.03;
+        }
+      }
+    }
+
+    if(ball.y<=ROLL_END_Y) finishRoll();
+  }
+
+  function finishRoll(){
+    let knocked=0;
+    for(let i=0;i<10;i++) if(standingAtRollStart[i] && !pinsStanding[i]) knocked++;
+    rolls.push(knocked);
+
+    let label = knocked===10 ? '¡CHUZO!' : (knocked===0 ? 'POZO' : knocked+' BOLOS');
+
+    if(frameIdx<9){
+      if(rollInFrame===0){
+        if(knocked===10){
+          advanceFrame();
+        } else {
+          rollInFrame=1;
+        }
+      } else {
+        const r0=rolls[frameStarts[frameIdx]];
+        if(r0+knocked===10) label='¡SPARE!';
+        else if(r0+knocked===0) label='POZO DOBLE';
+        advanceFrame();
+      }
+    } else {
+      const start=frameStarts[9];
+      const posInFrame10=rolls.length-start; // 1, 2 o 3
+      if(posInFrame10===2){
+        const r0=rolls[start];
+        if(r0<10 && r0+knocked===10) label='¡SPARE!';
+        else if(r0<10 && r0+knocked===0) label='POZO DOBLE';
+      }
+      handleFrame10(knocked);
+    }
+
+    phase='result'; holdTimer=1300;
+    flashMsg(label);
+    updateHud();
+  }
+
+  function advanceFrame(){
+    frameIdx++;
+    if(frameIdx<10){
+      rollInFrame=0;
+      resetPins();
+      frameStarts[frameIdx]=rolls.length;
+    }
+  }
+
+  function handleFrame10(knocked){
+    const start=frameStarts[9];
+    if(rollInFrame===0){
+      if(knocked===10) resetPins();
+      rollInFrame=1;
+    } else if(rollInFrame===1){
+      const r0=rolls[start];
+      const r1=knocked;
+      if(r0===10){
+        if(r1===10) resetPins();
+        rollInFrame=2;
+      } else if(r0+r1===10){
+        resetPins();
+        rollInFrame=2;
+      } else {
+        pendingGameOver=true;
+      }
+    } else {
+      pendingGameOver=true;
+    }
+  }
+
+  function gameOver(){
+    running=false; started=false;
+    const total=refreshScoreboard();
+    const isRec = best===0 || total>best;
+    if(isRec){ best=total; localStorage.setItem(BEST_KEY,best); }
+    ovTitle.textContent='¡PARTIDA TERMINADA!';
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Puntaje: <b>${total}</b></span>`+
+      (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Tocá el canvas dos veces por tiro (potencia y efecto) · ESPACIO con teclado.';
+    overlay.classList.remove('hidden');
+  }
+
+  function start(){
+    newGame();
+    started=true; running=true; paused=false;
+    overlay.classList.add('hidden');
+    beginRoll();
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function tap(){
+    if(!started||!running||paused) return;
+    if(phase==='power'){
+      const v=(Math.sin(phaseTimer*(2*Math.PI/POWER_PERIOD)-Math.PI/2)+1)/2;
+      lockPower(v);
+    } else if(phase==='curve'){
+      const v=Math.sin(phaseTimer*(2*Math.PI/CURVE_PERIOD));
+      lockCurveAndShoot(v);
+    }
+  }
+
+  let last=0;
+  function update(dt){
+    tGlobal+=dt;
+    if(msgTimer>0) msgTimer-=dt;
+    if(phase==='power'||phase==='curve') phaseTimer+=dt;
+    if(phase==='rolling') updateRollingBall();
+    if(phase==='result'){
+      holdTimer-=dt;
+      if(holdTimer<=0){
+        if(pendingGameOver){ phase='over'; gameOver(); return; }
+        phase='ready';
+        updateHud();
+        beginRoll();
+      }
+    }
+  }
+
+  function drawLane(){
+    ctx.fillStyle='#05070f';
+    ctx.fillRect(0,0,W,H);
+    // pozos laterales
+    ctx.fillStyle='#0a0d1c';
+    ctx.fillRect(PLAY_LEFT-4,0,LANE_LEFT-PLAY_LEFT+4,H);
+    ctx.fillRect(LANE_RIGHT,0,PLAY_RIGHT-LANE_RIGHT+4,H);
+    // carril
+    ctx.fillStyle='#12162a';
+    ctx.fillRect(LANE_LEFT,0,LANE_RIGHT-LANE_LEFT,H);
+    ctx.strokeStyle='rgba(39,232,255,.28)'; ctx.lineWidth=2;
+    ctx.strokeRect(LANE_LEFT,0,LANE_RIGHT-LANE_LEFT,H);
+    ctx.strokeStyle='rgba(39,232,255,.06)'; ctx.lineWidth=1;
+    for(let y=40;y<H;y+=34){
+      ctx.beginPath(); ctx.moveTo(LANE_LEFT,y); ctx.lineTo(LANE_RIGHT,y); ctx.stroke();
+    }
+    // guías centrales
+    ctx.fillStyle='rgba(255,210,59,.5)';
+    for(let i=-2;i<=2;i++){
+      ctx.beginPath(); ctx.arc(CX+i*30,430,2.4,0,Math.PI*2); ctx.fill();
+    }
+    // muros exteriores
+    ctx.fillStyle='#8a4bff'; ctx.shadowColor='#8a4bff'; ctx.shadowBlur=10;
+    ctx.fillRect(PLAY_LEFT-4,0,4,H);
+    ctx.fillRect(PLAY_RIGHT,0,4,H);
+    ctx.shadowBlur=0;
+  }
+
+  function drawPins(){
+    for(let i=0;i<10;i++){
+      const p=PIN_POS[i];
+      if(pinsStanding[i]){
+        ctx.fillStyle='#e8f6ff'; ctx.shadowColor='#e8f6ff'; ctx.shadowBlur=10;
+        ctx.beginPath(); ctx.ellipse(p.x,p.y,PIN_R*0.62,PIN_R,0,0,Math.PI*2); ctx.fill();
+        ctx.shadowBlur=0;
+        ctx.strokeStyle='rgba(255,43,214,.7)'; ctx.lineWidth=1.4;
+        ctx.beginPath(); ctx.ellipse(p.x,p.y-2,PIN_R*0.34,PIN_R*0.34,0,0,Math.PI*2); ctx.stroke();
+      } else {
+        ctx.fillStyle='rgba(127,166,200,.28)';
+        ctx.beginPath(); ctx.ellipse(p.x,p.y,PIN_R*0.62,PIN_R*0.34,0,0,Math.PI*2); ctx.fill();
+      }
+    }
+  }
+
+  function drawBall(){
+    if(phase==='rolling'||phase==='power'||phase==='curve'||phase==='result'||phase==='ready'){
+      const gutterNow = guttered && phase==='rolling';
+      ctx.fillStyle=gutterNow?'#ff5470':'#27e8ff';
+      ctx.shadowColor=gutterNow?'#ff5470':'#27e8ff'; ctx.shadowBlur=14;
+      ctx.beginPath(); ctx.arc(ball.x,ball.y,BALL_R,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function drawMeter(){
+    const barX=LANE_LEFT+8, barW=(LANE_RIGHT-LANE_LEFT)-16, barY=H-46, barH=14;
+    if(phase==='power'){
+      const v=(Math.sin(phaseTimer*(2*Math.PI/POWER_PERIOD)-Math.PI/2)+1)/2;
+      ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(barX,barY,barW,barH);
+      ctx.fillStyle='#27e8ff'; ctx.shadowColor='#27e8ff'; ctx.shadowBlur=10;
+      ctx.fillRect(barX,barY,barW*v,barH);
+      ctx.shadowBlur=0;
+      ctx.strokeStyle='rgba(39,232,255,.6)'; ctx.lineWidth=1.5; ctx.strokeRect(barX,barY,barW,barH);
+      ctx.fillStyle='#7fa6c8'; ctx.font='700 11px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('POTENCIA · TOCÁ PARA FRENAR',W/2,barY-8);
+    } else if(phase==='curve'){
+      const v=Math.sin(phaseTimer*(2*Math.PI/CURVE_PERIOD));
+      ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(barX,barY,barW,barH);
+      ctx.strokeStyle='rgba(255,43,214,.6)'; ctx.lineWidth=1.5; ctx.strokeRect(barX,barY,barW,barH);
+      ctx.fillStyle='rgba(255,210,59,.5)'; ctx.fillRect(barX+barW/2-1,barY-3,2,barH+6);
+      const mx=barX+barW/2+v*(barW/2-6);
+      ctx.fillStyle='#ff2bd6'; ctx.shadowColor='#ff2bd6'; ctx.shadowBlur=12;
+      ctx.beginPath(); ctx.arc(mx,barY+barH/2,7,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#7fa6c8'; ctx.font='700 11px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('EFECTO · TOCÁ PARA FRENAR',W/2,barY-8);
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    drawLane();
+    drawPins();
+    drawBall();
+    drawMeter();
+
+    if(msgTimer>0){
+      ctx.globalAlpha=Math.min(1,msgTimer/300);
+      ctx.fillStyle='#ffd23b';
+      ctx.font='900 22px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=16;
+      ctx.fillText(msg,W/2,H/2-4);
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+
+    ctx.fillStyle='#7fa6c8'; ctx.font='700 12px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('FRAME '+Math.min(frameIdx+1,10)+'/10 · TIRO '+(rollInFrame+1), 12, H-8);
+
+    if(paused){
+      ctx.fillStyle='rgba(5,7,15,.6)'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#27e8ff'; ctx.font='900 26px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.shadowColor='#27e8ff'; ctx.shadowBlur=14;
+      ctx.fillText('PAUSA',W/2,H/2);
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!paused){
+      const dt=Math.min(40,ts-last);
+      last=ts;
+      update(dt);
+      if(!running) return;
+      draw();
+    }else{
+      last=ts;
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function canvasPos(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    return { x:(clientX-rect.left)*(W/rect.width), y:(clientY-rect.top)*(H/rect.height) };
+  }
+
+  canvas.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    tap();
+  });
+
+  window.addEventListener('keydown',e=>{
+    if(e.key===' '||e.key==='Enter'||e.key==='ArrowUp'){ e.preventDefault(); tap(); }
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+
+  function togglePause(){
+    if(!started||!running) return;
+    paused=!paused;
+    pauseBtn.textContent = paused ? 'Seguir' : 'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+  pauseBtn.addEventListener('click',togglePause);
+  startBtn.addEventListener('click',start);
+
+  newGame();
+  ball={x:CX,y:BALL_START_Y,vx:0,vy:0};
+})();
+</script>
+</body>
+</html>
