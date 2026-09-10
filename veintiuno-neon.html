@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VEINTIUNO NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--gold),var(--pink),var(--cyan),var(--gold));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,210,59,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:10.5px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.bet b{color:var(--pink);}
+  .hud .box.rec b{color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    min-height:360px;
+  }
+
+  .table{display:flex; flex-direction:column; gap:10px; padding:4px 2px;}
+  .hand-area .hand-label{text-align:center; font-size:11.5px; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:6px;}
+  .hand-area .hand-label b{color:var(--cyan); font-weight:900; letter-spacing:.5px;}
+  .hand-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; align-items:center; min-height:86px;}
+
+  .card{width:56px; height:80px; border-radius:8px; flex:none; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-weight:900; box-shadow:0 3px 10px rgba(0,0,0,.5);
+    animation:dealIn .22s ease;}
+  @keyframes dealIn{from{transform:translateY(-14px) scale(.85); opacity:0;} to{transform:translateY(0) scale(1); opacity:1;}}
+  .card.faceup{background:linear-gradient(165deg,#101a38,#0a0f22); border:1.5px solid rgba(138,75,255,.35);}
+  .card.facedown{background:
+      repeating-linear-gradient(135deg, rgba(138,75,255,.5) 0 4px, rgba(39,232,255,.3) 4px 8px);
+    border:1.5px solid rgba(138,75,255,.5);}
+  .card.faceup.black{color:var(--cyan); text-shadow:0 0 8px rgba(39,232,255,.55);}
+  .card.faceup.red{color:var(--pink); text-shadow:0 0 8px rgba(255,43,214,.55);}
+  .card .rk{font-size:18px; line-height:1.15;}
+  .card .st{font-size:22px; line-height:1;}
+
+  .msg-area{text-align:center; min-height:24px; font-weight:800; font-size:14.5px; letter-spacing:.5px; color:var(--muted);}
+  .msg-area.win{color:var(--gold); text-shadow:0 0 10px rgba(255,210,59,.5);}
+  .msg-area.lose{color:var(--red); text-shadow:0 0 10px rgba(255,84,112,.5);}
+  .msg-area.push{color:var(--cyan); text-shadow:0 0 10px rgba(39,232,255,.5);}
+
+  .betting{display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:6px;}
+  .betting.hidden{display:none;}
+  .chips{display:flex; gap:9px; justify-content:center; flex-wrap:wrap;}
+  .chip{width:52px; height:52px; border-radius:50%; cursor:pointer; border:2px solid rgba(255,255,255,.22);
+    font-weight:900; font-size:12.5px; color:#031018; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,.4), inset 0 0 8px rgba(255,255,255,.18); transition:transform .12s ease, opacity .12s ease;}
+  .chip:hover{transform:translateY(-3px);}
+  .chip:active{transform:scale(.92);}
+  .chip.c25{background:radial-gradient(circle at 35% 30%, #4be0ff, #1194b8);}
+  .chip.c50{background:radial-gradient(circle at 35% 30%, #6dffc2, #1a9d63);}
+  .chip.c100{background:radial-gradient(circle at 35% 30%, #ffe27a, #c99a12);}
+  .chip.c250{background:radial-gradient(circle at 35% 30%, #ff8fe8, #c2189e);}
+  .chip:disabled{opacity:.32; cursor:default; transform:none;}
+  .bet-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center;}
+
+  .actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;}
+  .actions.hidden{display:none;}
+  .result-actions{display:flex; justify-content:center; margin-top:10px;}
+  .result-actions.hidden{display:none;}
+
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn:disabled{opacity:.35; cursor:default; transform:none; box-shadow:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:12.5px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.35; cursor:default;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:12px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--gold),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,210,59,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:7px; font-size:12.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5; text-align:center; margin-top:12px;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">VEINTIUNO NEÓN</div>
+      <div class="sub">B L A C K J A C K</div>
+    </header>
+
+    <div class="hud">
+      <div class="box"><span>BANCA</span><b id="hudBalance">500</b></div>
+      <div class="box bet"><span>APUESTA</span><b id="hudBet">0</b></div>
+      <div class="box rec"><span>RÉCORD</span><b id="hudBest">500</b></div>
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="table">
+        <div class="hand-area">
+          <div class="hand-label">DEALER · <b id="dealerScore">-</b></div>
+          <div class="hand-row" id="dealerRow"></div>
+        </div>
+        <div class="msg-area" id="msgArea"></div>
+        <div class="hand-area">
+          <div class="hand-label">VOS · <b id="playerScore">-</b></div>
+          <div class="hand-row" id="playerRow"></div>
+        </div>
+      </div>
+
+      <div class="betting" id="bettingUI">
+        <div class="chips">
+          <button class="chip c25" data-v="25">25</button>
+          <button class="chip c50" data-v="50">50</button>
+          <button class="chip c100" id="chip100" data-v="100">100</button>
+          <button class="chip c250" data-v="250">250</button>
+        </div>
+        <div class="bet-actions">
+          <button class="mini" id="repeatBtn">↺ Repetir</button>
+          <button class="mini" id="clearBetBtn">Borrar</button>
+          <button class="btn" id="dealBtn">REPARTIR ▶</button>
+        </div>
+      </div>
+
+      <div class="actions hidden" id="actionsUI">
+        <button class="btn" id="hitBtn">PEDIR</button>
+        <button class="btn ghost" id="standBtn">PLANTARSE</button>
+        <button class="btn ghost" id="doubleBtn">DOBLAR</button>
+      </div>
+
+      <div class="result-actions hidden" id="resultUI">
+        <button class="btn" id="nextBtn">NUEVA MANO ▶</button>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <h2>VEINTIUNO NEÓN</h2>
+        <p>Acercate a <b>21</b> sin pasarte y ganale al dealer, que planta en 17. El As vale 1 u 11 (lo que más te convenga) y las figuras valen 10.</p>
+        <div class="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Elegí fichas para armar tu apuesta y tocá REPARTIR</span>
+          <span><i class="dot" style="color:var(--green);background:var(--green)"></i> PEDIR suma una carta · PLANTARSE cierra tu mano</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> DOBLAR (con 2 cartas) duplica la apuesta y pedís una última carta</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Blackjack natural (As + figura) paga 3 a 2</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint">500 fichas para arrancar, guardadas en tu dispositivo · Teclas 1-4 apuestan, H/S/D juegan, Enter avanza.</p>
+      </div>
+
+      <div class="overlay hidden" id="brokeOverlay">
+        <h2>SIN FICHAS</h2>
+        <p>Te quedaste sin fichas para seguir apostando. La casa te invita una recarga para volver a la mesa.</p>
+        <button class="btn" id="reloadBtn">RECARGAR FICHAS</button>
+      </div>
+    </div>
+
+    <p class="hint">Click / toque en las fichas y los botones · teclas 1-4 apuestan (25/50/100/250), H pide, S planta, D dobla, Enter reparte o sigue.</p>
+
+    <footer>NEON ARCADE · Veintiuno Neón</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var BALANCE_KEY='neon-veintiuno-neon-balance';
+  var BEST_KEY='neon-veintiuno-neon-best';
+  var START_BALANCE=500, MIN_CHIP=25;
+
+  var hudBalance=document.getElementById('hudBalance');
+  var hudBet=document.getElementById('hudBet');
+  var hudBest=document.getElementById('hudBest');
+  var dealerRow=document.getElementById('dealerRow');
+  var playerRow=document.getElementById('playerRow');
+  var dealerScoreEl=document.getElementById('dealerScore');
+  var playerScoreEl=document.getElementById('playerScore');
+  var msgArea=document.getElementById('msgArea');
+  var bettingUI=document.getElementById('bettingUI');
+  var actionsUI=document.getElementById('actionsUI');
+  var resultUI=document.getElementById('resultUI');
+  var overlay=document.getElementById('overlay');
+  var brokeOverlay=document.getElementById('brokeOverlay');
+  var startBtn=document.getElementById('startBtn');
+  var reloadBtn=document.getElementById('reloadBtn');
+  var dealBtn=document.getElementById('dealBtn');
+  var clearBetBtn=document.getElementById('clearBetBtn');
+  var repeatBtn=document.getElementById('repeatBtn');
+  var hitBtn=document.getElementById('hitBtn');
+  var standBtn=document.getElementById('standBtn');
+  var doubleBtn=document.getElementById('doubleBtn');
+  var nextBtn=document.getElementById('nextBtn');
+  var chipBtns=Array.prototype.slice.call(document.querySelectorAll('.chip'));
+
+  var balance=parseInt(localStorage.getItem(BALANCE_KEY)||'',10);
+  if(isNaN(balance)) balance=START_BALANCE;
+  var best=parseInt(localStorage.getItem(BEST_KEY)||'',10);
+  if(isNaN(best)) best=balance;
+
+  var deck=[], playerHand=[], dealerHand=[];
+  var bet=0, lastBet=0, phase='bet', holeHidden=true;
+
+  function saveMoney(){
+    localStorage.setItem(BALANCE_KEY,String(balance));
+    localStorage.setItem(BEST_KEY,String(best));
+  }
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+
+  function freshDeck(){
+    var suits=[{s:'♠',c:'black'},{s:'♣',c:'black'},{s:'♥',c:'red'},{s:'♦',c:'red'}];
+    var ranks=[['A',11],['2',2],['3',3],['4',4],['5',5],['6',6],['7',7],['8',8],['9',9],['10',10],['J',10],['Q',10],['K',10]];
+    var d=[];
+    suits.forEach(function(su){
+      ranks.forEach(function(rv){ d.push({rank:rv[0], suit:su.s, color:su.c, base:rv[1]}); });
+    });
+    for(var i=d.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      var t=d[i]; d[i]=d[j]; d[j]=t;
+    }
+    return d;
+  }
+  function draw(){ return deck.pop(); }
+
+  function handValue(cards){
+    var total=0, aces=0;
+    cards.forEach(function(c){ total+=c.base; if(c.rank==='A') aces++; });
+    while(total>21 && aces>0){ total-=10; aces--; }
+    return {total:total, soft:aces>0};
+  }
+  function isBlackjack(cards){ return cards.length===2 && handValue(cards).total===21; }
+
+  function cardNode(card, faceDown){
+    var div=document.createElement('div');
+    if(faceDown){
+      div.className='card facedown';
+    } else {
+      div.className='card faceup '+card.color;
+      div.innerHTML='<span class="rk">'+card.rank+'</span><span class="st">'+card.suit+'</span>';
+    }
+    return div;
+  }
+
+  function render(){
+    playerRow.innerHTML='';
+    playerHand.forEach(function(c){ playerRow.appendChild(cardNode(c,false)); });
+    dealerRow.innerHTML='';
+    dealerHand.forEach(function(c,i){ dealerRow.appendChild(cardNode(c, holeHidden && i===1)); });
+    updateScores();
+  }
+
+  function scoreLabel(cards, hideSecond){
+    if(!cards.length) return '-';
+    if(hideSecond){ return String(cards[0].base===11?11:cards[0].base)+' + ?'; }
+    var v=handValue(cards);
+    if(v.total>21) return v.total+' · SE PASÓ';
+    return String(v.total)+(v.soft && v.total!==21?' (blando)':'');
+  }
+
+  function updateScores(){
+    dealerScoreEl.textContent=scoreLabel(dealerHand, holeHidden);
+    playerScoreEl.textContent=scoreLabel(playerHand,false);
+  }
+
+  function revealHole(){ holeHidden=false; render(); }
+
+  function updateHud(){
+    hudBalance.textContent=String(balance);
+    hudBet.textContent=String(bet);
+    hudBest.textContent=String(best);
+  }
+
+  function updateChipStates(){
+    chipBtns.forEach(function(btn){
+      var v=parseInt(btn.dataset.v,10);
+      btn.disabled = phase!=='bet' || (bet+v>balance);
+    });
+    dealBtn.disabled = !(phase==='bet' && bet>0 && bet<=balance);
+    clearBetBtn.disabled = !(phase==='bet' && bet>0);
+    repeatBtn.disabled = !(phase==='bet' && bet===0 && lastBet>0 && lastBet<=balance);
+  }
+
+  function setMsg(text, cls){
+    msgArea.textContent=text||'';
+    msgArea.className='msg-area'+(cls?(' '+cls):'');
+  }
+
+  function showBetting(){
+    bettingUI.classList.remove('hidden');
+    actionsUI.classList.add('hidden');
+    resultUI.classList.add('hidden');
+    updateChipStates();
+  }
+  function showActions(){
+    bettingUI.classList.add('hidden');
+    actionsUI.classList.remove('hidden');
+    resultUI.classList.add('hidden');
+    updateActionButtons();
+  }
+  function showResult(){
+    bettingUI.classList.add('hidden');
+    actionsUI.classList.add('hidden');
+    resultUI.classList.remove('hidden');
+  }
+
+  function updateActionButtons(){
+    var canPlay = phase==='player';
+    hitBtn.disabled = !canPlay;
+    standBtn.disabled = !canPlay;
+    doubleBtn.disabled = !(canPlay && playerHand.length===2 && balance>=bet);
+  }
+
+  function addChip(v){
+    if(phase!=='bet') return;
+    if(bet+v>balance) return;
+    bet+=v;
+    updateHud();
+    updateChipStates();
+  }
+
+  function startRound(){
+    if(phase!=='bet' || bet<=0 || bet>balance) return;
+    balance-=bet;
+    lastBet=bet;
+    deck=freshDeck();
+    playerHand=[draw(),draw()];
+    dealerHand=[draw(),draw()];
+    holeHidden=true;
+    setMsg('','');
+    updateHud();
+    render();
+
+    var playerBJ=isBlackjack(playerHand);
+    var upCard=dealerHand[0];
+    var dealerMayHaveBJ=(upCard.rank==='A' || upCard.base===10);
+
+    if(playerBJ || dealerMayHaveBJ){
+      var dealerBJ=isBlackjack(dealerHand);
+      if(playerBJ || dealerBJ){
+        revealHole();
+        if(playerBJ && dealerBJ) return finishRound('push','EMPATE · BLACKJACK DOBLE');
+        if(playerBJ) return finishRound('blackjack','¡BLACKJACK! PAGA 3 A 2');
+        return finishRound('lose','BLACKJACK DEL DEALER');
+      }
+    }
+    phase='player';
+    showActions();
+  }
+
+  function hit(){
+    if(phase!=='player') return;
+    playerHand.push(draw());
+    render();
+    var v=handValue(playerHand).total;
+    if(v>21){ revealHole(); return finishRound('lose','TE PASASTE'); }
+    if(v===21){ return standFlow(); }
+    updateActionButtons();
+  }
+
+  function stand(){
+    if(phase!=='player') return;
+    standFlow();
+  }
+
+  function doubleDown(){
+    if(phase!=='player' || playerHand.length!==2 || balance<bet) return;
+    balance-=bet;
+    bet*=2;
+    updateHud();
+    playerHand.push(draw());
+    render();
+    var v=handValue(playerHand).total;
+    if(v>21){ revealHole(); return finishRound('lose','TE PASASTE (DOBLADA)'); }
+    standFlow();
+  }
+
+  function standFlow(){
+    phase='dealer';
+    updateActionButtons();
+    dealerTurn();
+  }
+
+  function dealerTurn(){
+    sleep(450).then(function(){
+      revealHole();
+      return sleep(500);
+    }).then(function step(){
+      if(handValue(dealerHand).total<17){
+        dealerHand.push(draw());
+        render();
+        return sleep(650).then(step);
+      }
+      resolveVsDealer();
+    });
+  }
+
+  function resolveVsDealer(){
+    var p=handValue(playerHand).total;
+    var d=handValue(dealerHand).total;
+    if(d>21) return finishRound('win','¡EL DEALER SE PASÓ! GANASTE');
+    if(d>p) return finishRound('lose','GANÓ EL DEALER');
+    if(d<p) return finishRound('win','¡GANASTE!');
+    return finishRound('push','EMPATE');
+  }
+
+  function finishRound(kind, label){
+    if(kind==='blackjack'){ balance+=bet+Math.round(bet*1.5); setMsg(label,'win'); }
+    else if(kind==='win'){ balance+=bet*2; setMsg(label,'win'); }
+    else if(kind==='push'){ balance+=bet; setMsg(label,'push'); }
+    else { setMsg(label,'lose'); }
+
+    if(balance>best){ best=balance; }
+    saveMoney();
+    bet=0;
+    phase='result';
+    updateHud();
+    updateActionButtons();
+    showResult();
+  }
+
+  function nextHand(){
+    playerHand=[]; dealerHand=[]; holeHidden=true;
+    render();
+    setMsg('','');
+    if(balance<MIN_CHIP){
+      brokeOverlay.classList.remove('hidden');
+      return;
+    }
+    phase='bet';
+    showBetting();
+  }
+
+  function start(){
+    overlay.classList.add('hidden');
+    nextHand();
+  }
+
+  function reloadChips(){
+    balance=START_BALANCE;
+    saveMoney();
+    updateHud();
+    brokeOverlay.classList.add('hidden');
+    phase='bet';
+    bet=0;
+    showBetting();
+  }
+
+  chipBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){ addChip(parseInt(btn.dataset.v,10)); });
+  });
+  clearBetBtn.addEventListener('click', function(){ bet=0; updateHud(); updateChipStates(); });
+  repeatBtn.addEventListener('click', function(){
+    if(phase==='bet' && bet===0 && lastBet>0 && lastBet<=balance){ bet=lastBet; updateHud(); updateChipStates(); }
+  });
+  dealBtn.addEventListener('click', startRound);
+  hitBtn.addEventListener('click', hit);
+  standBtn.addEventListener('click', stand);
+  doubleBtn.addEventListener('click', doubleDown);
+  nextBtn.addEventListener('click', nextHand);
+  startBtn.addEventListener('click', start);
+  reloadBtn.addEventListener('click', reloadChips);
+
+  window.addEventListener('keydown', function(e){
+    if(phase==='bet'){
+      if(e.key==='1'){ addChip(25); }
+      else if(e.key==='2'){ addChip(50); }
+      else if(e.key==='3'){ addChip(100); }
+      else if(e.key==='4'){ addChip(250); }
+      else if(e.key==='Backspace'){ bet=0; updateHud(); updateChipStates(); }
+      else if(e.key==='Enter' && bet>0){ e.preventDefault(); startRound(); }
+    } else if(phase==='player'){
+      if(e.key==='h'||e.key==='H'){ hit(); }
+      else if(e.key==='s'||e.key==='S'){ stand(); }
+      else if(e.key==='d'||e.key==='D'){ doubleDown(); }
+    } else if(phase==='result'){
+      if(e.key==='Enter'){ e.preventDefault(); nextHand(); }
+    }
+  });
+
+  updateHud();
+  render();
+})();
+</script>
+</body>
+</html>

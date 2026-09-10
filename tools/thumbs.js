@@ -110,7 +110,10 @@ const OVERRIDES = {
   "generala-neon": { steps: [".lvl-card", "#btnRoll"], wait: 500 },
   // Dos clicks en el canvas frenan potencia y efecto y tiran la bola: la
   // agarramos a mitad de camino por el carril, con los bolos de pie.
-  "bolos-neon": { steps: ["#startBtn", { canvas: [0.5, 0.2] }, { canvas: [0.5, 0.2] }], wait: 150 }
+  "bolos-neon": { steps: ["#startBtn", { canvas: [0.5, 0.2] }, { canvas: [0.5, 0.2] }], wait: 150 },
+  // Apostamos 200 fichas y repartimos para que la miniatura muestre cartas
+  // sobre la mesa (con la carta tapada del dealer), no sólo el menú de fichas.
+  "veintiuno-neon": { steps: ["#startBtn", "#chip100", "#chip100", "#dealBtn"], wait: 700 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

@@ -417,6 +417,13 @@
       desc: "Bolos con tiro a tiempo: frenás la barra de potencia y después la de efecto para tirar la bola por el carril y buscar el chuzo. 10 frames con el sistema de puntaje real de bolos (chuzos y spares suman los tiros extra), y récord guardado.",
       controles: "Tocá el canvas dos veces por tiro (potencia y efecto); espacio con teclado", fecha: "2026-09-09",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "veintiuno-neon", titulo: "Veintiuno Neón", archivo: "veintiuno-neon.html",
+      emoji: "♦️", categoria: "mental", tags: ["blackjack", "cartas", "casino", "apuestas", "dealer"],
+      desc: "Blackjack neón: pedí cartas para acercarte a 21 sin pasarte y ganale al dealer, que planta en 17. Apostá fichas, doblá la apuesta con tus dos primeras cartas y el blackjack natural (As + figura) paga 3 a 2.",
+      controles: "Click / toque en fichas y botones; teclas 1-4 apuestan, H/S/D juegan, Enter avanza", fecha: "2026-09-10",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

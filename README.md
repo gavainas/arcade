@@ -61,6 +61,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🔗 Flujo Neón | [`flujo-neon.html`](flujo-neon.html) | Flow: conectá cada par de puntos del mismo color trazando un cable sin cruzarte con otro camino. Ganás cuando cubrís todas las celdas del tablero. 8 niveles con grillas y cantidad de colores crecientes, generados al azar y siempre resolubles, con deshacer y contador de trazos. |
 | 🎲 Generala Neón | [`generala-neon.html`](generala-neon.html) | Generala clásica: tirá los 5 dados hasta 3 veces por turno, guardá los que te sirvan y anotá el resultado en la planilla de 10 categorías. 1 jugador contra tu propio récord, o de a dos pasando el turno en el mismo dispositivo. |
 | 🎳 Bolos Neón | [`bolos-neon.html`](bolos-neon.html) | Bolos con tiro a tiempo: frenás la barra de potencia y después la de efecto para tirar la bola por el carril y buscar el chuzo, con curva según el efecto y pozo si se va afuera. 10 frames con el sistema de puntaje real de bolos (chuzos y spares suman los tiros extra), planilla en pantalla y récord guardado. |
+| ♦️ Veintiuno Neón | [`veintiuno-neon.html`](veintiuno-neon.html) | Blackjack neón: pedí cartas para acercarte a 21 sin pasarte y ganale al dealer, que planta en 17. Apostá fichas, doblá la apuesta con tus dos primeras cartas y el blackjack natural (As + figura) paga 3 a 2. Banca de 500 fichas guardada en tu dispositivo, con récord de la mejor banca. |
 
 ## Sopa de Letras
 
