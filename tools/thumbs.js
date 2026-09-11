@@ -113,7 +113,10 @@ const OVERRIDES = {
   "bolos-neon": { steps: ["#startBtn", { canvas: [0.5, 0.2] }, { canvas: [0.5, 0.2] }], wait: 150 },
   // Apostamos 200 fichas y repartimos para que la miniatura muestre cartas
   // sobre la mesa (con la carta tapada del dealer), no sólo el menú de fichas.
-  "veintiuno-neon": { steps: ["#startBtn", "#chip100", "#chip100", "#dealBtn"], wait: 700 }
+  "veintiuno-neon": { steps: ["#startBtn", "#chip100", "#chip100", "#dealBtn"], wait: 700 },
+  // Elegimos dificultad para que la miniatura muestre las notas cayendo por
+  // los carriles, no sólo el menú de selección.
+  "ritmo-neon": { steps: [".lvl-card"], wait: 1300 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

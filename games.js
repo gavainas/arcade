@@ -424,6 +424,13 @@
       desc: "Blackjack neón: pedí cartas para acercarte a 21 sin pasarte y ganale al dealer, que planta en 17. Apostá fichas, doblá la apuesta con tus dos primeras cartas y el blackjack natural (As + figura) paga 3 a 2.",
       controles: "Click / toque en fichas y botones; teclas 1-4 apuestan, H/S/D juegan, Enter avanza", fecha: "2026-09-10",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "ritmo-neon", titulo: "Ritmo Neón", archivo: "ritmo-neon.html",
+      emoji: "🎧", categoria: "reflejos", tags: ["ritmo", "musica", "carriles", "combo", "precision"],
+      desc: "Las notas caen por 4 carriles: tocá el botón o la tecla del carril justo cuando la nota llegue a la línea. 3 dificultades con más BPM y densidad, combo con multiplicador y nota final S/A/B/C/D según tu precisión.",
+      controles: "Teclado D F J K o flechas; o tocá los botones de carril en pantalla", fecha: "2026-09-11",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
