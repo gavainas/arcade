@@ -431,6 +431,13 @@
       desc: "Las notas caen por 4 carriles: tocá el botón o la tecla del carril justo cuando la nota llegue a la línea. 3 dificultades con más BPM y densidad, combo con multiplicador y nota final S/A/B/C/D según tu precisión.",
       controles: "Teclado D F J K o flechas; o tocá los botones de carril en pantalla", fecha: "2026-09-11",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "crucigrama-neon", titulo: "Crucigrama Neón", archivo: "crucigrama-neon.html",
+      emoji: "📝", categoria: "palabras", tags: ["crucigrama", "palabras cruzadas", "pistas", "grilla"],
+      desc: "Crucigrama clásico: resolvé las pistas horizontales y verticales para completar la grilla, generada al azar entrelazando palabras que comparten letras. 3 dificultades con más palabras y menos pistas, cronómetro y récord de mejor tiempo por dificultad.",
+      controles: "Tocá una celda y escribí (toca de nuevo para cambiar de dirección); teclado y flechas también andan", fecha: "2026-09-12",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

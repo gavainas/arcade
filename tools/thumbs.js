@@ -116,7 +116,10 @@ const OVERRIDES = {
   "veintiuno-neon": { steps: ["#startBtn", "#chip100", "#chip100", "#dealBtn"], wait: 700 },
   // Elegimos dificultad para que la miniatura muestre las notas cayendo por
   // los carriles, no sólo el menú de selección.
-  "ritmo-neon": { steps: [".lvl-card"], wait: 1300 }
+  "ritmo-neon": { steps: [".lvl-card"], wait: 1300 },
+  // Elegimos dificultad para que la miniatura muestre la grilla con pistas
+  // numeradas, no sólo el menú de selección.
+  "crucigrama-neon": { steps: [".lvl-card"], wait: 600 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];
