@@ -438,6 +438,13 @@
       desc: "Crucigrama clásico: resolvé las pistas horizontales y verticales para completar la grilla, generada al azar entrelazando palabras que comparten letras. 3 dificultades con más palabras y menos pistas, cronómetro y récord de mejor tiempo por dificultad.",
       controles: "Tocá una celda y escribí (toca de nuevo para cambiar de dirección); teclado y flechas también andan", fecha: "2026-09-12",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "devora-neon", titulo: "Devora Neón", archivo: "devora-neon.html",
+      emoji: "👻", categoria: "arcade", tags: ["comecocos", "laberinto", "fantasmas", "persecucion"],
+      desc: "Laberinto tipo comecocos: recorré el tablero comiendo todos los puntos mientras esquivás a los fantasmas neón que te persiguen. Las píldoras de las esquinas los vuelven vulnerables por unos segundos, ¡comételos para puntos extra! Niveles con más fantasmas y más velocidad.",
+      controles: "Flechas / WASD o los botones en pantalla; deslizá el dedo en el canvas", fecha: "2026-09-13",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

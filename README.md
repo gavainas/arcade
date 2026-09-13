@@ -64,6 +64,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ♦️ Veintiuno Neón | [`veintiuno-neon.html`](veintiuno-neon.html) | Blackjack neón: pedí cartas para acercarte a 21 sin pasarte y ganale al dealer, que planta en 17. Apostá fichas, doblá la apuesta con tus dos primeras cartas y el blackjack natural (As + figura) paga 3 a 2. Banca de 500 fichas guardada en tu dispositivo, con récord de la mejor banca. |
 | 🎧 Ritmo Neón | [`ritmo-neon.html`](ritmo-neon.html) | Rhythm game de 4 carriles: tocá el botón o la tecla D/F/J/K justo cuando la nota cruce la línea de golpe. 3 dificultades con más BPM y densidad, combo con multiplicador y una nota final S/A/B/C/D según tu precisión. |
 | 📝 Crucigrama Neón | [`crucigrama-neon.html`](crucigrama-neon.html) | Crucigrama clásico: resolvé las pistas horizontales y verticales para completar la grilla, generada al azar entrelazando palabras que comparten letras. 3 dificultades con más palabras y menos pistas, cronómetro y récord de mejor tiempo. |
+| 👻 Devora Neón | [`devora-neon.html`](devora-neon.html) | Laberinto tipo comecocos: recorré el tablero comiendo todos los puntos mientras esquivás a los fantasmas neón que te persiguen. Las píldoras de las esquinas los vuelven vulnerables por unos segundos, comételos para puntos extra. Niveles con más fantasmas y más velocidad. |
 
 ## Sopa de Letras
 

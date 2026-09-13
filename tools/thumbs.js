@@ -119,7 +119,10 @@ const OVERRIDES = {
   "ritmo-neon": { steps: [".lvl-card"], wait: 1300 },
   // Elegimos dificultad para que la miniatura muestre la grilla con pistas
   // numeradas, no sólo el menú de selección.
-  "crucigrama-neon": { steps: [".lvl-card"], wait: 600 }
+  "crucigrama-neon": { steps: [".lvl-card"], wait: 600 },
+  // Dejamos correr un ratito para que la miniatura muestre el laberinto con
+  // el pac neón, los fantasmas y varios puntos ya comidos.
+  "devora-neon": { steps: ["#startBtn"], wait: 1600 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

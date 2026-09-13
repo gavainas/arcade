@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DEVORA NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --orange:#ff9838;
+    --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(28px,7vw,48px); font-weight:900; letter-spacing:3px; line-height:1;
+    background:linear-gradient(90deg,var(--gold),var(--pink),var(--purple),var(--gold));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,210,59,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--pink); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11.5px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.liv b{color:var(--pink);}
+  .hud .box.lvl b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(57,255,158,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px;
+    background:rgba(5,7,15,.88); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,5.6vw,32px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--gold),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,210,59,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr 1fr; gap:7px 14px; font-size:12px; color:var(--ink); text-align:left; max-width:360px;}
+  .legend span{display:flex; align-items:center; gap:7px;}
+  .dot{width:12px; height:12px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--gold),var(--pink)); box-shadow:0 8px 24px rgba(255,210,59,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,210,59,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+
+  .dpad{display:grid; grid-template-columns:44px 44px 44px; grid-template-rows:44px 44px 44px; gap:5px; margin:16px auto 0; width:fit-content;}
+  .dpad button{border:1px solid rgba(138,75,255,.4); background:rgba(20,28,58,.75); color:var(--cyan);
+    border-radius:10px; font-size:18px; cursor:pointer; -webkit-user-select:none; user-select:none;}
+  .dpad button:active{background:rgba(39,232,255,.25);}
+  .dpad .up{grid-column:2; grid-row:1;} .dpad .left{grid-column:1; grid-row:2;}
+  .dpad .right{grid-column:3; grid-row:2;} .dpad .down{grid-column:2; grid-row:3;}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">DEVORA NEÓN</div>
+      <div class="sub">L A B E R I N T O &nbsp; · &nbsp; F A N T A S M A S</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">PUNTOS<b id="score">0</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+      <div class="box liv">VIDAS<b id="lives">3</b></div>
+      <div class="box lvl">NIVEL<b id="level">1</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="408" height="456"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">DEVORA NEÓN</h2>
+        <p id="ovText">Recorré el laberinto y comé todos los puntos esquivando a los fantasmas. Las píldoras grandes los vuelven vulnerables por unos segundos: ¡comételos para puntos extra!</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Punto · +10</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Píldora · +50 y modo caza</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Fantasma normal · pierde vida</span>
+          <span><i class="dot" style="color:#1b2a6b;background:#1b2a6b;border:1px solid #6f8bff"></i> Fantasma vulnerable · comelo</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Flechas / WASD · o los botones de abajo.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Flechas o <b>WASD</b> · <b>P</b> pausa.</div>
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+
+    <div class="dpad" id="dpad">
+      <button class="up" data-dx="0" data-dy="-1">▲</button>
+      <button class="left" data-dx="-1" data-dy="0">◀</button>
+      <button class="right" data-dx="1" data-dy="0">▶</button>
+      <button class="down" data-dx="0" data-dy="1">▼</button>
+    </div>
+
+    <footer>NEON ARCADE · Devora Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const COLS=17, ROWS=19, CELL=canvas.width/COLS;
+  const MID_ROW=Math.floor(ROWS/2); // fila abierta de punta a punta (túnel + casa de fantasmas)
+  const HOME={col:8,row:MID_ROW};
+
+  const scoreEl=document.getElementById('score');
+  const bestEl=document.getElementById('best');
+  const livesEl=document.getElementById('lives');
+  const levelEl=document.getElementById('level');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+  const dpad=document.getElementById('dpad');
+
+  const BEST_KEY='neon-devora-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  bestEl.textContent=best;
+
+  const COLORS={
+    wall:'#39ff9e', pellet:'#27e8ff', power:'#ffd23b', player:'#ffd23b',
+    ghosts:['#ff2bd6','#ff5470','#8a4bff','#ff9838'],
+    frBody:'#1b2a6b', frFlash:'#ffffff'
+  };
+
+  const DIRS=[{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
+
+  // ---- Maze ----
+  let grid, floorCells, pelletsLeft;
+  function buildMaze(){
+    grid=[];
+    for(let r=0;r<ROWS;r++){
+      const row=[];
+      for(let c=0;c<COLS;c++){
+        const border=(r===0||r===ROWS-1||c===0||c===COLS-1);
+        let wall=false;
+        if(border){ wall=!(r===MID_ROW && (c===0||c===COLS-1)); }
+        else if(r%2===0 && c%2===0){ wall=true; }
+        row.push({wall, pellet:!wall, power:false});
+      }
+      grid.push(row);
+    }
+    const corners=[[1,1],[1,COLS-2],[ROWS-2,1],[ROWS-2,COLS-2]];
+    corners.forEach(([r,c])=>{ grid[r][c].power=true; grid[r][c].pellet=false; });
+    floorCells=[];
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(!grid[r][c].wall) floorCells.push({col:c,row:r});
+  }
+  function clearPelletAt(r,c){ grid[r][c].pellet=false; grid[r][c].power=false; }
+  function isWall(col,row){
+    if(row<0||row>=ROWS) return true;
+    col=((col%COLS)+COLS)%COLS;
+    return grid[row][col].wall;
+  }
+  function countPellets(){
+    let n=0;
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(grid[r][c].pellet||grid[r][c].power) n++;
+    return n;
+  }
+
+  // ---- Entidades ----
+  const PLAYER_START={col:8,row:15};
+  const GHOST_COLS=[7,9,6,10];
+  let player, ghosts, level, score, lives, comboMult, frightenedTimer, freezeTimer, gameState, animT;
+
+  function speedForLevel(lv){ return Math.min(5.4, 3.6+lv*0.15); }
+  function frightDurationForLevel(lv){ return Math.max(3000, 7000-lv*350); }
+  function ghostCountForLevel(lv){ return lv>=6?4:(lv>=3?3:2); }
+
+  function makePlayer(){
+    return {px:PLAYER_START.col, py:PLAYER_START.row, dir:{x:0,y:0}, nextDir:{x:-1,y:0}, lastDir:{x:-1,y:0}, speed:5.2};
+  }
+  function makeGhosts(){
+    const n=ghostCountForLevel(level);
+    const arr=[];
+    const personalities=['chaser','ambusher','random','shy'];
+    for(let i=0;i<n;i++){
+      arr.push({
+        px:GHOST_COLS[i], py:MID_ROW, dir:{x:(i%2?1:-1),y:0}, color:COLORS.ghosts[i],
+        personality:personalities[i], mode:'chase', speed:speedForLevel(level)
+      });
+    }
+    return arr;
+  }
+
+  function placeEntities(){
+    player=makePlayer();
+    ghosts=makeGhosts();
+  }
+
+  function startLevel(freshLives){
+    buildMaze();
+    clearPelletAt(PLAYER_START.row,PLAYER_START.col);
+    GHOST_COLS.slice(0,ghostCountForLevel(level)).forEach(c=>clearPelletAt(MID_ROW,c));
+    pelletsLeft=countPellets();
+    placeEntities();
+    comboMult=1; frightenedTimer=0; freezeTimer=1100; animT=0;
+    scoreEl.textContent=score;
+    levelEl.textContent=level;
+    livesEl.textContent=lives;
+  }
+
+  function resetGame(){
+    level=1; score=0; lives=3;
+    startLevel(true);
+  }
+
+  // ---- Movimiento ----
+  const CENTER_EPS=0.06;
+  function atCenter(e){ return Math.abs(e.px-Math.round(e.px))<CENTER_EPS && Math.abs(e.py-Math.round(e.py))<CENTER_EPS; }
+
+  function movePlayer(dt){
+    if(atCenter(player)){
+      const col=Math.round(player.px), row=Math.round(player.py);
+      player.px=col; player.py=row;
+      if(grid[row][col].pellet||grid[row][col].power) eatPellet(row,col);
+      const nd=player.nextDir;
+      if(nd && !(nd.x===0&&nd.y===0) && !isWall(col+nd.x,row+nd.y)) player.dir=nd;
+      if((player.dir.x||player.dir.y) && isWall(col+player.dir.x,row+player.dir.y)) player.dir={x:0,y:0};
+    }
+    if(player.dir.x||player.dir.y) player.lastDir=player.dir;
+    player.px+=player.dir.x*player.speed*dt;
+    player.py+=player.dir.y*player.speed*dt;
+    if(player.px<-0.5) player.px+=COLS; else if(player.px>COLS-0.5) player.px-=COLS;
+  }
+
+  function eatPellet(row,col){
+    const cell=grid[row][col];
+    if(cell.power){
+      score+=50; comboMult=1;
+      frightenedTimer=frightDurationForLevel(level);
+      ghosts.forEach(g=>{ if(g.mode!=='eaten'){ g.mode='frightened'; g.dir={x:-g.dir.x,y:-g.dir.y}; } });
+    } else { score+=10; }
+    cell.pellet=false; cell.power=false;
+    pelletsLeft--;
+    scoreEl.textContent=score;
+    if(pelletsLeft<=0) levelClear();
+  }
+
+  function ghostTarget(g){
+    if(g.mode==='eaten') return HOME;
+    const pc=Math.round(player.px), pr=Math.round(player.py);
+    if(g.personality==='ambusher'){
+      return {col:pc+player.lastDir.x*4, row:pr+player.lastDir.y*4};
+    }
+    if(g.personality==='random'){
+      if(Math.random()<0.4) return floorCells[Math.floor(Math.random()*floorCells.length)];
+      return {col:pc,row:pr};
+    }
+    if(g.personality==='shy'){
+      const d=Math.hypot(g.px-pc,g.py-pr);
+      if(d>6) return {col:pc,row:pr};
+      return {col:COLS-2,row:ROWS-2};
+    }
+    return {col:pc,row:pr};
+  }
+
+  function chooseGhostDir(g){
+    const col=Math.round(g.px), row=Math.round(g.py);
+    let opts=DIRS.filter(d=> !(d.x===-g.dir.x&&d.y===-g.dir.y) && !isWall(col+d.x,row+d.y));
+    if(!opts.length){
+      const rev={x:-g.dir.x,y:-g.dir.y};
+      if(!isWall(col+rev.x,row+rev.y)) opts=[rev]; else return g.dir;
+    }
+    if(g.mode==='frightened') return opts[Math.floor(Math.random()*opts.length)];
+    const target=ghostTarget(g);
+    let best=null,bestD=Infinity;
+    for(const d of opts){
+      const nc=col+d.x, nr=row+d.y;
+      const dist=(nc-target.col)*(nc-target.col)+(nr-target.row)*(nr-target.row);
+      if(dist<bestD){ bestD=dist; best=d; }
+    }
+    return best;
+  }
+
+  function moveGhost(g,dt){
+    if(atCenter(g)){
+      const col=Math.round(g.px), row=Math.round(g.py);
+      g.px=col; g.py=row;
+      if(g.mode==='eaten' && col===HOME.col && row===HOME.row){
+        g.mode=frightenedTimer>0?'frightened':'chase';
+      }
+      g.dir=chooseGhostDir(g);
+    }
+    let sp=g.speed;
+    if(g.mode==='frightened') sp=g.speed*0.6;
+    else if(g.mode==='eaten') sp=g.speed*1.7;
+    g.px+=g.dir.x*sp*dt;
+    g.py+=g.dir.y*sp*dt;
+    if(g.px<-0.5) g.px+=COLS; else if(g.px>COLS-0.5) g.px-=COLS;
+  }
+
+  function checkCollisions(){
+    for(const g of ghosts){
+      const d=Math.hypot(g.px-player.px,g.py-player.py);
+      if(d<0.6){
+        if(g.mode==='frightened'){
+          g.mode='eaten';
+          score+=200*comboMult; comboMult=Math.min(8,comboMult*2);
+          scoreEl.textContent=score;
+        } else if(g.mode!=='eaten'){
+          loseLife();
+          return;
+        }
+      }
+    }
+  }
+
+  function loseLife(){
+    lives--;
+    livesEl.textContent=Math.max(0,lives);
+    if(lives<=0){ gameOver(); return; }
+    placeEntities();
+    freezeTimer=1100;
+  }
+
+  function levelClear(){
+    freezeTimer=1600;
+    ovTitle.textContent='¡NIVEL '+level+' LIMPIO!';
+    ovText.innerHTML='<span class="final">Puntaje: <b>'+score+'</b></span><br>Preparate para el siguiente laberinto…';
+    legend.style.display='none';
+    startBtn.style.display='none';
+    ovHint.textContent='';
+    overlay.classList.remove('hidden');
+    setTimeout(()=>{
+      level++;
+      startLevel();
+      overlay.classList.add('hidden');
+      startBtn.style.display='';
+    }, 1700);
+  }
+
+  function gameOver(){
+    gameState='over'; running=false;
+    const isRec=score>0 && score>=best;
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    ovTitle.textContent='GAME OVER';
+    legend.style.display='none';
+    ovText.innerHTML='<span class="final">Puntaje: <b>'+score+'</b></span>'+
+      (isRec?'<br><span class="newrec">¡NUEVO RÉCORD!</span>':'<br>Récord: '+best);
+    startBtn.textContent='JUGAR DE NUEVO';
+    startBtn.style.display='';
+    ovHint.textContent='Flechas / WASD · o los botones de abajo.';
+    overlay.classList.remove('hidden');
+  }
+
+  // ---- Loop ----
+  let running=false, paused=false, started=false, last=0;
+
+  function start(){
+    resetGame();
+    started=true; running=true; paused=false; gameState='play';
+    overlay.classList.add('hidden');
+    legend.style.display='';
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function loop(t){
+    if(!running){ return; }
+    const dt=Math.min(0.033,(t-last)/1000); last=t; animT+=dt*1000;
+    if(!paused){
+      if(freezeTimer>0){ freezeTimer-=dt*1000; }
+      else{
+        movePlayer(dt);
+        ghosts.forEach(g=>moveGhost(g,dt));
+        checkCollisions();
+        if(frightenedTimer>0){
+          frightenedTimer-=dt*1000;
+          if(frightenedTimer<=0){ frightenedTimer=0; ghosts.forEach(g=>{ if(g.mode==='frightened') g.mode='chase'; }); }
+        }
+      }
+    }
+    draw();
+    if(running) requestAnimationFrame(loop);
+  }
+
+  // ---- Render ----
+  function draw(){
+    ctx.fillStyle='#05070f';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    drawMaze();
+    drawPlayer();
+    ghosts.forEach(drawGhost);
+    if(paused) drawPause();
+    if(freezeTimer>0 && gameState==='play' && running) drawReady();
+  }
+
+  function drawMaze(){
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const cell=grid[r][c];
+        const x=c*CELL, y=r*CELL;
+        if(cell.wall){
+          ctx.save();
+          ctx.shadowBlur=6; ctx.shadowColor=COLORS.wall;
+          ctx.fillStyle='rgba(57,255,158,.22)';
+          ctx.fillRect(x+1.5,y+1.5,CELL-3,CELL-3);
+          ctx.strokeStyle=COLORS.wall; ctx.lineWidth=1.4;
+          ctx.strokeRect(x+1.5,y+1.5,CELL-3,CELL-3);
+          ctx.restore();
+        } else if(cell.power){
+          const pulse=1+.25*Math.sin(animT/140);
+          ctx.save();
+          ctx.shadowBlur=14; ctx.shadowColor=COLORS.power; ctx.fillStyle=COLORS.power;
+          ctx.beginPath(); ctx.arc(x+CELL/2,y+CELL/2,CELL*0.24*pulse,0,Math.PI*2); ctx.fill();
+          ctx.restore();
+        } else if(cell.pellet){
+          ctx.save();
+          ctx.shadowBlur=6; ctx.shadowColor=COLORS.pellet; ctx.fillStyle=COLORS.pellet;
+          ctx.beginPath(); ctx.arc(x+CELL/2,y+CELL/2,CELL*0.09,0,Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  function drawPlayer(){
+    const cx=(player.px+0.5)*CELL, cy=(player.py+0.5)*CELL;
+    const facing=Math.atan2(player.lastDir.y,player.lastDir.x);
+    const moving=(player.dir.x||player.dir.y);
+    const mouth=moving? (0.06+0.16*Math.abs(Math.sin(animT/100))) : 0.16;
+    const half=mouth*Math.PI;
+    ctx.save();
+    ctx.translate(cx,cy); ctx.rotate(facing);
+    ctx.shadowBlur=14; ctx.shadowColor=COLORS.player; ctx.fillStyle=COLORS.player;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,CELL*0.42,half,Math.PI*2-half);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function ghostPath(cx,cy,r){
+    ctx.beginPath();
+    ctx.arc(cx,cy-r*0.12,r,Math.PI,0,false);
+    const waves=4, step=(2*r)/waves, baseY=cy+r*0.82;
+    ctx.lineTo(cx+r,baseY-5);
+    for(let i=0;i<waves;i++){
+      const xMid=cx+r-step*(i+0.5);
+      const xEnd=cx+r-step*(i+1);
+      ctx.quadraticCurveTo(xMid, i%2?baseY+6:baseY-9, xEnd, baseY-5);
+    }
+    ctx.lineTo(cx-r,cy-r*0.12);
+    ctx.closePath();
+  }
+
+  function drawGhost(g){
+    const cx=(g.px+0.5)*CELL, cy=(g.py+0.5)*CELL, r=CELL*0.42;
+    let color=g.color;
+    if(g.mode==='frightened'){
+      color=(frightenedTimer<1200 && Math.floor(animT/150)%2===0)?COLORS.frFlash:COLORS.frBody;
+    }
+    if(g.mode!=='eaten'){
+      ctx.save();
+      ctx.shadowBlur=13; ctx.shadowColor=color; ctx.fillStyle=color;
+      ghostPath(cx,cy,r); ctx.fill();
+      ctx.restore();
+    }
+    const dir=(g.dir.x||g.dir.y)?g.dir:{x:0,y:1};
+    const ex=r*0.30, ey=-r*0.08;
+    [[-ex,ey],[ex,ey]].forEach(([ox,oy])=>{
+      ctx.fillStyle='#eafcff';
+      ctx.beginPath(); ctx.ellipse(cx+ox,cy+oy,r*0.19,r*0.24,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle= g.mode==='frightened' ? '#274bff' : '#0b1030';
+      ctx.beginPath(); ctx.arc(cx+ox+dir.x*r*0.09,cy+oy+dir.y*r*0.09,r*0.095,0,Math.PI*2); ctx.fill();
+    });
+  }
+
+  function drawPause(){
+    ctx.save();
+    ctx.fillStyle='rgba(5,7,15,.6)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#27e8ff';
+    ctx.font='900 28px "Segoe UI",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowBlur=16; ctx.shadowColor='#27e8ff';
+    ctx.fillText('PAUSA', canvas.width/2, canvas.height/2);
+    ctx.restore();
+  }
+
+  function drawReady(){
+    ctx.save();
+    ctx.fillStyle='#ffd23b'; ctx.font='900 22px "Segoe UI",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowBlur=14; ctx.shadowColor='#ffd23b';
+    ctx.fillText('¡LISTOS!', canvas.width/2, canvas.height/2);
+    ctx.restore();
+  }
+
+  // ---- Controles ----
+  function turn(dx,dy){
+    if(!started){ start(); return; }
+    if(!running||paused) return;
+    if(player.dir.x===-dx && player.dir.y===-dy && (dx||dy)) player.dir={x:dx,y:dy};
+    player.nextDir={x:dx,y:dy};
+  }
+  function togglePause(){
+    if(!running) return;
+    paused=!paused; pauseBtn.textContent=paused?'Seguir':'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+
+  window.addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
+    if(!started){ if(k===' '||k==='enter') start(); return; }
+    if(k==='arrowup'||k==='w') turn(0,-1);
+    else if(k==='arrowdown'||k==='s') turn(0,1);
+    else if(k==='arrowleft'||k==='a') turn(-1,0);
+    else if(k==='arrowright'||k==='d') turn(1,0);
+    else if(k==='p') togglePause();
+    else if((k===' '||k==='enter') && gameState==='over') start();
+  });
+
+  // Táctil: swipe sobre el canvas
+  let tsx=0,tsy=0,tActive=false;
+  canvas.addEventListener('touchstart',e=>{ const t=e.touches[0]; tsx=t.clientX; tsy=t.clientY; tActive=true; },{passive:true});
+  canvas.addEventListener('touchmove',e=>{
+    if(!tActive) return;
+    const t=e.touches[0]; const dx=t.clientX-tsx, dy=t.clientY-tsy;
+    if(Math.hypot(dx,dy)<22) return;
+    if(Math.abs(dx)>Math.abs(dy)) turn(dx>0?1:-1,0); else turn(0,dy>0?1:-1);
+    tsx=t.clientX; tsy=t.clientY;
+  },{passive:true});
+  canvas.addEventListener('touchend',()=>{ tActive=false; },{passive:true});
+
+  // D-pad
+  dpad.querySelectorAll('button').forEach(btn=>{
+    const dx=parseInt(btn.dataset.dx,10), dy=parseInt(btn.dataset.dy,10);
+    const fire=(ev)=>{ ev.preventDefault(); turn(dx,dy); };
+    btn.addEventListener('click',fire);
+    btn.addEventListener('touchstart',fire,{passive:false});
+  });
+
+  startBtn.addEventListener('click',start);
+  pauseBtn.addEventListener('click',togglePause);
+
+  // ---- Dibujo inicial ----
+  level=1; score=0; lives=3;
+  buildMaze();
+  clearPelletAt(PLAYER_START.row,PLAYER_START.col);
+  GHOST_COLS.slice(0,2).forEach(c=>clearPelletAt(MID_ROW,c));
+  placeEntities();
+  animT=0; freezeTimer=0; started=false; running=false; gameState='idle';
+  draw();
+})();
+</script>
+</body>
+</html>
