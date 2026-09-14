@@ -445,6 +445,13 @@
       desc: "Laberinto tipo comecocos: recorré el tablero comiendo todos los puntos mientras esquivás a los fantasmas neón que te persiguen. Las píldoras de las esquinas los vuelven vulnerables por unos segundos, ¡comételos para puntos extra! Niveles con más fantasmas y más velocidad.",
       controles: "Flechas / WASD o los botones en pantalla; deslizá el dedo en el canvas", fecha: "2026-09-13",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "circuito-neon", titulo: "Circuito Neón", archivo: "circuito-neon.html",
+      emoji: "🔌", categoria: "logica", tags: ["circuito", "cables", "rotar", "conexion", "grilla"],
+      desc: "Puzzle de cables: girá cada pieza 90° para reconectar la red desde la fuente ⚡ hasta encender todas las bombillas 💡. 8 niveles con grillas y cantidad de bombillas crecientes, generados al azar sobre un árbol de expansión (siempre resolubles), con deshacer y contador de giros.",
+      controles: "Click / toque gira un cable; flechas mueven el foco y Enter/espacio lo gira", fecha: "2026-09-14",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

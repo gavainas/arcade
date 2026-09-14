@@ -122,7 +122,10 @@ const OVERRIDES = {
   "crucigrama-neon": { steps: [".lvl-card"], wait: 600 },
   // Dejamos correr un ratito para que la miniatura muestre el laberinto con
   // el pac neón, los fantasmas y varios puntos ya comidos.
-  "devora-neon": { steps: ["#startBtn"], wait: 1600 }
+  "devora-neon": { steps: ["#startBtn"], wait: 1600 },
+  // Elegimos un nivel y giramos un par de cables para que la miniatura
+  // muestre el tablero con piezas ya rotadas, no sólo la grilla de inicio.
+  "circuito-neon": { steps: [".lvl-card", ".cell", ".cell"], wait: 400 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

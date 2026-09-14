@@ -65,6 +65,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🎧 Ritmo Neón | [`ritmo-neon.html`](ritmo-neon.html) | Rhythm game de 4 carriles: tocá el botón o la tecla D/F/J/K justo cuando la nota cruce la línea de golpe. 3 dificultades con más BPM y densidad, combo con multiplicador y una nota final S/A/B/C/D según tu precisión. |
 | 📝 Crucigrama Neón | [`crucigrama-neon.html`](crucigrama-neon.html) | Crucigrama clásico: resolvé las pistas horizontales y verticales para completar la grilla, generada al azar entrelazando palabras que comparten letras. 3 dificultades con más palabras y menos pistas, cronómetro y récord de mejor tiempo. |
 | 👻 Devora Neón | [`devora-neon.html`](devora-neon.html) | Laberinto tipo comecocos: recorré el tablero comiendo todos los puntos mientras esquivás a los fantasmas neón que te persiguen. Las píldoras de las esquinas los vuelven vulnerables por unos segundos, comételos para puntos extra. Niveles con más fantasmas y más velocidad. |
+| 🔌 Circuito Neón | [`circuito-neon.html`](circuito-neon.html) | Net/pipe puzzle: girá cada pieza de cable 90° para reconectar la red eléctrica desde la fuente ⚡ hasta encender todas las bombillas 💡. 8 niveles con grillas y cantidad de bombillas crecientes, generados al azar sobre un árbol de expansión (siempre resolubles), con deshacer y contador de giros. |
 
 ## Sopa de Letras
 
