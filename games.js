@@ -445,6 +445,13 @@
       desc: "Laberinto tipo comecocos: recorré el tablero comiendo todos los puntos mientras esquivás a los fantasmas neón que te persiguen. Las píldoras de las esquinas los vuelven vulnerables por unos segundos, ¡comételos para puntos extra! Niveles con más fantasmas y más velocidad.",
       controles: "Flechas / WASD o los botones en pantalla; deslizá el dedo en el canvas", fecha: "2026-09-13",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "cajas-neon", titulo: "Cajas Neón", archivo: "cajas-neon.html",
+      emoji: "🔲", categoria: "logica", tags: ["dots and boxes", "puntos y cajas", "lineas", "estrategia", "2 jugadores"],
+      desc: "Puntos y Cajas: por turnos trazá una línea entre dos puntos vecinos de la grilla; si completás los 4 lados de una caja te la quedás y jugás de nuevo. Tablero de 4×4 (16 cajas); gana quien tenga más al terminarse las líneas. Contra una CPU con 3 dificultades (la difícil sacrifica cajas a propósito para no perder el control de la partida) o de a dos en el mismo dispositivo.",
+      controles: "Click / toque cerca de una línea para dibujarla; flechas + Enter con teclado", fecha: "2026-09-15",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

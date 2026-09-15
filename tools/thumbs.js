@@ -122,7 +122,17 @@ const OVERRIDES = {
   "crucigrama-neon": { steps: [".lvl-card"], wait: 600 },
   // Dejamos correr un ratito para que la miniatura muestre el laberinto con
   // el pac neón, los fantasmas y varios puntos ya comidos.
-  "devora-neon": { steps: ["#startBtn"], wait: 1600 }
+  "devora-neon": { steps: ["#startBtn"], wait: 1600 },
+  // Modo 2 jugadores y las 4 líneas de una caja para que la miniatura muestre
+  // una caja ya capturada y no sólo la grilla vacía.
+  "cajas-neon": {
+    steps: [
+      '[data-mode="2p"]', "#startBtn",
+      { canvas: [0.396, 0.293] }, { canvas: [0.396, 0.5] },
+      { canvas: [0.293, 0.396] }, { canvas: [0.5, 0.396] }
+    ],
+    wait: 400
+  }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

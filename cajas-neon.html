@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CAJAS NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:440px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 6px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; letter-spacing:1px; margin-top:2px;}
+  .hud .box.p1 b{color:var(--cyan);}
+  .hud .box.p2 b{color:var(--pink);}
+  .hud .box.rec b{color:var(--gold);}
+
+  .turn{text-align:center; margin:2px 0 6px; font-size:14px; font-weight:800; letter-spacing:1px; min-height:20px;}
+  .turn.p1{color:var(--cyan);}
+  .turn.p2{color:var(--pink);}
+  .turn.warn{color:var(--gold);}
+
+  .score{display:flex; justify-content:center; align-items:center; gap:22px; margin:0 0 10px; font-size:14px; font-weight:800;}
+  .score .chip{display:flex; align-items:center; gap:7px;}
+  .score .chip b{font-size:20px;}
+  .score .p1{color:var(--cyan);}
+  .score .p2{color:var(--pink);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  canvas{display:block; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none; width:100%; height:auto; max-width:400px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px 16px; gap:9px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:2; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(19px,5.6vw,27px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:320px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:5px; font-size:11.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:13px; height:13px; border-radius:4px; flex:none; box-shadow:0 0 10px currentColor;}
+  .modes{display:flex; flex-direction:column; gap:7px; width:100%; max-width:290px; margin-top:2px;}
+  .modelbl{font-size:11px; letter-spacing:1.5px; color:var(--muted); margin-top:4px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.3);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.hidden{display:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none;}
+  .btn.ghost.active{border-color:var(--cyan); color:var(--cyan); background:rgba(39,232,255,.14);}
+  .diffrow{display:flex; gap:8px;}
+  .diffrow .btn{flex:1; padding:10px 6px; font-size:12px;}
+  .final{font-size:14px; color:var(--ink);}
+  .final b{font-size:19px;}
+  .newrec{color:var(--gold); font-weight:800; display:block; margin-top:4px;}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">CAJAS NEÓN</div>
+      <div class="sub">4 × 4 &nbsp;·&nbsp; 16 CAJAS</div>
+    </header>
+
+    <div class="hud">
+      <div class="box p1">VICTORIAS<b id="p1wins">0</b></div>
+      <div class="box rec">RACHA RÉCORD<b id="chainRec">0</b></div>
+      <div class="box p2">RIVAL<b id="p2wins">0</b></div>
+    </div>
+    <div class="turn" id="turnText">&nbsp;</div>
+    <div class="score">
+      <span class="chip p1"><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> <b id="scoreP1">0</b></span>
+      <span class="chip p2"><i class="dot" style="color:var(--pink);background:var(--pink)"></i> <b id="scoreP2">0</b></span>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="400" height="400"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">CAJAS NEÓN</h2>
+        <p id="ovText">Por turnos, trazá una línea entre dos puntos vecinos de la grilla. Si tu línea completa los 4 lados de una caja, te la quedás y jugás de nuevo; si no completás ninguna, le pasás el turno al rival. Cuando se dibujan todas las líneas, gana quien tenga más cajas.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Tus cajas y líneas</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Cajas y líneas rivales</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Línea resaltada: tu cursor</span>
+        </div>
+        <div class="modes" id="modeButtons">
+          <div class="modelbl">VS COMPUTADORA</div>
+          <div class="diffrow">
+            <button class="btn ghost" data-mode="cpu" data-diff="facil">FÁCIL</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="medio">MEDIO</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="dificil">DIFÍCIL</button>
+          </div>
+          <div class="modelbl">O DE A DOS</div>
+          <button class="btn ghost" data-mode="2p">2 JUGADORES</button>
+        </div>
+        <button class="btn hidden" id="startBtn">JUGAR ▶</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Click / toque en una línea para dibujarla · flechas + <b>ENTER</b> con teclado.</div>
+      <button class="mini" id="restartBtn">Reiniciar</button>
+    </div>
+
+    <footer>NEON ARCADE · Cajas Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  "use strict";
+  const BX=4, BY=4; // cajas: 4 columnas x 4 filas
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const PAD=34;
+  const CELL=(W-PAD*2)/BX;
+
+  const p1winsEl=document.getElementById('p1wins');
+  const p2winsEl=document.getElementById('p2wins');
+  const chainRecEl=document.getElementById('chainRec');
+  const turnText=document.getElementById('turnText');
+  const scoreP1=document.getElementById('scoreP1');
+  const scoreP2=document.getElementById('scoreP2');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const legend=document.getElementById('legend');
+  const modeButtons=document.getElementById('modeButtons');
+  const startBtn=document.getElementById('startBtn');
+  const restartBtn=document.getElementById('restartBtn');
+
+  const COLORS={1:'#27e8ff', 2:'#ff2bd6'};
+  const GLOW={1:'rgba(39,232,255,.85)', 2:'rgba(255,43,214,.85)'};
+  const FILL={1:'rgba(39,232,255,.16)', 2:'rgba(255,43,214,.16)'};
+
+  const STATS_KEY='neon-cajas-stats';
+  const CHAIN_KEY='neon-cajas-chain';
+  function loadStats(){
+    try{ return JSON.parse(localStorage.getItem(STATS_KEY))||{p1:0,p2:0,ties:0}; }
+    catch(e){ return {p1:0,p2:0,ties:0}; }
+  }
+  let stats=loadStats();
+  function saveStats(){ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
+  function loadChainRecord(){
+    const v=parseInt(localStorage.getItem(CHAIN_KEY),10);
+    return isNaN(v)?0:v;
+  }
+  let chainRecord=loadChainRecord();
+  function saveChainRecord(){ localStorage.setItem(CHAIN_KEY, String(chainRecord)); }
+  function renderStats(){
+    p1winsEl.textContent=stats.p1;
+    p2winsEl.textContent=stats.p2;
+    chainRecEl.textContent=chainRecord;
+  }
+  renderStats();
+
+  // ---------- Reglas del juego (Puntos y Cajas / Dots and Boxes) ----------
+  // horiz[r][c]: línea horizontal entre punto(r,c) y punto(r,c+1). r:0..BY, c:0..BX-1
+  // vert[r][c]: línea vertical entre punto(r,c) y punto(r+1,c). r:0..BY-1, c:0..BX
+  function emptyState(){
+    return {
+      horiz: Array.from({length:BY+1},()=>Array(BX).fill(0)),
+      vert: Array.from({length:BY},()=>Array(BX+1).fill(0)),
+      owner: Array.from({length:BY},()=>Array(BX).fill(0))
+    };
+  }
+  function cloneState(s){
+    return {
+      horiz: s.horiz.map(row=>row.slice()),
+      vert: s.vert.map(row=>row.slice()),
+      owner: s.owner.map(row=>row.slice())
+    };
+  }
+  function opponentOf(p){ return p===1?2:1; }
+  function isDrawn(s,edge){ return edge.type==='h' ? !!s.horiz[edge.r][edge.c] : !!s.vert[edge.r][edge.c]; }
+  function sidesCount(s,r,c){
+    let n=0;
+    if(s.horiz[r][c]) n++;
+    if(s.horiz[r+1][c]) n++;
+    if(s.vert[r][c]) n++;
+    if(s.vert[r][c+1]) n++;
+    return n;
+  }
+  function boxesForEdge(edge){
+    const list=[];
+    if(edge.type==='h'){
+      if(edge.r-1>=0) list.push({r:edge.r-1,c:edge.c});
+      if(edge.r<=BY-1) list.push({r:edge.r,c:edge.c});
+    } else {
+      if(edge.c-1>=0) list.push({r:edge.r,c:edge.c-1});
+      if(edge.c<=BX-1) list.push({r:edge.r,c:edge.c});
+    }
+    return list;
+  }
+  function missingEdgeOfBox(s,r,c){
+    const cand=[
+      {type:'h',r:r,c:c}, {type:'h',r:r+1,c:c},
+      {type:'v',r:r,c:c}, {type:'v',r:r,c:c+1}
+    ];
+    const missing=cand.filter(e=>!isDrawn(s,e));
+    return missing.length===1 ? missing[0] : (missing[0]||null);
+  }
+  function allUndrawnEdges(s){
+    const out=[];
+    for(let r=0;r<=BY;r++) for(let c=0;c<BX;c++) if(!s.horiz[r][c]) out.push({type:'h',r,c});
+    for(let r=0;r<BY;r++) for(let c=0;c<=BX;c++) if(!s.vert[r][c]) out.push({type:'v',r,c});
+    return out;
+  }
+  function applyEdgeSim(s, edge, player){
+    if(edge.type==='h') s.horiz[edge.r][edge.c]=player; else s.vert[edge.r][edge.c]=player;
+    const captured=[];
+    for(const b of boxesForEdge(edge)){
+      if(s.owner[b.r][b.c]) continue;
+      if(sidesCount(s,b.r,b.c)===4){ s.owner[b.r][b.c]=player; captured.push(b); }
+    }
+    return captured;
+  }
+  function isSafeEdge(s, edge){
+    for(const b of boxesForEdge(edge)){
+      if(s.owner[b.r][b.c]) continue;
+      if(sidesCount(s,b.r,b.c)>=2) return false;
+    }
+    return true;
+  }
+  function findCapturableBox(s){
+    for(let r=0;r<BY;r++) for(let c=0;c<BX;c++){
+      if(!s.owner[r][c] && sidesCount(s,r,c)===3) return {r,c};
+    }
+    return null;
+  }
+  function greedyChainSteps(s, player){
+    const steps=[];
+    while(true){
+      const found=findCapturableBox(s);
+      if(!found) break;
+      const edge=missingEdgeOfBox(s,found.r,found.c);
+      if(!edge) break;
+      const gained=applyEdgeSim(s, edge, player);
+      steps.push({edge, captured:gained});
+    }
+    return steps;
+  }
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+    return arr;
+  }
+
+  // ---------- Planificación del turno de la CPU ----------
+  function chooseNonCapturingMove(s, player, difficulty){
+    const allEdges=allUndrawnEdges(s);
+    if(!allEdges.length) return null;
+    const safe=allEdges.filter(e=>isSafeEdge(s,e));
+    if(safe.length) return safe[Math.floor(Math.random()*safe.length)];
+    if(difficulty!=='dificil'){
+      return allEdges[Math.floor(Math.random()*allEdges.length)];
+    }
+    let best=null, bestScore=Infinity;
+    for(const e of allEdges){
+      const s2=cloneState(s);
+      applyEdgeSim(s2, e, player);
+      const oppSteps=greedyChainSteps(s2, opponentOf(player));
+      const oppGain=oppSteps.reduce((n,st)=>n+st.captured.length,0);
+      if(oppGain<bestScore){ bestScore=oppGain; best=e; }
+    }
+    return best;
+  }
+
+  function planCpuTurn(realState, player, difficulty){
+    const s=cloneState(realState);
+    const steps=greedyChainSteps(s, player);
+    const totalCaptured=steps.reduce((n,st)=>n+st.captured.length,0);
+    let finalSteps=steps;
+    let turnEndsAfterCapture=false;
+
+    if(difficulty==='dificil' && totalCaptured>=3 && steps.length===totalCaptured){
+      const s2=cloneState(realState);
+      finalSteps=[];
+      for(let i=0;i<steps.length-2;i++){
+        const gained=applyEdgeSim(s2, steps[i].edge, player);
+        finalSteps.push({edge:steps[i].edge, captured:gained});
+      }
+      const sacEdge=steps[steps.length-1].edge;
+      const gained2=applyEdgeSim(s2, sacEdge, player);
+      finalSteps.push({edge:sacEdge, captured:gained2});
+      turnEndsAfterCapture=true;
+      s.horiz=s2.horiz; s.vert=s2.vert; s.owner=s2.owner;
+    }
+
+    if(!turnEndsAfterCapture){
+      const extra=chooseNonCapturingMove(s, player, difficulty);
+      if(extra){
+        const gained=applyEdgeSim(s, extra, player);
+        finalSteps.push({edge:extra, captured:gained});
+      }
+    }
+    return finalSteps;
+  }
+
+  function planCpuTurnFacil(realState, player){
+    const s=cloneState(realState);
+    const finalSteps=[];
+    let guard=0;
+    while(guard++<200){
+      const found=findCapturableBox(s);
+      if(found && Math.random()<0.6){
+        const edge=missingEdgeOfBox(s,found.r,found.c);
+        const gained=applyEdgeSim(s, edge, player);
+        finalSteps.push({edge, captured:gained});
+        continue;
+      }
+      const allEdges=allUndrawnEdges(s);
+      if(!allEdges.length) break;
+      const edge=allEdges[Math.floor(Math.random()*allEdges.length)];
+      const gained=applyEdgeSim(s, edge, player);
+      finalSteps.push({edge, captured:gained});
+      if(gained.length===0) break;
+    }
+    return finalSteps;
+  }
+
+  // ---------- Estado de partida ----------
+  let mode=null, difficulty=null;
+  let game, running, gameOver, turnChainCount, lastEdge, cpuTimer;
+  let cursorEdge={type:'h',r:2,c:1};
+  let pulse=0;
+
+  function totalBoxes(){ return BX*BY; }
+  function boxesFilledCount(){
+    let n=0;
+    for(let r=0;r<BY;r++) for(let c=0;c<BX;c++) if(game.owner[r][c]) n++;
+    return n;
+  }
+
+  function updateTurnText(){
+    if(!running || gameOver) return;
+    if(mode==='cpu'){
+      turnText.textContent = game.current===1 ? 'TU TURNO' : 'PENSANDO…';
+      turnText.className='turn '+(game.current===1?'p1':'p2');
+    } else {
+      turnText.textContent = game.current===1 ? 'TURNO JUGADOR 1' : 'TURNO JUGADOR 2';
+      turnText.className='turn '+(game.current===1?'p1':'p2');
+    }
+  }
+
+  function reset(){
+    if(cpuTimer){ clearTimeout(cpuTimer); cpuTimer=null; }
+    game=emptyState();
+    game.current=1;
+    running=true; gameOver=false;
+    turnChainCount=0;
+    lastEdge=null;
+    cursorEdge=firstUndrawnEdge();
+    updateTurnText();
+    render();
+  }
+
+  function firstUndrawnEdge(){
+    const es=allUndrawnEdges(game);
+    return es.length ? es[Math.floor(es.length/2)] : {type:'h',r:0,c:0};
+  }
+
+  function addScore(player, n){
+    if(player===1) scoreP1.textContent=(parseInt(scoreP1.textContent,10)||0)+n;
+    else scoreP2.textContent=(parseInt(scoreP2.textContent,10)||0)+n;
+  }
+
+  function endOfTurn(chainCount){
+    if(chainCount>chainRecord){
+      chainRecord=chainCount;
+      saveChainRecord();
+      renderStats();
+    }
+  }
+
+  function checkGameOverAndMaybeEnd(){
+    if(boxesFilledCount()===totalBoxes()){
+      endGame();
+      return true;
+    }
+    return false;
+  }
+
+  function endGame(){
+    running=false; gameOver=true;
+    if(cpuTimer){ clearTimeout(cpuTimer); cpuTimer=null; }
+    const p1c=parseInt(scoreP1.textContent,10)||0, p2c=parseInt(scoreP2.textContent,10)||0;
+    const winner = p1c>p2c ? 1 : (p2c>p1c ? 2 : 0);
+    if(winner===0) stats.ties++; else if(winner===1) stats.p1++; else stats.p2++;
+    saveStats(); renderStats(); render();
+    ovTitle.textContent = winner===0 ? 'EMPATE' : (winner===1 ? '¡GANASTE!' : (mode==='cpu' ? 'GANÓ LA CPU' : 'GANÓ JUGADOR 2'));
+    let detail;
+    if(winner===0) detail='Empataron '+p1c+' a '+p2c+'.';
+    else{
+      const wLabel = winner===1 ? 'Vos' : (mode==='cpu' ? 'La CPU' : 'Jugador 2');
+      const wCount = winner===1 ? p1c : p2c, lCount = winner===1 ? p2c : p1c;
+      detail = wLabel+' ganó '+wCount+' a '+lCount+'.';
+    }
+    ovText.innerHTML='<span class="final">'+detail+'</span>';
+    legend.style.display='none';
+    modeButtons.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+    startBtn.textContent='REVANCHA ▶';
+    overlay.classList.remove('hidden');
+  }
+
+  function switchTurn(){
+    endOfTurn(turnChainCount);
+    turnChainCount=0;
+    game.current=opponentOf(game.current);
+    updateTurnText();
+    render();
+    if(mode==='cpu' && game.current===2 && !gameOver){
+      cpuTimer=setTimeout(cpuTakeTurn, 500);
+    }
+  }
+
+  function humanPlayEdge(edge){
+    if(!running || gameOver) return;
+    if(mode==='cpu' && game.current===2) return;
+    if(isDrawn(game, edge)) return;
+    const gained=applyEdgeSim(game, edge, game.current);
+    lastEdge=edge;
+    if(gained.length){
+      addScore(game.current, gained.length);
+      turnChainCount+=gained.length;
+    }
+    render();
+    if(checkGameOverAndMaybeEnd()){ endOfTurn(turnChainCount); return; }
+    if(gained.length===0) switchTurn();
+  }
+
+  function cpuTakeTurn(){
+    if(gameOver) return;
+    const plan = difficulty==='facil' ? planCpuTurnFacil(game, 2) : planCpuTurn(game, 2, difficulty);
+    if(!plan.length){ checkGameOverAndMaybeEnd(); return; }
+    let i=0;
+    function step(){
+      if(gameOver) return;
+      if(i>=plan.length){
+        if(checkGameOverAndMaybeEnd()){ endOfTurn(turnChainCount); return; }
+        switchTurn();
+        return;
+      }
+      const {edge, captured}=plan[i++];
+      if(edge.type==='h') game.horiz[edge.r][edge.c]=2; else game.vert[edge.r][edge.c]=2;
+      for(const b of captured) game.owner[b.r][b.c]=2;
+      lastEdge=edge;
+      if(captured.length){ addScore(2, captured.length); turnChainCount+=captured.length; }
+      render();
+      if(checkGameOverAndMaybeEnd()){ endOfTurn(turnChainCount); return; }
+      cpuTimer=setTimeout(step, 480);
+    }
+    step();
+  }
+
+  // ---------- Render ----------
+  function pointXY(r,c){ return {x:PAD+c*CELL, y:PAD+r*CELL}; }
+  function edgeGeom(edge){
+    if(edge.type==='h'){
+      const a=pointXY(edge.r, edge.c), b=pointXY(edge.r, edge.c+1);
+      return {a,b, mid:{x:(a.x+b.x)/2, y:(a.y+b.y)/2}};
+    } else {
+      const a=pointXY(edge.r, edge.c), b=pointXY(edge.r+1, edge.c);
+      return {a,b, mid:{x:(a.x+b.x)/2, y:(a.y+b.y)/2}};
+    }
+  }
+
+  function render(){
+    ctx.clearRect(0,0,W,H);
+
+    // cajas capturadas
+    for(let r=0;r<BY;r++) for(let c=0;c<BX;c++){
+      const owner=game.owner[r][c];
+      if(!owner) continue;
+      const p=pointXY(r,c);
+      ctx.fillStyle=FILL[owner];
+      ctx.fillRect(p.x+3, p.y+3, CELL-6, CELL-6);
+      ctx.save();
+      ctx.globalAlpha=.9;
+      ctx.font='700 '+(CELL*0.32)+'px system-ui,sans-serif';
+      ctx.fillStyle=COLORS[owner];
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.shadowColor=GLOW[owner]; ctx.shadowBlur=8;
+      ctx.fillText(owner===1?'1':'2', p.x+CELL/2, p.y+CELL/2);
+      ctx.restore();
+    }
+
+    // líneas guía tenues (todas las posiciones posibles)
+    ctx.strokeStyle='rgba(138,75,255,.16)';
+    ctx.lineWidth=2;
+    for(let r=0;r<=BY;r++) for(let c=0;c<BX;c++){
+      if(game.horiz[r][c]) continue;
+      const {a,b}=edgeGeom({type:'h',r,c});
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    }
+    for(let r=0;r<BY;r++) for(let c=0;c<=BX;c++){
+      if(game.vert[r][c]) continue;
+      const {a,b}=edgeGeom({type:'v',r,c});
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    }
+
+    // líneas dibujadas
+    function drawEdgeLine(edge, player){
+      const {a,b}=edgeGeom(edge);
+      ctx.save();
+      ctx.shadowColor=GLOW[player]; ctx.shadowBlur=9;
+      ctx.strokeStyle=COLORS[player];
+      ctx.lineWidth=4.5;
+      ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+      ctx.restore();
+    }
+    for(let r=0;r<=BY;r++) for(let c=0;c<BX;c++){
+      if(game.horiz[r][c]) drawEdgeLine({type:'h',r,c}, game.horiz[r][c]);
+    }
+    for(let r=0;r<BY;r++) for(let c=0;c<=BX;c++){
+      if(game.vert[r][c]) drawEdgeLine({type:'v',r,c}, game.vert[r][c]);
+    }
+
+    // último movimiento resaltado
+    if(lastEdge){
+      const {mid}=edgeGeom(lastEdge);
+      const p=0.55+0.35*Math.sin(pulse);
+      ctx.beginPath();
+      ctx.arc(mid.x,mid.y,7,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(232,246,255,${p})`;
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+
+    // cursor de teclado
+    if(running && !gameOver && !(mode==='cpu' && game.current===2) && !isDrawn(game,cursorEdge)){
+      const {a,b}=edgeGeom(cursorEdge);
+      ctx.save();
+      ctx.strokeStyle='rgba(255,210,59,.85)';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=10;
+      ctx.lineWidth=5.5;
+      ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+      ctx.restore();
+    }
+
+    // puntos
+    for(let r=0;r<=BY;r++) for(let c=0;c<=BX;c++){
+      const p=pointXY(r,c);
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,4,0,Math.PI*2);
+      ctx.fillStyle='rgba(232,246,255,.85)';
+      ctx.shadowColor='rgba(39,232,255,.6)'; ctx.shadowBlur=6;
+      ctx.fill();
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function loop(){
+    pulse+=0.09;
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Input ----------
+  function eventToPoint(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+    return {x:(clientX-rect.left)*scaleX, y:(clientY-rect.top)*scaleY};
+  }
+
+  function distToSeg(p, a, b){
+    const dx=b.x-a.x, dy=b.y-a.y;
+    const len2=dx*dx+dy*dy;
+    let t = len2===0 ? 0 : ((p.x-a.x)*dx+(p.y-a.y)*dy)/len2;
+    t=Math.max(0,Math.min(1,t));
+    const cx=a.x+t*dx, cy=a.y+t*dy;
+    return Math.hypot(p.x-cx, p.y-cy);
+  }
+
+  function nearestEdgeTo(p){
+    let best=null, bestDist=22;
+    for(const edge of allUndrawnEdges(game)){
+      const {a,b}=edgeGeom(edge);
+      const d=distToSeg(p,a,b);
+      if(d<bestDist){ bestDist=d; best=edge; }
+    }
+    return best;
+  }
+
+  canvas.addEventListener('click', e=>{
+    if(!running || gameOver) return;
+    const p=eventToPoint(e.clientX,e.clientY);
+    const edge=nearestEdgeTo(p);
+    if(edge) humanPlayEdge(edge);
+  });
+
+  function edgeCenterXY(edge){ return edgeGeom(edge).mid; }
+  function moveCursor(dir){
+    const cur=edgeCenterXY(cursorEdge);
+    let best=null, bestDist=Infinity;
+    for(const edge of allUndrawnEdges(game)){
+      const p=edgeCenterXY(edge);
+      const dx=p.x-cur.x, dy=p.y-cur.y;
+      let ok=false;
+      if(dir==='up') ok = dy<-4 && Math.abs(dx)<=Math.abs(dy)+CELL*0.6;
+      if(dir==='down') ok = dy>4 && Math.abs(dx)<=Math.abs(dy)+CELL*0.6;
+      if(dir==='left') ok = dx<-4 && Math.abs(dy)<=Math.abs(dx)+CELL*0.6;
+      if(dir==='right') ok = dx>4 && Math.abs(dy)<=Math.abs(dx)+CELL*0.6;
+      if(!ok) continue;
+      const dist=Math.hypot(dx,dy);
+      if(dist<bestDist){ bestDist=dist; best=edge; }
+    }
+    if(best) cursorEdge=best;
+  }
+
+  document.addEventListener('keydown', e=>{
+    if(!running || gameOver) return;
+    if(mode==='cpu' && game.current===2) return;
+    let handled=true;
+    switch(e.key){
+      case 'ArrowUp': moveCursor('up'); break;
+      case 'ArrowDown': moveCursor('down'); break;
+      case 'ArrowLeft': moveCursor('left'); break;
+      case 'ArrowRight': moveCursor('right'); break;
+      case 'Enter': case ' ': humanPlayEdge(cursorEdge); break;
+      default: handled=false;
+    }
+    if(handled) e.preventDefault();
+  });
+
+  // ---------- Overlay: elegir modo y arrancar ----------
+  modeButtons.addEventListener('click', e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    modeButtons.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode=btn.dataset.mode;
+    difficulty=btn.dataset.diff || null;
+    startBtn.classList.remove('hidden');
+  });
+
+  function startGame(){
+    if(!mode) return;
+    legend.style.display='';
+    overlay.classList.add('hidden');
+    scoreP1.textContent='0'; scoreP2.textContent='0';
+    reset();
+  }
+
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', startGame);
+
+  // estado inicial: mostrar overlay de selección de modo
+  running=false; gameOver=false;
+  game=emptyState(); game.current=1;
+  lastEdge=null; turnChainCount=0;
+  render();
+  loop();
+})();
+</script>
+</body>
+</html>
