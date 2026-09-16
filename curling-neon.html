@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CURLING NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,42px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.lvl b{color:var(--purple);}
+  .hud .box.liv b{color:var(--pink); font-size:16px;}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:6px; font-size:12px; color:var(--ink); text-align:left; max-width:330px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5;}
+  .curlGroup{display:flex; gap:6px;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini.active{background:rgba(39,232,255,.22); border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 12px rgba(39,232,255,.35);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">CURLING NEÓN</div>
+      <div class="sub">C U R L I N G &nbsp;·&nbsp; 4 &nbsp;E N D S</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">END<b id="endBox">1/4</b></div>
+      <div class="box liv">MARCADOR<b id="scoreBox">0 - 0</b></div>
+      <div class="box lvl">TURNO<b id="turnBox">VOS</b></div>
+      <div class="box rec">RÉCORD<b id="recBox">0</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="640"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">CURLING NEÓN</h2>
+        <p id="ovText">Arrastrá hacia atrás desde la piedra para apuntar y definir la potencia; soltá para lanzarla sobre el hielo hacia la casa. Elegí el efecto antes de tirar para curvarla, y mantené presionado mientras se desliza para barrerla.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Tus piedras</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Piedras de la CPU</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> El botón: cuanto más cerca, más puntos</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Arrastrá y soltá para lanzar · flechas + ESPACIO con teclado · mantené presionado para barrer.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="curlGroup">
+        <button class="mini" id="curlL" title="Efecto izquierda">↺ Izq</button>
+        <button class="mini active" id="curlN" title="Sin efecto">● Recto</button>
+        <button class="mini" id="curlR" title="Efecto derecha">↻ Der</button>
+      </div>
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+    <div class="hint" style="margin-top:8px;">Arrastrá desde la piedra (o flechas + <b>ESPACIO</b>) · mantené presionado / <b>ESPACIO</b> mientras se desliza para barrer · <b>Q</b>/<b>E</b> cambian el efecto · <b>P</b> pausa.</div>
+
+    <footer>NEON ARCADE · Curling Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const endEl=document.getElementById('endBox');
+  const scoreEl=document.getElementById('scoreBox');
+  const turnEl=document.getElementById('turnBox');
+  const recEl=document.getElementById('recBox');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+  const curlL=document.getElementById('curlL');
+  const curlN=document.getElementById('curlN');
+  const curlR=document.getElementById('curlR');
+
+  const BEST_KEY='neon-curling-neon-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  recEl.textContent=best;
+
+  const STONE_R=13;
+  const PLAY_LEFT=30, PLAY_RIGHT=W-30, PLAY_TOP=26, PLAY_BOTTOM=H-20;
+  const START={x:220,y:566};
+  const HOUSE={x:220,y:150};
+  const HOUSE_R1=76, HOUSE_R2=51, HOUSE_R3=26, BUTTON_R=8;
+  const FAR_HOG_Y=440;
+  const MAX_PULL=100, MIN_SPEED=1.5, MAX_SPEED=4.7, STOP_EPS=0.02;
+  const DECEL=0.016, DECEL_SWEEP=0.0095;
+  const CURL_ACCEL=0.0028, CURL_ACCEL_SWEEP=0.0011;
+  const TOTAL_ENDS=4, PER_TEAM=4;
+  const TURN_ORDER=['p','c','p','c','p','c','p','c'];
+
+  let scoreP=0, scoreC=0, endNum=1, throwsThisEnd=0, curTeam='p';
+  let stones=[]; let stoneSeq=0; let activeStoneId=-1;
+  let curlChoice=0; // -1 izq, 0 recto, 1 der
+  let aimAngle=0, aimPower=0.5, dragging=false, dragPointerId=null;
+  let sweeping=false;
+  let state='intro'; // intro | aiming | cpu-thinking | sliding | end-score | game-over
+  let running=false, paused=false;
+  let msg='', msgTimer=0, holdTimer=0, cpuTimer=0;
+  let keyLeft=false,keyRight=false,keyUp=false,keyDown=false;
+
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+  function flashMsg(t,dur){ msg=t; msgTimer=dur||1500; }
+
+  function updateHud(){
+    endEl.textContent=Math.min(endNum,TOTAL_ENDS)+'/'+TOTAL_ENDS;
+    scoreEl.textContent=scoreP+' - '+scoreC;
+    turnEl.textContent = curTeam==='p' ? 'VOS' : 'CPU';
+  }
+
+  function setCurl(c){
+    curlChoice=c;
+    curlL.classList.toggle('active',c===-1);
+    curlN.classList.toggle('active',c===0);
+    curlR.classList.toggle('active',c===1);
+  }
+  curlL.addEventListener('click',()=>setCurl(-1));
+  curlN.addEventListener('click',()=>setCurl(0));
+  curlR.addEventListener('click',()=>setCurl(1));
+
+  function resetMatch(){
+    scoreP=0; scoreC=0; endNum=1;
+    startEnd();
+  }
+
+  function startEnd(){
+    stones=[]; throwsThisEnd=0; curTeam=TURN_ORDER[0];
+    flashMsg('END '+endNum+' DE '+TOTAL_ENDS,1600);
+    prepareThrow();
+    updateHud();
+  }
+
+  function prepareThrow(){
+    curTeam=TURN_ORDER[throwsThisEnd];
+    updateHud();
+    if(curTeam==='p'){
+      state='aiming';
+      aimAngle=0; aimPower=0.5;
+    }else{
+      state='cpu-thinking';
+      cpuTimer=650;
+    }
+  }
+
+  function start(){
+    resetMatch();
+    running=true; paused=false;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function stoneSpeed(s){ return Math.hypot(s.vx,s.vy); }
+
+  function throwStone(team,angle,power,curl){
+    const speed=MIN_SPEED+clamp(power,0,1)*(MAX_SPEED-MIN_SPEED);
+    const s={
+      id:++stoneSeq, team,
+      x:START.x, y:START.y,
+      vx:Math.sin(angle)*speed, vy:-Math.cos(angle)*speed,
+      curl, moving:true, settled:false
+    };
+    stones.push(s);
+    activeStoneId=s.id;
+    sweeping=false;
+    state='sliding';
+    updateHud();
+  }
+
+  function shootPlayer(){
+    if(state!=='aiming') return;
+    if(aimPower<0.08) return;
+    throwStone('p',aimAngle,aimPower,curlChoice);
+  }
+
+  function cpuThrow(){
+    let targetX=HOUSE.x+(Math.random()*24-12), targetY=HOUSE.y+(Math.random()*20-10);
+    let power=0.62;
+    const playerStonesInHouse=stones.filter(s=>s.team==='p'&&Math.hypot(s.x-HOUSE.x,s.y-HOUSE.y)<HOUSE_R1+10);
+    if(playerStonesInHouse.length && Math.random()<0.55){
+      const best=playerStonesInHouse.reduce((a,b)=>Math.hypot(a.x-HOUSE.x,a.y-HOUSE.y)<Math.hypot(b.x-HOUSE.x,b.y-HOUSE.y)?a:b);
+      targetX=best.x+(Math.random()*10-5);
+      targetY=best.y+(Math.random()*10-5);
+      power=0.9;
+    }
+    const ddx=targetX-START.x, ddy=targetY-START.y;
+    let angle=Math.atan2(ddx,-ddy);
+    angle+=(Math.random()*0.05-0.025);
+    const dist=Math.hypot(ddx,ddy);
+    const vReq=Math.sqrt(2*DECEL*dist);
+    let p=clamp((vReq-MIN_SPEED)/(MAX_SPEED-MIN_SPEED),0,1);
+    if(power>0.7) p=Math.max(p,0.72);
+    p=clamp(p+(Math.random()*0.08-0.04),0.15,1);
+    throwStone('c',angle,p,0);
+  }
+
+  function collideStones(a,b){
+    const dx=b.x-a.x, dy=b.y-a.y, dist=Math.hypot(dx,dy), minDist=STONE_R*2;
+    if(dist>=minDist) return;
+    const nx=dist===0?1:dx/dist, ny=dist===0?0:dy/dist;
+    const overlap=minDist-dist;
+    a.x-=nx*overlap/2; a.y-=ny*overlap/2;
+    b.x+=nx*overlap/2; b.y+=ny*overlap/2;
+    const rvx=b.vx-a.vx, rvy=b.vy-a.vy;
+    const velAlongNormal=rvx*nx+rvy*ny;
+    if(velAlongNormal>0) return;
+    const restitution=0.92;
+    const impulse=-(1+restitution)*velAlongNormal/2;
+    a.vx-=impulse*nx; a.vy-=impulse*ny;
+    b.vx+=impulse*nx; b.vy+=impulse*ny;
+    a.moving=true; b.moving=true;
+  }
+
+  function outOfSheet(s){
+    return (s.x-STONE_R<PLAY_LEFT)||(s.x+STONE_R>PLAY_RIGHT)||(s.y-STONE_R<PLAY_TOP);
+  }
+
+  function decelStone(s,amt){
+    const sp=Math.hypot(s.vx,s.vy);
+    if(sp<=amt){ s.vx=0; s.vy=0; return; }
+    const scale=(sp-amt)/sp;
+    s.vx*=scale; s.vy*=scale;
+  }
+
+  function updateSliding(){
+    for(const s of stones){
+      if(!s.moving) continue;
+      const isActiveSwept = s.id===activeStoneId && s.team==='p' && sweeping;
+      decelStone(s, isActiveSwept ? DECEL_SWEEP : DECEL);
+      if(s.curl && (s.vx||s.vy)){
+        const ca = isActiveSwept ? CURL_ACCEL_SWEEP : CURL_ACCEL;
+        s.vx += s.curl*ca;
+      }
+      s.x+=s.vx; s.y+=s.vy;
+    }
+    for(let i=0;i<stones.length;i++){
+      for(let j=i+1;j<stones.length;j++){
+        if(stones[i].moving||stones[j].moving) collideStones(stones[i],stones[j]);
+      }
+    }
+    const removed=[];
+    for(const s of stones){
+      if(!s.moving) continue;
+      if(outOfSheet(s)){
+        removed.push(s);
+        continue;
+      }
+      if(stoneSpeed(s)<STOP_EPS){
+        s.vx=0; s.vy=0; s.moving=false;
+        if(s.y>FAR_HOG_Y){
+          removed.push(s);
+        }
+      }
+    }
+    if(removed.length){
+      const wasPlayer=removed.some(s=>s.team==='p'&&s.id===activeStoneId);
+      const wasCpu=removed.some(s=>s.team==='c'&&s.id===activeStoneId);
+      stones=stones.filter(s=>!removed.includes(s));
+      if(wasPlayer) flashMsg('¡AFUERA! TU PIEDRA SALIÓ',1500);
+      else if(wasCpu) flashMsg('LA PIEDRA DE LA CPU SALIÓ',1500);
+    }
+    if(!stones.some(s=>s.moving)){
+      sweeping=false;
+      throwsThisEnd++;
+      if(throwsThisEnd<TURN_ORDER.length){
+        prepareThrow();
+      }else{
+        endScoring();
+      }
+    }
+  }
+
+  function endScoring(){
+    const list=stones.map(s=>({team:s.team,dist:Math.hypot(s.x-HOUSE.x,s.y-HOUSE.y)}));
+    if(!list.length){
+      flashMsg('END EN BLANCO · NADIE ANOTA',2000);
+    }else{
+      const minDist=Math.min(...list.map(s=>s.dist));
+      const scoringTeam=list.find(s=>s.dist===minDist).team;
+      const oppTeam=scoringTeam==='p'?'c':'p';
+      const oppDists=list.filter(s=>s.team===oppTeam).map(s=>s.dist);
+      const oppMin=oppDists.length?Math.min(...oppDists):Infinity;
+      const points=list.filter(s=>s.team===scoringTeam&&s.dist<oppMin).length;
+      if(scoringTeam==='p') scoreP+=points; else scoreC+=points;
+      flashMsg((scoringTeam==='p'?'¡VOS ANOTÁS ':'LA CPU ANOTA ')+points+' PUNTO'+(points===1?'':'S')+'!',2200);
+    }
+    updateHud();
+    state='end-score';
+    holdTimer=2400;
+  }
+
+  function nextEnd(){
+    endNum++;
+    if(endNum>TOTAL_ENDS){ gameOver(); return; }
+    startEnd();
+  }
+
+  function gameOver(){
+    running=false;
+    state='game-over';
+    let title, extra='';
+    if(scoreP>scoreC){
+      title='¡GANASTE!';
+      const diff=scoreP-scoreC;
+      const isRec=diff>best;
+      if(isRec){ best=diff; localStorage.setItem(BEST_KEY,best); recEl.textContent=best; }
+      extra = isRec ? '<br><span class="newrec">¡NUEVO RÉCORD DE DIFERENCIA!</span>' : `<br>Récord: ${best}`;
+    }else if(scoreC>scoreP){
+      title='PERDISTE';
+      extra=`<br>Récord: ${best}`;
+    }else{
+      title='EMPATE';
+      extra=`<br>Récord: ${best}`;
+    }
+    ovTitle.textContent=title;
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Marcador final: <b>${scoreP} - ${scoreC}</b></span>`+extra;
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Arrastrá y soltá para lanzar · elegí el efecto y barré mientras se desliza.';
+    overlay.classList.remove('hidden');
+  }
+
+  let last=0;
+  function update(dt){
+    if(msgTimer>0) msgTimer-=dt;
+
+    if(state==='aiming'){
+      if(keyLeft) aimAngle-=0.032;
+      if(keyRight) aimAngle+=0.032;
+      if(keyUp) aimPower=clamp(aimPower+0.018,0,1);
+      if(keyDown) aimPower=clamp(aimPower-0.018,0,1);
+      aimAngle=clamp(aimAngle,-1.1,1.1);
+    }
+
+    if(state==='cpu-thinking'){
+      cpuTimer-=dt;
+      if(cpuTimer<=0) cpuThrow();
+    }
+
+    if(state==='sliding'){
+      updateSliding();
+    }
+
+    if(state==='end-score'){
+      holdTimer-=dt;
+      if(holdTimer<=0) nextEnd();
+    }
+  }
+
+  function drawHouse(){
+    ctx.save();
+    ctx.beginPath(); ctx.arc(HOUSE.x,HOUSE.y,HOUSE_R1,0,Math.PI*2);
+    ctx.fillStyle='rgba(39,232,255,.10)'; ctx.fill();
+    ctx.strokeStyle='rgba(39,232,255,.55)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(HOUSE.x,HOUSE.y,HOUSE_R2,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,43,214,.10)'; ctx.fill();
+    ctx.strokeStyle='rgba(255,43,214,.55)'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(HOUSE.x,HOUSE.y,HOUSE_R3,0,Math.PI*2);
+    ctx.fillStyle='rgba(138,75,255,.14)'; ctx.fill();
+    ctx.strokeStyle='rgba(138,75,255,.65)'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(HOUSE.x,HOUSE.y,BUTTON_R,0,Math.PI*2);
+    ctx.fillStyle='#ffd23b'; ctx.shadowColor='#ffd23b'; ctx.shadowBlur=14; ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+
+  function drawStone(s){
+    const color = s.team==='p' ? '#27e8ff' : '#ff2bd6';
+    ctx.beginPath(); ctx.arc(s.x,s.y,STONE_R,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.shadowColor=color; ctx.shadowBlur = s.id===activeStoneId&&sweeping ? 20 : 10;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(s.x,s.y,STONE_R*0.42,0,Math.PI*2);
+    ctx.fillStyle='rgba(5,7,15,.55)'; ctx.fill();
+    if(s.id===activeStoneId && sweeping){
+      ctx.strokeStyle='#ffffff'; ctx.lineWidth=2; ctx.globalAlpha=.6;
+      ctx.beginPath(); ctx.arc(s.x,s.y,STONE_R+4,0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a1626';
+    ctx.fillRect(PLAY_LEFT,PLAY_TOP,PLAY_RIGHT-PLAY_LEFT,PLAY_BOTTOM-PLAY_TOP);
+    ctx.strokeStyle='rgba(39,232,255,.3)'; ctx.lineWidth=3;
+    ctx.strokeRect(PLAY_LEFT,PLAY_TOP,PLAY_RIGHT-PLAY_LEFT,PLAY_BOTTOM-PLAY_TOP);
+
+    // hog line
+    ctx.strokeStyle='rgba(255,210,59,.55)'; ctx.setLineDash([6,6]); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(PLAY_LEFT,FAR_HOG_Y); ctx.lineTo(PLAY_RIGHT,FAR_HOG_Y); ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawHouse();
+
+    // start marker
+    ctx.strokeStyle='rgba(232,246,255,.25)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(PLAY_LEFT,START.y+18); ctx.lineTo(PLAY_RIGHT,START.y+18); ctx.stroke();
+
+    for(const s of stones) drawStone(s);
+
+    // aim preview
+    if(state==='aiming'){
+      const dx=Math.sin(aimAngle), dy=-Math.cos(aimAngle);
+      const len=44+aimPower*90;
+      ctx.setLineDash([6,7]); ctx.lineWidth=2.5;
+      ctx.strokeStyle=`hsl(${120-aimPower*120},90%,60%)`;
+      ctx.beginPath();
+      ctx.moveTo(START.x,START.y);
+      ctx.lineTo(START.x+dx*len,START.y+dy*len);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawStone({x:START.x,y:START.y,team:'p',id:-999});
+    }
+
+    ctx.fillStyle='#7fa6c8'; ctx.font='700 12px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('END '+Math.min(endNum,TOTAL_ENDS)+'/'+TOTAL_ENDS+' · '+scoreP+' - '+scoreC, 12, H-8);
+
+    if(msgTimer>0){
+      ctx.globalAlpha=Math.min(1,msgTimer/300);
+      ctx.fillStyle='#ffd23b';
+      ctx.font='900 18px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=16;
+      wrapText(msg,W/2,H/2,W-60);
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+
+    if(paused){
+      ctx.fillStyle='rgba(5,7,15,.6)'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#27e8ff'; ctx.font='900 26px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.shadowColor='#27e8ff'; ctx.shadowBlur=14;
+      ctx.fillText('PAUSA',W/2,H/2);
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function wrapText(text,cx,cy,maxW){
+    const words=text.split(' ');
+    const lines=[]; let cur='';
+    for(const w of words){
+      const test=cur?cur+' '+w:w;
+      if(ctx.measureText(test).width>maxW && cur){ lines.push(cur); cur=w; }
+      else cur=test;
+    }
+    if(cur) lines.push(cur);
+    const lh=22;
+    const startY=cy-((lines.length-1)*lh)/2;
+    lines.forEach((l,i)=>ctx.fillText(l,cx,startY+i*lh));
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!paused){
+      const dt=Math.min(40,ts-last);
+      last=ts;
+      update(dt);
+      draw();
+    }else{
+      last=ts;
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function canvasPos(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    return { x:(clientX-rect.left)*(W/rect.width), y:(clientY-rect.top)*(H/rect.height) };
+  }
+
+  function aimFromPointer(px,py){
+    let pdx=px-START.x, pdy=py-START.y;
+    let dist=Math.hypot(pdx,pdy);
+    if(dist>MAX_PULL){ pdx=pdx/dist*MAX_PULL; pdy=pdy/dist*MAX_PULL; dist=MAX_PULL; }
+    if(dist<4) return;
+    const sdx=-pdx, sdy=-pdy;
+    aimAngle=clamp(Math.atan2(sdx,-sdy),-1.1,1.1);
+    aimPower=clamp(dist/MAX_PULL,0,1);
+  }
+
+  canvas.addEventListener('pointerdown',e=>{
+    if(!running||paused) return;
+    const p=canvasPos(e.clientX,e.clientY);
+    if(state==='aiming'){
+      if(Math.hypot(p.x-START.x,p.y-START.y)>70) return;
+      dragging=true; dragPointerId=e.pointerId;
+      canvas.setPointerCapture(e.pointerId);
+      aimFromPointer(p.x,p.y);
+    }else if(state==='sliding' && activeStoneId>=0){
+      const s=stones.find(x=>x.id===activeStoneId);
+      if(s && s.team==='p') sweeping=true;
+    }
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!dragging||e.pointerId!==dragPointerId) return;
+    const p=canvasPos(e.clientX,e.clientY);
+    aimFromPointer(p.x,p.y);
+  });
+  function endDrag(e){
+    if(dragging && e.pointerId===dragPointerId){
+      dragging=false;
+      shootPlayer();
+    }
+    sweeping=false;
+  }
+  canvas.addEventListener('pointerup',endDrag);
+  canvas.addEventListener('pointercancel',endDrag);
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'){ keyLeft=true; e.preventDefault(); }
+    if(e.key==='ArrowRight'){ keyRight=true; e.preventDefault(); }
+    if(e.key==='ArrowUp'){ keyUp=true; e.preventDefault(); }
+    if(e.key==='ArrowDown'){ keyDown=true; e.preventDefault(); }
+    if(e.key===' '||e.key==='Enter'){
+      e.preventDefault();
+      if(state==='aiming') shootPlayer();
+      else if(state==='sliding'){
+        const s=stones.find(x=>x.id===activeStoneId);
+        if(s && s.team==='p') sweeping=true;
+      }
+    }
+    if(e.key==='q'||e.key==='Q') setCurl(-1);
+    if(e.key==='e'||e.key==='E') setCurl(1);
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+  window.addEventListener('keyup',e=>{
+    if(e.key==='ArrowLeft') keyLeft=false;
+    if(e.key==='ArrowRight') keyRight=false;
+    if(e.key==='ArrowUp') keyUp=false;
+    if(e.key==='ArrowDown') keyDown=false;
+    if(e.key===' ') sweeping=false;
+  });
+
+  function togglePause(){
+    if(!running) return;
+    paused=!paused;
+    pauseBtn.textContent = paused ? 'Seguir' : 'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+  pauseBtn.addEventListener('click',togglePause);
+  startBtn.addEventListener('click',start);
+})();
+</script>
+</body>
+</html>

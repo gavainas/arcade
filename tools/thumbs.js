@@ -132,7 +132,11 @@ const OVERRIDES = {
       { canvas: [0.293, 0.396] }, { canvas: [0.5, 0.396] }
     ],
     wait: 400
-  }
+  },
+  // Cualquier click cerca de la piedra (abajo del todo) hace que Playwright scrollee
+  // la piedra al centro del viewport y tape la casa: mejor la portada, con la casa
+  // y la línea de saque ya a la vista.
+  "curling-neon": { steps: ["#startBtn"], wait: 900 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

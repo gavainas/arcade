@@ -452,6 +452,13 @@
       desc: "Puntos y Cajas: por turnos trazá una línea entre dos puntos vecinos de la grilla; si completás los 4 lados de una caja te la quedás y jugás de nuevo. Tablero de 4×4 (16 cajas); gana quien tenga más al terminarse las líneas. Contra una CPU con 3 dificultades (la difícil sacrifica cajas a propósito para no perder el control de la partida) o de a dos en el mismo dispositivo.",
       controles: "Click / toque cerca de una línea para dibujarla; flechas + Enter con teclado", fecha: "2026-09-15",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "curling-neon", titulo: "Curling Neón", archivo: "curling-neon.html",
+      emoji: "🥌", categoria: "deportes", tags: ["curling", "hielo", "efecto", "barrida", "2 jugadores", "cpu"],
+      desc: "Curling: arrastrá hacia atrás desde la piedra para apuntar y definir la potencia, soltá para lanzarla sobre el hielo. Elegí el efecto (izquierda/derecha) antes de tirar para curvarla, y mantené presionado mientras se desliza para barrerla y estirar su recorrido. Chocá las piedras rivales para sacarlas de la zona de puntos. 4 piedras por jugador y por end; al terminar el end anota quien tenga piedras más cerca del centro (sólo las que estén más cerca que la mejor piedra rival). Partida a 4 ends contra la CPU, con récord de mejor diferencia guardado.",
+      controles: "Arrastrá y soltá para lanzar (o flechas + ESPACIO); mantené presionado o ESPACIO para barrer; Q/E cambian el efecto", fecha: "2026-09-16",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
