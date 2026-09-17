@@ -136,7 +136,10 @@ const OVERRIDES = {
   // Cualquier click cerca de la piedra (abajo del todo) hace que Playwright scrollee
   // la piedra al centro del viewport y tape la casa: mejor la portada, con la casa
   // y la línea de saque ya a la vista.
-  "curling-neon": { steps: ["#startBtn"], wait: 900 }
+  "curling-neon": { steps: ["#startBtn"], wait: 900 },
+  // Elegimos dificultad y dejamos correr un ratito para que la miniatura muestre
+  // el disco en movimiento y las dos paletas, no sólo la mesa vacía.
+  "hockey-neon": { steps: ['[data-diff="normal"]', "#startBtn"], wait: 1400 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

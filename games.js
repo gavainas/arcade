@@ -459,6 +459,13 @@
       desc: "Curling: arrastrá hacia atrás desde la piedra para apuntar y definir la potencia, soltá para lanzarla sobre el hielo. Elegí el efecto (izquierda/derecha) antes de tirar para curvarla, y mantené presionado mientras se desliza para barrerla y estirar su recorrido. Chocá las piedras rivales para sacarlas de la zona de puntos. 4 piedras por jugador y por end; al terminar el end anota quien tenga piedras más cerca del centro (sólo las que estén más cerca que la mejor piedra rival). Partida a 4 ends contra la CPU, con récord de mejor diferencia guardado.",
       controles: "Arrastrá y soltá para lanzar (o flechas + ESPACIO); mantené presionado o ESPACIO para barrer; Q/E cambian el efecto", fecha: "2026-09-16",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "hockey-neon", titulo: "Hockey Neón", archivo: "hockey-neon.html",
+      emoji: "🏒", categoria: "deportes", tags: ["air hockey", "fisica", "reflejos", "cpu"],
+      desc: "Air hockey: movés tu paleta libremente por tu mitad de la mesa (arrastrando el dedo o el mouse, o con WASD/flechas) y le metés el disco a la CPU antes de que te lo meta a vos. El disco rebota en las paredes y se frena de a poco por fricción. 3 dificultades de CPU (más rápida y con mejor anticipación cuanto más difícil). Partidas a 7 goles, con récord del mejor tiempo para ganar guardado por dificultad.",
+      controles: "Arrastrá el dedo o el mouse por tu mitad de la mesa; o WASD / flechas", fecha: "2026-09-17",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
