@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BILLAR NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,42px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.lvl b{color:var(--purple);}
+  .hud .box.liv b{color:var(--pink); font-size:16px;}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:6px; font-size:12px; color:var(--ink); text-align:left; max-width:330px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">BILLAR NEÓN</div>
+      <div class="sub">9 &nbsp;B O L A S &nbsp;·&nbsp; S O L I T A R I O</div>
+    </header>
+
+    <div class="hud">
+      <div class="box lvl">NIVEL<b id="lvlBox">1</b></div>
+      <div class="box">PUNTOS<b id="scoreBox">0</b></div>
+      <div class="box liv">VIDAS<b id="livesBox">♥♥♥</b></div>
+      <div class="box rec">RÉCORD<b id="recBox">0</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="640"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">BILLAR NEÓN</h2>
+        <p id="ovText">Arrastrá hacia atrás desde la bola blanca para apuntar y definir la potencia; soltá para tirar. Meté las 9 bolas numeradas en las troneras usando la menor cantidad de tiros posible: cuanto más rápido limpies la mesa, más puntos.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:#fff;background:#fff"></i> Bola blanca: si cae en una tronera es falta (perdés una vida)</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Bolas numeradas: metelas todas para pasar de nivel</span>
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Meter varias en el mismo tiro suma combo</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Arrastrá y soltá para tirar · flechas + ESPACIO con teclado.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+    <div class="hint" style="margin-top:8px;">Arrastrá desde la bola blanca (o flechas para apuntar + mantené <b>ESPACIO</b> para cargar y soltá para tirar) · <b>P</b> pausa.</div>
+
+    <footer>NEON ARCADE · Billar Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const lvlEl=document.getElementById('lvlBox');
+  const scoreEl=document.getElementById('scoreBox');
+  const livesEl=document.getElementById('livesBox');
+  const recEl=document.getElementById('recBox');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+
+  const BEST_KEY='neon-billar-neon-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  recEl.textContent=best;
+
+  const BALL_R=11;
+  const PLAY_LEFT=34, PLAY_RIGHT=W-34, PLAY_TOP=54, PLAY_BOTTOM=H-54;
+  const MID_Y=(PLAY_TOP+PLAY_BOTTOM)/2;
+  const CUE_START={x:W/2,y:PLAY_BOTTOM-64};
+  const RACK_APEX={x:W/2,y:PLAY_TOP+108};
+  const MAX_PULL=95, MAX_SPEED=15;
+  const DECEL=0.007, STOP_EPS=0.045;
+  const WALL_REST=0.84, BALL_REST=0.96;
+  const MAX_LIVES=3;
+
+  const COLORS=['#ffd23b','#27e8ff','#ff2bd6','#8a4bff','#39ff9e','#ff5470','#ff9838','#4b7bff','#b6ff3b'];
+
+  function pockets(){
+    const r=Math.max(13, 18-(level-1)*0.35);
+    return {
+      r,
+      list:[
+        {x:PLAY_LEFT,y:PLAY_TOP},{x:PLAY_RIGHT,y:PLAY_TOP},
+        {x:PLAY_LEFT,y:MID_Y},{x:PLAY_RIGHT,y:MID_Y},
+        {x:PLAY_LEFT,y:PLAY_BOTTOM},{x:PLAY_RIGHT,y:PLAY_BOTTOM}
+      ]
+    };
+  }
+
+  let level=1, score=0, lives=MAX_LIVES, shotsThisLevel=0;
+  let balls=[]; let cue=null;
+  let aimAngle=0, aimPower=0, dragging=false, dragPointerId=null;
+  let state='intro'; // intro | aiming | shooting | game-over
+  let running=false, paused=false;
+  let msg='', msgTimer=0, holdTimer=0;
+  let keyLeft=false,keyRight=false,keyCharging=false;
+  let shotPottedNumbers=0, shotScratch=false;
+
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+  function flashMsg(t,dur){ msg=t; msgTimer=dur||1500; }
+
+  function updateHud(){
+    lvlEl.textContent=level;
+    scoreEl.textContent=score;
+    livesEl.textContent='♥'.repeat(lives)+'♡'.repeat(MAX_LIVES-lives);
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function rackPositions(){
+    const dx=BALL_R*1.06, dy=BALL_R*1.85;
+    const jitter=Math.min(3.5,(level-1)*0.6);
+    const rows=[[0],[-1,1],[-2,0,2],[-1,1],[0]];
+    const pts=[];
+    rows.forEach((row,ri)=>{
+      row.forEach(off=>{
+        pts.push({
+          x:RACK_APEX.x+off*dx+(Math.random()*2-1)*jitter,
+          y:RACK_APEX.y+ri*dy+(Math.random()*2-1)*jitter
+        });
+      });
+    });
+    return pts;
+  }
+
+  function placeCueSafely(){
+    let x=CUE_START.x, y=CUE_START.y;
+    let tries=0;
+    while(balls.some(b=>!b.potted && Math.hypot(b.x-x,b.y-y)<BALL_R*2.4) && tries<20){
+      y-=BALL_R*2.6; tries++;
+      if(y<PLAY_TOP+BALL_R*3) y=CUE_START.y+BALL_R*2.6*tries;
+    }
+    cue.x=x; cue.y=y; cue.vx=0; cue.vy=0; cue.potted=false;
+  }
+
+  function rackLevel(){
+    const pts=rackPositions();
+    const nums=shuffle([1,2,3,4,5,6,7,8,9]);
+    balls=nums.map((n,i)=>({
+      x:pts[i].x, y:pts[i].y, vx:0, vy:0, r:BALL_R,
+      color:COLORS[n-1], number:n, potted:false, isCue:false
+    }));
+    cue={x:CUE_START.x,y:CUE_START.y,vx:0,vy:0,r:BALL_R,color:'#ffffff',isCue:true,potted:false};
+    shotsThisLevel=0;
+    aimAngle=0; aimPower=0;
+    state='aiming';
+  }
+
+  function nextLevel(){
+    level++;
+    rackLevel();
+    flashMsg('NIVEL '+level,1600);
+    updateHud();
+  }
+
+  function allBalls(){ return cue?[...balls,cue]:balls; }
+
+  function anyMoving(){ return allBalls().some(b=>!b.potted && (Math.abs(b.vx)>STOP_EPS||Math.abs(b.vy)>STOP_EPS)); }
+
+  function shootCue(){
+    if(state!=='aiming') return;
+    if(aimPower<0.06) return;
+    const speed=clamp(aimPower,0,1)*MAX_SPEED;
+    cue.vx=Math.sin(aimAngle)*speed;
+    cue.vy=-Math.cos(aimAngle)*speed;
+    shotPottedNumbers=0; shotScratch=false;
+    shotsThisLevel++;
+    state='shooting';
+  }
+
+  function decelBall(b,amt){
+    const sp=Math.hypot(b.vx,b.vy);
+    if(sp<=amt){ b.vx=0; b.vy=0; return; }
+    const scale=(sp-amt)/sp;
+    b.vx*=scale; b.vy*=scale;
+  }
+
+  function collideBalls(a,b){
+    const dx=b.x-a.x, dy=b.y-a.y, dist=Math.hypot(dx,dy), minDist=a.r+b.r;
+    if(dist>=minDist||dist===0) return;
+    const nx=dx/dist, ny=dy/dist;
+    const overlap=minDist-dist;
+    a.x-=nx*overlap/2; a.y-=ny*overlap/2;
+    b.x+=nx*overlap/2; b.y+=ny*overlap/2;
+    const rvx=b.vx-a.vx, rvy=b.vy-a.vy;
+    const velAlongNormal=rvx*nx+rvy*ny;
+    if(velAlongNormal>0) return;
+    const impulse=-(1+BALL_REST)*velAlongNormal/2;
+    a.vx-=impulse*nx; a.vy-=impulse*ny;
+    b.vx+=impulse*nx; b.vy+=impulse*ny;
+  }
+
+  function tryPocket(b){
+    const P=pockets();
+    for(const p of P.list){
+      if(Math.hypot(b.x-p.x,b.y-p.y)<P.r){
+        b.potted=true; b.vx=0; b.vy=0;
+        if(b.isCue){ shotScratch=true; }
+        else { shotPottedNumbers++; score+=100; flashMsg('¡BOLA '+b.number+'!',900); }
+        updateHud();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function nearPocketZone(b){
+    const P=pockets();
+    return P.list.some(p=>Math.hypot(b.x-p.x,b.y-p.y)<P.r*2.6);
+  }
+
+  function stepPhysics(dt){
+    const list=allBalls().filter(b=>!b.potted);
+    for(const b of list){
+      decelBall(b,DECEL*dt);
+      b.x+=b.vx*(dt/16.7); b.y+=b.vy*(dt/16.7);
+    }
+    for(let i=0;i<list.length;i++){
+      for(let j=i+1;j<list.length;j++) collideBalls(list[i],list[j]);
+    }
+    for(const b of list){
+      if(tryPocket(b)) continue;
+      if(nearPocketZone(b)) continue;
+      if(b.x-b.r<PLAY_LEFT && b.vx<0){ b.x=PLAY_LEFT+b.r; b.vx=-b.vx*WALL_REST; }
+      if(b.x+b.r>PLAY_RIGHT && b.vx>0){ b.x=PLAY_RIGHT-b.r; b.vx=-b.vx*WALL_REST; }
+      if(b.y-b.r<PLAY_TOP && b.vy<0){ b.y=PLAY_TOP+b.r; b.vy=-b.vy*WALL_REST; }
+      if(b.y+b.r>PLAY_BOTTOM && b.vy>0){ b.y=PLAY_BOTTOM-b.r; b.vy=-b.vy*WALL_REST; }
+    }
+  }
+
+  function updateShooting(dt){
+    const SUBSTEPS=6;
+    const subDt=dt/SUBSTEPS;
+    for(let s=0;s<SUBSTEPS;s++) stepPhysics(subDt);
+    if(!anyMoving()){
+      resolveShot();
+    }
+  }
+
+  function resolveShot(){
+    if(shotPottedNumbers>1){
+      const bonus=(shotPottedNumbers-1)*50;
+      score+=bonus;
+      flashMsg('¡COMBO x'+shotPottedNumbers+'! +'+bonus,1400);
+    }
+    if(shotScratch){
+      lives--;
+      updateHud();
+      if(lives<=0){
+        gameOver();
+        return;
+      }
+      flashMsg('¡FALTA! LA BLANCA CAYÓ',1600);
+      placeCueSafely();
+    }
+    const remaining=balls.filter(b=>!b.potted).length;
+    if(remaining===0){
+      const par=9+level*2;
+      const clearBonus=300+Math.max(0,(par-shotsThisLevel))*40;
+      score+=clearBonus;
+      updateHud();
+      flashMsg('¡MESA LIMPIA! +'+clearBonus,1800);
+      holdTimer=1500;
+      state='level-clear';
+      return;
+    }
+    aimAngle=0; aimPower=0;
+    state='aiming';
+    updateHud();
+  }
+
+  function gameOver(){
+    running=false;
+    state='game-over';
+    const isRec=score>best;
+    if(isRec){ best=score; localStorage.setItem(BEST_KEY,best); recEl.textContent=best; }
+    ovTitle.textContent='FIN DE LA PARTIDA';
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Llegaste al nivel <b>${level}</b> con <b>${score}</b> puntos.</span>`+
+      (isRec?'<br><span class="newrec">¡NUEVO RÉCORD!</span>':`<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Arrastrá y soltá para tirar · meté las 9 bolas con la menor cantidad de tiros posible.';
+    overlay.classList.remove('hidden');
+  }
+
+  function start(){
+    level=1; score=0; lives=MAX_LIVES;
+    rackLevel();
+    updateHud();
+    running=true; paused=false;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  let last=0;
+  function update(dt){
+    if(msgTimer>0) msgTimer-=dt;
+
+    if(state==='aiming'){
+      if(keyLeft) aimAngle-=0.032;
+      if(keyRight) aimAngle+=0.032;
+      if(keyCharging) aimPower=clamp(aimPower+0.016,0,1);
+    }
+
+    if(state==='shooting'){
+      updateShooting(dt);
+    }
+
+    if(state==='level-clear'){
+      holdTimer-=dt;
+      if(holdTimer<=0) nextLevel();
+    }
+  }
+
+  function drawTable(){
+    ctx.fillStyle='#0a1f16';
+    ctx.fillRect(PLAY_LEFT,PLAY_TOP,PLAY_RIGHT-PLAY_LEFT,PLAY_BOTTOM-PLAY_TOP);
+    ctx.strokeStyle='rgba(39,232,255,.3)'; ctx.lineWidth=3;
+    ctx.strokeRect(PLAY_LEFT,PLAY_TOP,PLAY_RIGHT-PLAY_LEFT,PLAY_BOTTOM-PLAY_TOP);
+    const P=pockets();
+    for(const p of P.list){
+      ctx.beginPath(); ctx.arc(p.x,p.y,P.r,0,Math.PI*2);
+      ctx.fillStyle='#03040a'; ctx.fill();
+      ctx.strokeStyle='rgba(255,210,59,.5)'; ctx.lineWidth=2; ctx.stroke();
+    }
+  }
+
+  function drawBall(b){
+    if(b.potted) return;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.fillStyle=b.color; ctx.shadowColor=b.color; ctx.shadowBlur=10;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    if(!b.isCue){
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r*0.62,0,Math.PI*2);
+      ctx.fillStyle='rgba(5,7,15,.75)'; ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='700 10px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(b.number,b.x,b.y+1);
+    }else{
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r*0.35,0,Math.PI*2);
+      ctx.fillStyle='rgba(39,232,255,.35)'; ctx.fill();
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    drawTable();
+    for(const b of balls) drawBall(b);
+    if(cue) drawBall(cue);
+
+    if(state==='aiming'){
+      const dx=Math.sin(aimAngle), dy=-Math.cos(aimAngle);
+      const len=50+aimPower*150;
+      ctx.setLineDash([6,7]); ctx.lineWidth=2.5;
+      ctx.strokeStyle=`hsl(${120-aimPower*120},90%,60%)`;
+      ctx.beginPath();
+      ctx.moveTo(cue.x,cue.y);
+      ctx.lineTo(cue.x+dx*len,cue.y+dy*len);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // cue stick behind the ball
+      ctx.strokeStyle='rgba(232,246,255,.5)'; ctx.lineWidth=4;
+      ctx.beginPath();
+      ctx.moveTo(cue.x-dx*(18+aimPower*40),cue.y-dy*(18+aimPower*40));
+      ctx.lineTo(cue.x-dx*(60+aimPower*40),cue.y-dy*(60+aimPower*40));
+      ctx.stroke();
+    }
+
+    ctx.fillStyle='#7fa6c8'; ctx.font='700 12px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.fillText('NIVEL '+level+' · TIRO '+shotsThisLevel+' · QUEDAN '+balls.filter(b=>!b.potted).length, 12, H-8);
+
+    if(msgTimer>0){
+      ctx.globalAlpha=Math.min(1,msgTimer/300);
+      ctx.fillStyle='#ffd23b';
+      ctx.font='900 18px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=16;
+      ctx.fillText(msg,W/2,H/2);
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+
+    if(paused){
+      ctx.fillStyle='rgba(5,7,15,.6)'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#27e8ff'; ctx.font='900 26px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.shadowColor='#27e8ff'; ctx.shadowBlur=14;
+      ctx.fillText('PAUSA',W/2,H/2);
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!paused){
+      const dt=Math.min(40,ts-last);
+      last=ts;
+      update(dt);
+      draw();
+    }else{
+      last=ts;
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function canvasPos(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    return { x:(clientX-rect.left)*(W/rect.width), y:(clientY-rect.top)*(H/rect.height) };
+  }
+
+  function aimFromPointer(px,py){
+    let pdx=px-cue.x, pdy=py-cue.y;
+    let dist=Math.hypot(pdx,pdy);
+    if(dist>MAX_PULL){ pdx=pdx/dist*MAX_PULL; pdy=pdy/dist*MAX_PULL; dist=MAX_PULL; }
+    if(dist<4) return;
+    const sdx=-pdx, sdy=-pdy;
+    aimAngle=Math.atan2(sdx,-sdy);
+    aimPower=clamp(dist/MAX_PULL,0,1);
+  }
+
+  canvas.addEventListener('pointerdown',e=>{
+    if(!running||paused||state!=='aiming') return;
+    const p=canvasPos(e.clientX,e.clientY);
+    if(Math.hypot(p.x-cue.x,p.y-cue.y)>80) return;
+    dragging=true; dragPointerId=e.pointerId;
+    canvas.setPointerCapture(e.pointerId);
+    aimFromPointer(p.x,p.y);
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!dragging||e.pointerId!==dragPointerId) return;
+    const p=canvasPos(e.clientX,e.clientY);
+    aimFromPointer(p.x,p.y);
+  });
+  function endDrag(e){
+    if(dragging && e.pointerId===dragPointerId){
+      dragging=false;
+      shootCue();
+    }
+  }
+  canvas.addEventListener('pointerup',endDrag);
+  canvas.addEventListener('pointercancel',endDrag);
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'){ keyLeft=true; e.preventDefault(); }
+    if(e.key==='ArrowRight'){ keyRight=true; e.preventDefault(); }
+    if(e.key===' '||e.key==='Enter'){
+      e.preventDefault();
+      if(state==='aiming') keyCharging=true;
+    }
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+  window.addEventListener('keyup',e=>{
+    if(e.key==='ArrowLeft') keyLeft=false;
+    if(e.key==='ArrowRight') keyRight=false;
+    if(e.key===' '||e.key==='Enter'){
+      if(keyCharging){ keyCharging=false; shootCue(); }
+    }
+  });
+
+  function togglePause(){
+    if(!running) return;
+    paused=!paused;
+    pauseBtn.textContent = paused ? 'Seguir' : 'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+  pauseBtn.addEventListener('click',togglePause);
+  startBtn.addEventListener('click',start);
+})();
+</script>
+</body>
+</html>

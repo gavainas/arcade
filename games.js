@@ -466,6 +466,13 @@
       desc: "Air hockey: movés tu paleta libremente por tu mitad de la mesa (arrastrando el dedo o el mouse, o con WASD/flechas) y le metés el disco a la CPU antes de que te lo meta a vos. El disco rebota en las paredes y se frena de a poco por fricción. 3 dificultades de CPU (más rápida y con mejor anticipación cuanto más difícil). Partidas a 7 goles, con récord del mejor tiempo para ganar guardado por dificultad.",
       controles: "Arrastrá el dedo o el mouse por tu mitad de la mesa; o WASD / flechas", fecha: "2026-09-17",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "billar-neon", titulo: "Billar Neón", archivo: "billar-neon.html",
+      emoji: "🎱", categoria: "deportes", tags: ["billar", "pool", "fisica", "punteria", "troneras", "solitario"],
+      desc: "Billar solitario: arrastrá hacia atrás desde la bola blanca para apuntar y definir la potencia, soltá para tirar. Meté las 9 bolas numeradas en las 6 troneras de la mesa usando la menor cantidad de tiros posible; meter varias en el mismo tiro suma combo, pero si la blanca cae en una tronera es falta y perdés una vida. Niveles infinitos con troneras cada vez más chicas, y récord de puntaje guardado.",
+      controles: "Arrastrá desde la bola blanca; o flechas para apuntar + mantené ESPACIO para cargar y soltá para tirar", fecha: "2026-09-18",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
