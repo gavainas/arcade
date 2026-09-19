@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BÁSQUET NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,42px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--gold),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.time b{color:var(--pink); font-size:20px;}
+  .hud .box.streak b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:6px; font-size:12px; color:var(--ink); text-align:left; max-width:330px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:flex-end; gap:8px;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:8px;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">BÁSQUET NEÓN</div>
+      <div class="sub">T I R O S &nbsp;L I B R E S &nbsp;·&nbsp; 6 0 &nbsp;S E G</div>
+    </header>
+
+    <div class="hud">
+      <div class="box time">TIEMPO<b id="timeBox">60</b></div>
+      <div class="box">PUNTOS<b id="scoreBox">0</b></div>
+      <div class="box streak">RACHA<b id="streakBox">0</b></div>
+      <div class="box rec">RÉCORD<b id="recBox">0</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="640"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">BÁSQUET NEÓN</h2>
+        <p id="ovText">Arrastrá hacia atrás desde la pelota para apuntar y definir la potencia; soltá para tirarla al aro antes de que se acabe el tiempo. Cuanto más lejos del aro esté la pelota, más vale el tiro.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Tiro cerca del aro: 2 puntos</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Tiro desde atrás de la línea: 3 puntos</span>
+          <span><i class="dot" style="color:var(--green);background:var(--green)"></i> Encestá sin tocar el aro: +1 de bonus (SWISH)</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Cada enceste suma tiempo y sube tu racha</span>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Arrastrá y soltá para tirar · flechas para apuntar + ESPACIO con teclado.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="mini" id="pauseBtn">Pausa</button>
+    </div>
+    <div class="hint">Arrastrá desde la pelota (o flechas para el ángulo/potencia + <b>ESPACIO</b> para tirar) · <b>P</b> pausa.</div>
+
+    <footer>NEON ARCADE · Básquet Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const timeEl=document.getElementById('timeBox');
+  const scoreEl=document.getElementById('scoreBox');
+  const streakEl=document.getElementById('streakBox');
+  const recEl=document.getElementById('recBox');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const startBtn=document.getElementById('startBtn');
+  const pauseBtn=document.getElementById('pauseBtn');
+
+  const BEST_KEY='neon-basquet-neon-best';
+  let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
+  recEl.textContent=best;
+
+  const BALL_R=13;
+  const FLOOR_Y=560;
+  const THREE_PT_X=150;
+  const SHOT_MIN_X=64, SHOT_MAX_X=282;
+  const BOARD_X=372, BOARD_W=15, BOARD_TOP=138, BOARD_BOT=232;
+  const RIM_Y=200, RIM_LEFT_X=320, RIM_RIGHT_X=372, RIM_POST_R=4;
+  const RIM_CX=(RIM_LEFT_X+RIM_RIGHT_X)/2;
+  const GRAVITY=0.20;
+  const MAX_PULL=120, MIN_SPEED=9, MAX_SPEED=23;
+  const ROUND_TIME=60000, MAKE_TIME_BONUS=1000;
+  const ANGLE_MIN=0.25, ANGLE_MAX=1.5;
+
+  let timeLeft=ROUND_TIME, score=0, streak=0;
+  let shotX=180, ballX=shotX, ballY=FLOOR_Y-BALL_R, prevBallY=ballY;
+  let vx=0, vy=0, hitRim=false;
+  let aimAngle=0.78, aimPower=0.55, dragging=false, dragPointerId=null;
+  let state='intro'; // intro | aiming | flying | resolved | game-over
+  let running=false, paused=false;
+  let msg='', msgColor='#ffd23b', msgTimer=0, holdTimer=0;
+  let keyLeft=false,keyRight=false,keyUp=false,keyDown=false;
+  let netFlash=0, boardFlash=0;
+  let last=0;
+
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+  function flashMsg(t,color,dur){ msg=t; msgColor=color||'#ffd23b'; msgTimer=dur||1200; }
+
+  function updateHud(){
+    timeEl.textContent=String(Math.max(0,Math.ceil(timeLeft/1000)));
+    scoreEl.textContent=score;
+    streakEl.textContent=streak;
+  }
+
+  function multiplierFor(s){ return 1+Math.floor(s/3); }
+
+  function randomShotX(){
+    return SHOT_MIN_X + Math.random()*(SHOT_MAX_X-SHOT_MIN_X);
+  }
+
+  function newShot(){
+    shotX=randomShotX();
+    ballX=shotX; ballY=FLOOR_Y-BALL_R; prevBallY=ballY;
+    vx=0; vy=0; hitRim=false;
+    aimAngle=0.78; aimPower=0.55;
+    state='aiming';
+  }
+
+  function resetGame(){
+    timeLeft=ROUND_TIME; score=0; streak=0;
+    newShot();
+    updateHud();
+  }
+
+  function start(){
+    resetGame();
+    running=true; paused=false;
+    overlay.classList.add('hidden');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function shoot(){
+    if(state!=='aiming') return;
+    if(aimPower<0.06) return;
+    const speed=MIN_SPEED+clamp(aimPower,0,1)*(MAX_SPEED-MIN_SPEED);
+    vx=Math.cos(aimAngle)*speed;
+    vy=-Math.sin(aimAngle)*speed;
+    hitRim=false;
+    prevBallY=ballY;
+    state='flying';
+  }
+
+  function aimFromPointer(px,py){
+    let pdx=px-ballX, pdy=py-ballY;
+    let dist=Math.hypot(pdx,pdy);
+    if(dist>MAX_PULL){ pdx=pdx/dist*MAX_PULL; pdy=pdy/dist*MAX_PULL; dist=MAX_PULL; }
+    if(dist<6) return;
+    const sdx=-pdx, sdy=-pdy; // dirección del tiro: opuesta al arrastre
+    let angle=Math.atan2(-sdy,sdx);
+    aimAngle=clamp(angle,ANGLE_MIN,ANGLE_MAX);
+    aimPower=clamp(dist/MAX_PULL,0,1);
+  }
+
+  function circleHit(cx,cy,r,bx,by,br){
+    return Math.hypot(bx-cx,by-cy) < (r+br);
+  }
+
+  function bounceOffPoint(cx,cy){
+    const dx=ballX-cx, dy=ballY-cy;
+    const dist=Math.hypot(dx,dy)||0.001;
+    const nx=dx/dist, ny=dy/dist;
+    const overlap=(BALL_R+RIM_POST_R)-dist;
+    ballX+=nx*overlap; ballY+=ny*overlap;
+    const vDotN=vx*nx+vy*ny;
+    vx=(vx-2*vDotN*nx)*0.62;
+    vy=(vy-2*vDotN*ny)*0.62;
+    hitRim=true;
+  }
+
+  function resolveShot(made, points, swish){
+    if(made){
+      score+=points;
+      streak++;
+      timeLeft=Math.min(ROUND_TIME*3, timeLeft+MAKE_TIME_BONUS);
+      netFlash=380;
+      const bonusTxt = swish ? ' ¡SWISH! +1' : '';
+      flashMsg('¡ENCESTE! +'+points+bonusTxt, swish?'#39ff9e':'#27e8ff', 1300);
+    }else{
+      streak=0;
+      flashMsg('FALLASTE',  '#ff5470', 900);
+    }
+    updateHud();
+    state='resolved';
+    holdTimer=made?650:500;
+  }
+
+  function updateFlying(){
+    prevBallY=ballY;
+    vy+=GRAVITY;
+    ballX+=vx; ballY+=vy;
+
+    // tablero
+    if(ballX+BALL_R>=BOARD_X && ballX-BALL_R<=BOARD_X+BOARD_W && ballY>=BOARD_TOP && ballY<=BOARD_BOT && vx>0){
+      vx=-Math.abs(vx)*0.55;
+      ballX=BOARD_X-BALL_R-1;
+      hitRim=true;
+      boardFlash=200;
+    }
+
+    // postes del aro
+    if(circleHit(RIM_LEFT_X,RIM_Y,RIM_POST_R,ballX,ballY,BALL_R)) bounceOffPoint(RIM_LEFT_X,RIM_Y);
+    else if(circleHit(RIM_RIGHT_X,RIM_Y,RIM_POST_R,ballX,ballY,BALL_R)) bounceOffPoint(RIM_RIGHT_X,RIM_Y);
+
+    // ¿pasó por el aro cayendo?
+    if(prevBallY<RIM_Y && ballY>=RIM_Y && vy>0){
+      const netMinX=RIM_LEFT_X+10, netMaxX=RIM_RIGHT_X-10;
+      if(ballX>netMinX && ballX<netMaxX){
+        const zoneX = shotX<THREE_PT_X ? 3 : 2;
+        const mult=multiplierFor(streak);
+        const swish=!hitRim;
+        resolveShot(true, zoneX*mult + (swish?1:0), swish);
+        return;
+      }
+    }
+
+    // piso o fuera de cancha
+    if(ballY-BALL_R>FLOOR_Y){ resolveShot(false,0,false); return; }
+    if(ballX<-40 || ballX>W+40 || ballY>H+60){ resolveShot(false,0,false); return; }
+  }
+
+  function gameOver(){
+    running=false;
+    state='game-over';
+    let isRec=score>best;
+    if(isRec){ best=score; localStorage.setItem(BEST_KEY,best); recEl.textContent=best; }
+    ovTitle.textContent='¡TIEMPO!';
+    legend.style.display='none';
+    ovText.innerHTML=`<span class="final">Puntaje final: <b>${score}</b></span>`+
+      (isRec?'<br><span class="newrec">¡NUEVO RÉCORD!</span>':`<br>Récord: ${best}`);
+    startBtn.textContent='JUGAR DE NUEVO';
+    ovHint.textContent='Arrastrá y soltá para tirar · flechas + ESPACIO con teclado.';
+    overlay.classList.remove('hidden');
+  }
+
+  function update(dt){
+    if(msgTimer>0) msgTimer-=dt;
+    if(netFlash>0) netFlash-=dt;
+    if(boardFlash>0) boardFlash-=dt;
+
+    if(!running || state==='game-over') return;
+
+    if(state!=='intro'){
+      timeLeft-=dt;
+      if(timeLeft<=0){
+        timeLeft=0;
+        updateHud();
+        if(state==='aiming'){ gameOver(); return; }
+      }else{
+        updateHud();
+      }
+    }
+
+    if(state==='aiming'){
+      if(keyLeft) aimAngle=clamp(aimAngle+0.028,ANGLE_MIN,ANGLE_MAX);
+      if(keyRight) aimAngle=clamp(aimAngle-0.028,ANGLE_MIN,ANGLE_MAX);
+      if(keyUp) aimPower=clamp(aimPower+0.018,0,1);
+      if(keyDown) aimPower=clamp(aimPower-0.018,0,1);
+    }
+
+    if(state==='flying'){
+      updateFlying();
+    }
+
+    if(state==='resolved'){
+      holdTimer-=dt;
+      if(holdTimer<=0){
+        if(timeLeft<=0) gameOver();
+        else newShot();
+      }
+    }
+  }
+
+  function drawCourt(){
+    ctx.fillStyle='#0a1626';
+    ctx.fillRect(20,20,W-40,FLOOR_Y-20);
+    ctx.strokeStyle='rgba(39,232,255,.3)'; ctx.lineWidth=3;
+    ctx.strokeRect(20,20,W-40,FLOOR_Y-20);
+
+    // piso
+    ctx.strokeStyle='rgba(232,246,255,.25)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(20,FLOOR_Y); ctx.lineTo(W-20,FLOOR_Y); ctx.stroke();
+
+    // linea de 3 puntos
+    ctx.strokeStyle='rgba(255,210,59,.55)'; ctx.setLineDash([6,6]); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(THREE_PT_X,30); ctx.lineTo(THREE_PT_X,FLOOR_Y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,210,59,.7)'; ctx.font='700 10px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('3PT', THREE_PT_X, 44);
+  }
+
+  function drawHoop(){
+    // tablero
+    ctx.fillStyle = boardFlash>0 ? 'rgba(255,255,255,.85)' : 'rgba(232,246,255,.14)';
+    ctx.fillRect(BOARD_X,BOARD_TOP,BOARD_W,BOARD_BOT-BOARD_TOP);
+    ctx.strokeStyle='rgba(39,232,255,.7)'; ctx.lineWidth=2;
+    ctx.strokeRect(BOARD_X,BOARD_TOP,BOARD_W,BOARD_BOT-BOARD_TOP);
+    ctx.strokeStyle='rgba(39,232,255,.4)'; ctx.lineWidth=1.5;
+    ctx.strokeRect(BOARD_X+2,RIM_Y-20,BOARD_W-4,16);
+
+    // aro
+    const rimColor = netFlash>0 ? '#39ff9e' : '#ff2bd6';
+    ctx.strokeStyle=rimColor; ctx.lineWidth=4; ctx.shadowColor=rimColor; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.moveTo(RIM_LEFT_X,RIM_Y); ctx.lineTo(RIM_RIGHT_X,RIM_Y); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // red
+    ctx.strokeStyle='rgba(232,246,255,.55)'; ctx.lineWidth=1.3;
+    const netBottom=RIM_Y+34;
+    const pts=[0,0.25,0.5,0.75,1];
+    for(const t of pts){
+      const topX=RIM_LEFT_X+(RIM_RIGHT_X-RIM_LEFT_X)*t;
+      const botX=RIM_CX+(topX-RIM_CX)*0.35;
+      ctx.beginPath(); ctx.moveTo(topX,RIM_Y); ctx.lineTo(botX,netBottom); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(RIM_LEFT_X+8,RIM_Y+16); ctx.lineTo(RIM_RIGHT_X-8,RIM_Y+16); ctx.stroke();
+  }
+
+  function drawShotMark(){
+    ctx.strokeStyle = shotX<THREE_PT_X ? 'rgba(255,210,59,.6)' : 'rgba(39,232,255,.5)';
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(shotX,FLOOR_Y,10,0,Math.PI*2); ctx.stroke();
+  }
+
+  function drawTrajectoryPreview(){
+    const speed=MIN_SPEED+clamp(aimPower,0,1)*(MAX_SPEED-MIN_SPEED);
+    let px=ballX, py=ballY;
+    let pvx=Math.cos(aimAngle)*speed, pvy=-Math.sin(aimAngle)*speed;
+    ctx.fillStyle=`hsl(${120-aimPower*120},90%,60%)`;
+    for(let i=0;i<70;i++){
+      pvy+=GRAVITY; px+=pvx; py+=pvy;
+      if(py-BALL_R>FLOOR_Y || px<0 || px>W) break;
+      if(i%3===0){
+        ctx.globalAlpha=Math.max(.15,1-i/70);
+        ctx.beginPath(); ctx.arc(px,py,2.6,0,Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function drawBall(x,y){
+    ctx.beginPath(); ctx.arc(x,y,BALL_R,0,Math.PI*2);
+    ctx.fillStyle='#ffa93b'; ctx.shadowColor='#ffa93b'; ctx.shadowBlur=12; ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(7,10,22,.7)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(x-BALL_R,y); ctx.lineTo(x+BALL_R,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y-BALL_R); ctx.lineTo(x,y+BALL_R); ctx.stroke();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    drawCourt();
+    drawHoop();
+
+    if(state==='aiming'){
+      drawShotMark();
+      drawTrajectoryPreview();
+      drawBall(ballX,ballY);
+    }else if(state==='flying'){
+      drawBall(ballX,ballY);
+    }else if(state==='resolved'){
+      drawShotMark();
+      drawBall(ballX,ballY);
+    }
+
+    ctx.fillStyle='#7fa6c8'; ctx.font='700 12px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('PUNTOS '+score+' · RACHA '+streak+' (x'+multiplierFor(streak)+')', 24, H-8);
+
+    if(msgTimer>0){
+      ctx.globalAlpha=Math.min(1,msgTimer/300);
+      ctx.fillStyle=msgColor;
+      ctx.font='900 18px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.shadowColor=msgColor; ctx.shadowBlur=16;
+      wrapText(msg,W/2,H/2-40,W-80);
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+
+    if(paused){
+      ctx.fillStyle='rgba(5,7,15,.6)'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#27e8ff'; ctx.font='900 26px "Segoe UI",system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.shadowColor='#27e8ff'; ctx.shadowBlur=14;
+      ctx.fillText('PAUSA',W/2,H/2);
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function wrapText(text,cx,cy,maxW){
+    const words=text.split(' ');
+    const lines=[]; let cur='';
+    for(const w of words){
+      const test=cur?cur+' '+w:w;
+      if(ctx.measureText(test).width>maxW && cur){ lines.push(cur); cur=w; }
+      else cur=test;
+    }
+    if(cur) lines.push(cur);
+    const lh=22;
+    const startY=cy-((lines.length-1)*lh)/2;
+    lines.forEach((l,i)=>ctx.fillText(l,cx,startY+i*lh));
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!paused){
+      const dt=Math.min(40,ts-last);
+      last=ts;
+      update(dt);
+      draw();
+    }else{
+      last=ts;
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function canvasPos(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    return { x:(clientX-rect.left)*(W/rect.width), y:(clientY-rect.top)*(H/rect.height) };
+  }
+
+  canvas.addEventListener('pointerdown',e=>{
+    if(!running||paused) return;
+    const p=canvasPos(e.clientX,e.clientY);
+    if(state==='aiming'){
+      if(Math.hypot(p.x-ballX,p.y-ballY)>90) return;
+      dragging=true; dragPointerId=e.pointerId;
+      canvas.setPointerCapture(e.pointerId);
+      aimFromPointer(p.x,p.y);
+    }
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!dragging||e.pointerId!==dragPointerId) return;
+    const p=canvasPos(e.clientX,e.clientY);
+    aimFromPointer(p.x,p.y);
+  });
+  function endDrag(e){
+    if(dragging && e.pointerId===dragPointerId){
+      dragging=false;
+      shoot();
+    }
+  }
+  canvas.addEventListener('pointerup',endDrag);
+  canvas.addEventListener('pointercancel',endDrag);
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'){ keyLeft=true; e.preventDefault(); }
+    if(e.key==='ArrowRight'){ keyRight=true; e.preventDefault(); }
+    if(e.key==='ArrowUp'){ keyUp=true; e.preventDefault(); }
+    if(e.key==='ArrowDown'){ keyDown=true; e.preventDefault(); }
+    if(e.key===' '||e.key==='Enter'){
+      e.preventDefault();
+      if(state==='aiming') shoot();
+    }
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+  window.addEventListener('keyup',e=>{
+    if(e.key==='ArrowLeft') keyLeft=false;
+    if(e.key==='ArrowRight') keyRight=false;
+    if(e.key==='ArrowUp') keyUp=false;
+    if(e.key==='ArrowDown') keyDown=false;
+  });
+
+  function togglePause(){
+    if(!running) return;
+    paused=!paused;
+    pauseBtn.textContent = paused ? 'Seguir' : 'Pausa';
+    if(!paused){ last=performance.now(); }
+  }
+  pauseBtn.addEventListener('click',togglePause);
+  startBtn.addEventListener('click',start);
+
+  draw();
+})();
+</script>
+</body>
+</html>

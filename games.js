@@ -473,6 +473,13 @@
       desc: "Billar solitario: arrastrá hacia atrás desde la bola blanca para apuntar y definir la potencia, soltá para tirar. Meté las 9 bolas numeradas en las 6 troneras de la mesa usando la menor cantidad de tiros posible; meter varias en el mismo tiro suma combo, pero si la blanca cae en una tronera es falta y perdés una vida. Niveles infinitos con troneras cada vez más chicas, y récord de puntaje guardado.",
       controles: "Arrastrá desde la bola blanca; o flechas para apuntar + mantené ESPACIO para cargar y soltá para tirar", fecha: "2026-09-18",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "basquet-neon", titulo: "Básquet Neón", archivo: "basquet-neon.html",
+      emoji: "🏀", categoria: "deportes", tags: ["basquet", "basketball", "tiros libres", "fisica", "puntaje", "arcade"],
+      desc: "Tiros libres contra el reloj: arrastrá hacia atrás desde la pelota para apuntar y definir la potencia, soltá para tirarla al aro antes de que se acaben los 60 segundos. Los tiros cerca del aro valen 2 puntos y los de atrás de la línea valen 3; si encestás sin tocar el aro sumás +1 de bonus (SWISH). Cada enceste te regala un segundo extra y sube tu racha, que multiplica los puntos del próximo tiro; fallar corta la racha. Récord de mejor puntaje guardado.",
+      controles: "Arrastrá desde la pelota; o flechas para el ángulo/potencia + ESPACIO para tirar", fecha: "2026-09-19",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
