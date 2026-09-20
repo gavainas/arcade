@@ -139,7 +139,10 @@ const OVERRIDES = {
   "curling-neon": { steps: ["#startBtn"], wait: 900 },
   // Elegimos dificultad y dejamos correr un ratito para que la miniatura muestre
   // el disco en movimiento y las dos paletas, no sólo la mesa vacía.
-  "hockey-neon": { steps: ['[data-diff="normal"]', "#startBtn"], wait: 1400 }
+  "hockey-neon": { steps: ['[data-diff="normal"]', "#startBtn"], wait: 1400 },
+  // Elegimos un nivel para que la miniatura muestre el tablero de fichas
+  // numeradas y no sólo el menú de niveles.
+  "quince-neon": { steps: [".lvl-card"], wait: 400 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

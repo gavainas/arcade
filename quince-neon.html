@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QUINCE NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:560px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .levels{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:26px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .name{margin-top:6px; font-size:14px; font-weight:800;}
+  .lvl-card .meta{margin-top:4px; font-size:11px; color:var(--muted); letter-spacing:.5px;}
+  .lvl-card .best{margin-top:6px; font-size:11.5px; color:var(--gold); font-weight:700; min-height:14px;}
+  .lvl-card.done{border-color:var(--green);}
+  .lvl-card.done .name::after{content:" ✓"; color:var(--green);}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.moves b{color:var(--pink);}
+  .hud .box.time b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:18px 14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  .grid{display:grid; gap:6px; touch-action:manipulation; user-select:none;}
+  .cell{
+    border-radius:10px; border:2px solid rgba(138,75,255,.35); cursor:pointer;
+    background:rgba(232,246,255,.04); box-shadow:inset 0 0 10px rgba(0,0,0,.5);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900; color:var(--ink);
+    transition:background .12s ease, box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+  }
+  .cell:active{transform:scale(.93);}
+  .cell.tile{
+    background:radial-gradient(circle at 35% 30%, #fff8, transparent 60%), linear-gradient(160deg, var(--cyan), var(--purple));
+    border-color:var(--cyan); box-shadow:0 0 14px rgba(39,232,255,.55), inset 0 0 10px rgba(255,255,255,.2);
+    color:#031018;
+  }
+  .cell.tile.movable{border-color:var(--pink); box-shadow:0 0 18px rgba(255,43,214,.6), inset 0 0 10px rgba(255,255,255,.25);}
+  .cell.empty{background:rgba(0,0,0,.3); border-style:dashed; border-color:rgba(138,75,255,.2); cursor:default; box-shadow:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">QUINCE NEÓN</div>
+      <div class="sub">S L I D I N G &nbsp; P U Z Z L E</div>
+    </header>
+
+    <!-- Level select -->
+    <section id="menu">
+      <p class="hint" style="margin-bottom:6px;">El clásico juego del quince: deslizá las fichas hacia el hueco vacío hasta ordenarlas del 1 en adelante, de izquierda a derecha y de arriba abajo. Elegí un nivel:</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <!-- Game -->
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box lvl">NIVEL<b id="hudLevel">-</b></div>
+        <div class="box moves">MOVIDAS<b id="hudMoves">0</b></div>
+        <div class="box time">TIEMPO<b id="hudTime">0:00</b></div>
+      </div>
+      <div class="panel">
+        <div class="grid" id="board"></div>
+
+        <div class="overlay hidden" id="winOverlay">
+          <div class="picture">🧮</div>
+          <h2>¡ORDEN NEÓN!</h2>
+          <div class="final">Movidas: <b id="winMoves">0</b> · Tiempo: <b id="winTime">0:00</b></div>
+          <div class="newrec hidden" id="winRecord">⭐ ¡NUEVO RÉCORD!</div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn ghost" id="btnRetry">REINTENTAR</button>
+            <button class="btn" id="btnNext">SIGUIENTE ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="btnrow">
+          <button class="mini" id="btnLevels">☰ Niveles</button>
+          <button class="mini" id="btnUndo">↶ Deshacer</button>
+          <button class="mini" id="btnReset">↺ Reiniciar</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Click / toque en una ficha pegada al hueco para deslizarla · Flechas mueven una ficha hacia el hueco en esa dirección · Deshacer con retroceso, reiniciar con R.</p>
+    </section>
+
+    <footer>Neon Arcade · Juego del 15 hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LEVELS = [
+    { id:"l1", name:"Primeras piezas", size:3, scramble:20 },
+    { id:"l2", name:"Circuito básico", size:3, scramble:40 },
+    { id:"l3", name:"Grilla clásica", size:4, scramble:60 },
+    { id:"l4", name:"Quince completo", size:4, scramble:110 },
+    { id:"l5", name:"Panel ampliado", size:5, scramble:160 },
+    { id:"l6", name:"Sobrecarga", size:5, scramble:240 },
+    { id:"l7", name:"Central neón", size:6, scramble:320 },
+    { id:"l8", name:"Caos total", size:6, scramble:450 }
+  ];
+  var EMOJIS = ["🧮", "🔢", "🎛️", "🧊", "🔷", "🔶", "🟪", "🟦"];
+
+  // ---------- Persistence ----------
+  var LS_BEST = "quince-neon-best";
+  var LS_DONE = "quince-neon-done";
+  function loadBest(){ try{ return JSON.parse(localStorage.getItem(LS_BEST))||{}; }catch(e){ return {}; } }
+  function saveBest(o){ try{ localStorage.setItem(LS_BEST, JSON.stringify(o)); }catch(e){} }
+  function loadDone(){ try{ return JSON.parse(localStorage.getItem(LS_DONE))||{}; }catch(e){ return {}; } }
+  function saveDone(o){ try{ localStorage.setItem(LS_DONE, JSON.stringify(o)); }catch(e){} }
+
+  // ---------- Puzzle logic ----------
+  // grid es un array plano de size*size; 0 representa el hueco vacío.
+  function solvedGrid(size){
+    var g = [];
+    for(var i=1; i<size*size; i++) g.push(i);
+    g.push(0);
+    return g;
+  }
+  function cloneGrid(g){ return g.slice(); }
+  function emptyIndex(g){ return g.indexOf(0); }
+
+  function neighbors(idx, size){
+    var r = Math.floor(idx/size), c = idx%size, list = [];
+    if(r>0) list.push(idx-size);
+    if(r<size-1) list.push(idx+size);
+    if(c>0) list.push(idx-1);
+    if(c<size-1) list.push(idx+1);
+    return list;
+  }
+
+  function slide(g, from){
+    var hole = emptyIndex(g);
+    g[hole] = g[from];
+    g[from] = 0;
+  }
+
+  function isSolved(g){
+    for(var i=0; i<g.length-1; i++){ if(g[i] !== i+1) return false; }
+    return true;
+  }
+
+  // Baraja aplicando movimientos legales al azar desde la posición resuelta:
+  // siempre queda un tablero resoluble, porque el camino inverso lo ordena.
+  function generateLevel(size, scramble){
+    var g = solvedGrid(size);
+    var last = -1;
+    for(var s=0; s<scramble; s++){
+      var hole = emptyIndex(g);
+      var opts = neighbors(hole, size).filter(function(n){ return n !== last; });
+      if(!opts.length) opts = neighbors(hole, size);
+      var pick = opts[Math.floor(Math.random()*opts.length)];
+      last = hole;
+      slide(g, pick);
+    }
+    if(isSolved(g)){
+      var hole2 = emptyIndex(g);
+      var opt2 = neighbors(hole2, size)[0];
+      slide(g, opt2);
+    }
+    return g;
+  }
+
+  function fmtTime(sec){
+    var m = Math.floor(sec/60), s = sec%60;
+    return m + ":" + (s<10 ? "0"+s : s);
+  }
+
+  // ---------- State ----------
+  var els = {
+    menu: document.getElementById("menu"),
+    game: document.getElementById("game"),
+    levelGrid: document.getElementById("levelGrid"),
+    board: document.getElementById("board"),
+    hudLevel: document.getElementById("hudLevel"),
+    hudMoves: document.getElementById("hudMoves"),
+    hudTime: document.getElementById("hudTime"),
+    winOverlay: document.getElementById("winOverlay"),
+    winMoves: document.getElementById("winMoves"),
+    winTime: document.getElementById("winTime"),
+    winRecord: document.getElementById("winRecord"),
+    btnUndo: document.getElementById("btnUndo"),
+    btnReset: document.getElementById("btnReset")
+  };
+
+  var current = null; // { def, size, grid, initialGrid }
+  var levelIndex = -1;
+  var history = [];
+  var moves = 0;
+  var won = false;
+  var startTime = 0, elapsed = 0, timerId = null;
+
+  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId = null; } }
+  function startTimer(){
+    stopTimer();
+    startTime = Date.now();
+    timerId = setInterval(function(){
+      elapsed = Math.floor((Date.now()-startTime)/1000);
+      els.hudTime.textContent = fmtTime(elapsed);
+    }, 250);
+  }
+
+  function loadLevel(idx){
+    levelIndex = idx;
+    var def = LEVELS[idx];
+    var grid = generateLevel(def.size, def.scramble);
+    current = { def: def, size: def.size, grid: grid, initialGrid: cloneGrid(grid) };
+    history = [];
+    moves = 0;
+    won = false;
+    elapsed = 0;
+    els.winOverlay.classList.add("hidden");
+    updateHud();
+    renderBoard();
+    startTimer();
+  }
+
+  function resetLevel(){
+    if(!current) return;
+    current.grid = cloneGrid(current.initialGrid);
+    history = [];
+    moves = 0;
+    won = false;
+    els.winOverlay.classList.add("hidden");
+    updateHud();
+    renderBoard();
+    startTimer();
+  }
+
+  function undo(){
+    if(won || !history.length) return;
+    current.grid = history.pop();
+    moves = Math.max(0, moves - 1);
+    updateHud();
+    renderBoard();
+  }
+
+  function trySlide(idx){
+    if(won || !current) return;
+    var hole = emptyIndex(current.grid);
+    if(neighbors(hole, current.size).indexOf(idx) === -1) return;
+    history.push(cloneGrid(current.grid));
+    slide(current.grid, idx);
+    moves++;
+    updateHud();
+    renderBoard();
+    if(isSolved(current.grid)) onWin();
+  }
+
+  function moveInDirection(dir){
+    if(won || !current) return;
+    var size = current.size;
+    var hole = emptyIndex(current.grid);
+    var r = Math.floor(hole/size), c = hole%size, target = -1;
+    // La flecha indica hacia dónde se mueve la ficha (el hueco se mueve al revés).
+    if(dir === "up" && r < size-1) target = hole+size;
+    else if(dir === "down" && r > 0) target = hole-size;
+    else if(dir === "left" && c < size-1) target = hole+1;
+    else if(dir === "right" && c > 0) target = hole-1;
+    if(target >= 0) trySlide(target);
+  }
+
+  function onWin(){
+    won = true;
+    stopTimer();
+    var best = loadBest();
+    var prevBest = best[current.def.id];
+    var isNew = (!prevBest || moves < prevBest.moves || (moves === prevBest.moves && elapsed < prevBest.time));
+    if(isNew){ best[current.def.id] = { moves: moves, time: elapsed }; saveBest(best); }
+    var doneMap = loadDone();
+    doneMap[current.def.id] = true;
+    saveDone(doneMap);
+    els.winMoves.textContent = moves;
+    els.winTime.textContent = fmtTime(elapsed);
+    els.winRecord.classList.toggle("hidden", !isNew);
+    document.getElementById("btnNext").classList.toggle("hidden", levelIndex >= LEVELS.length-1);
+    els.winOverlay.classList.remove("hidden");
+  }
+
+  function updateHud(){
+    els.hudLevel.textContent = (levelIndex+1) + "/" + LEVELS.length;
+    els.hudMoves.textContent = moves;
+    els.hudTime.textContent = fmtTime(elapsed);
+    els.btnUndo.disabled = !history.length;
+  }
+
+  function renderBoard(){
+    var size = current.size;
+    var wrap = els.board;
+    wrap.style.gridTemplateColumns = "repeat(" + size + ", minmax(0,1fr))";
+    var cellPx = size <= 3 ? 84 : (size <= 4 ? 68 : (size <= 5 ? 56 : 46));
+    var fontPx = size <= 3 ? 28 : (size <= 4 ? 24 : (size <= 5 ? 20 : 17));
+    wrap.innerHTML = "";
+    var hole = emptyIndex(current.grid);
+    var moveIdxs = neighbors(hole, size);
+    for(var i=0; i<current.grid.length; i++){
+      var v = current.grid[i];
+      var cell = document.createElement("div");
+      var cls = "cell" + (v === 0 ? " empty" : " tile") +
+        (v !== 0 && moveIdxs.indexOf(i) !== -1 ? " movable" : "");
+      cell.className = cls;
+      cell.style.width = cellPx + "px";
+      cell.style.height = cellPx + "px";
+      cell.style.fontSize = fontPx + "px";
+      cell.textContent = v === 0 ? "" : v;
+      cell.addEventListener("click", (function(ii){ return function(){ trySlide(ii); }; })(i));
+      wrap.appendChild(cell);
+    }
+  }
+
+  function renderMenu(){
+    var best = loadBest();
+    var doneMap = loadDone();
+    els.levelGrid.innerHTML = "";
+    LEVELS.forEach(function(lvl, i){
+      var card = document.createElement("div");
+      card.className = "lvl-card" + (doneMap[lvl.id] ? " done" : "");
+      var b = best[lvl.id];
+      card.innerHTML =
+        '<div class="glyph">' + EMOJIS[i % EMOJIS.length] + '</div>' +
+        '<div class="name">' + (i+1) + ". " + lvl.name + '</div>' +
+        '<div class="meta">' + lvl.size + '×' + lvl.size + '</div>' +
+        '<div class="best">' + (b ? ("Mejor: " + b.moves + " mov · " + fmtTime(b.time)) : "") + '</div>';
+      card.addEventListener("click", function(){
+        els.menu.classList.add("hidden");
+        els.game.classList.remove("hidden");
+        loadLevel(i);
+      });
+      els.levelGrid.appendChild(card);
+    });
+  }
+
+  function goMenu(){
+    stopTimer();
+    els.game.classList.add("hidden");
+    els.menu.classList.remove("hidden");
+    renderMenu();
+  }
+
+  // ---------- Input ----------
+  // Las flechas mueven, en esa dirección, la ficha vecina al hueco (el hueco
+  // termina yendo hacia el lado contrario de la flecha).
+  document.addEventListener("keydown", function(e){
+    if(els.game.classList.contains("hidden") || !current) return;
+    var k = e.key;
+    if(k === "ArrowUp" || k === "w" || k === "W"){ moveInDirection("up"); e.preventDefault(); }
+    else if(k === "ArrowDown" || k === "s" || k === "S"){ moveInDirection("down"); e.preventDefault(); }
+    else if(k === "ArrowLeft" || k === "a" || k === "A"){ moveInDirection("left"); e.preventDefault(); }
+    else if(k === "ArrowRight" || k === "d" || k === "D"){ moveInDirection("right"); e.preventDefault(); }
+    else if(k === "Backspace" || k === "u" || k === "U"){ undo(); e.preventDefault(); }
+    else if(k === "r" || k === "R"){ resetLevel(); }
+  });
+
+  document.getElementById("btnLevels").addEventListener("click", goMenu);
+  document.getElementById("btnMenu").addEventListener("click", goMenu);
+  els.btnUndo.addEventListener("click", undo);
+  els.btnReset.addEventListener("click", resetLevel);
+  document.getElementById("btnRetry").addEventListener("click", resetLevel);
+  document.getElementById("btnNext").addEventListener("click", function(){
+    if(levelIndex < LEVELS.length-1) loadLevel(levelIndex+1);
+    else goMenu();
+  });
+
+  renderMenu();
+})();
+</script>
+</body>
+</html>

@@ -480,6 +480,13 @@
       desc: "Tiros libres contra el reloj: arrastrá hacia atrás desde la pelota para apuntar y definir la potencia, soltá para tirarla al aro antes de que se acaben los 60 segundos. Los tiros cerca del aro valen 2 puntos y los de atrás de la línea valen 3; si encestás sin tocar el aro sumás +1 de bonus (SWISH). Cada enceste te regala un segundo extra y sube tu racha, que multiplica los puntos del próximo tiro; fallar corta la racha. Récord de mejor puntaje guardado.",
       controles: "Arrastrá desde la pelota; o flechas para el ángulo/potencia + ESPACIO para tirar", fecha: "2026-09-19",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "quince-neon", titulo: "Quince Neón", archivo: "quince-neon.html",
+      emoji: "🧮", categoria: "logica", tags: ["15 puzzle", "sliding puzzle", "numeros", "deslizar", "niveles"],
+      desc: "El clásico juego del 15: deslizá las fichas numeradas hacia el hueco vacío hasta ordenarlas todas en fila, de izquierda a derecha y de arriba abajo. 8 niveles con grillas crecientes (3×3 a 6×6), siempre resolubles porque se generan barajando con movimientos legales desde la posición ordenada, con deshacer, contador de movidas y cronómetro con récord guardado por nivel.",
+      controles: "Click / toque en una ficha pegada al hueco; o flechas para deslizar en esa dirección", fecha: "2026-09-20",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
