@@ -487,6 +487,13 @@
       desc: "El clásico juego del 15: deslizá las fichas numeradas hacia el hueco vacío hasta ordenarlas todas en fila, de izquierda a derecha y de arriba abajo. 8 niveles con grillas crecientes (3×3 a 6×6), siempre resolubles porque se generan barajando con movimientos legales desde la posición ordenada, con deshacer, contador de movidas y cronómetro con récord guardado por nivel.",
       controles: "Click / toque en una ficha pegada al hueco; o flechas para deslizar en esa dirección", fecha: "2026-09-20",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "hanoi-neon", titulo: "Hanói Neón", archivo: "hanoi-neon.html",
+      emoji: "🗿", categoria: "logica", tags: ["torres de hanoi", "discos", "puzzle", "logica", "niveles"],
+      desc: "Torre de Hanói: tocá una torre para levantar su disco de arriba y tocá otra para soltarlo ahí, sin poner nunca un disco grande sobre uno más chico. Mové toda la pila desde la torre 1 hasta la torre 3 (la meta). 8 niveles de 3 a 10 discos, con contador de movidas comparado contra el óptimo matemático (2^n-1), deshacer y cronómetro con récord guardado por nivel.",
+      controles: "Click / toque: tocá la torre de origen y después la de destino; o teclas 1/2/3", fecha: "2026-09-21",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
