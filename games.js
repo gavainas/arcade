@@ -494,6 +494,13 @@
       desc: "Torre de Hanói: tocá una torre para levantar su disco de arriba y tocá otra para soltarlo ahí, sin poner nunca un disco grande sobre uno más chico. Mové toda la pila desde la torre 1 hasta la torre 3 (la meta). 8 niveles de 3 a 10 discos, con contador de movidas comparado contra el óptimo matemático (2^n-1), deshacer y cronómetro con récord guardado por nivel.",
       controles: "Click / toque: tocá la torre de origen y después la de destino; o teclas 1/2/3", fecha: "2026-09-21",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "misiles-neon", titulo: "Misiles Neón", archivo: "misiles-neon.html",
+      emoji: "🚀", categoria: "accion", tags: ["missile command", "defensa", "torres", "puntería", "oleadas"],
+      desc: "Missile Command: defendé tus 6 ciudades lanzando misiles interceptores desde 3 bases antiaéreas hacia donde apuntes; el interceptor explota ahí y destruye todo misil enemigo que cruce la nube. Munición limitada por base (se recarga al superar la oleada); oleadas cada vez más numerosas y rápidas, y desde la oleada 4 algunos misiles se dividen en dos en pleno vuelo. Puntaje por cada misil derribado más bonus de fin de oleada por ciudades y munición sobrevivientes, con récord guardado.",
+      controles: "Click / toque en la pantalla; o flechas/WASD para mover la mira + ESPACIO para disparar", fecha: "2026-09-22",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
