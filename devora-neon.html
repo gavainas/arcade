@@ -374,7 +374,7 @@
 
   function gameOver(){
     gameState='over'; running=false;
-    const isRec=score>0 && score>=best;
+    const isRec=score>0 && score>best;
     if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
     ovTitle.textContent='GAME OVER';
     legend.style.display='none';

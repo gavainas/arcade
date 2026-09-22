@@ -148,6 +148,7 @@
 
   let stack, current, camera, fallingPieces, particles;
   let score, combo, running, started, gameOverFlag;
+  let prevBest=best; // récord al empezar la partida: el de esta partida ya se guarda en vivo
   let lastTime=null;
 
   function reset(){
@@ -233,7 +234,7 @@
   function endGame(){
     running=false; gameOverFlag=true;
     ovTitle.textContent='TORRE CAÍDA';
-    const isRec=score>=best && score>0;
+    const isRec=score>prevBest && score>0;
     ovText.innerHTML='<span class="final">Puntaje: <b>'+score+'</b></span>'+(isRec?'<br><span class="newrec">¡NUEVO RÉCORD!</span>':'<br>Récord: '+best);
     legend.style.display='none';
     ovHint.textContent='';
@@ -242,8 +243,10 @@
   }
 
   function startGame(){
+    prevBest=best;
     reset();
     running=true; started=true; gameOverFlag=false;
+    legend.style.display='';
     overlay.classList.add('hidden');
   }
 

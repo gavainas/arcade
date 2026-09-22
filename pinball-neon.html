@@ -225,6 +225,7 @@
   function start(){
     resetGame();
     started=true; running=true;
+    legend.style.display='';
     overlay.classList.add('hidden');
     last=performance.now();
     requestAnimationFrame(loop);
@@ -234,7 +235,7 @@
 
   function gameOver(){
     running=false; started=false;
-    const isRec = score>0 && score>=best;
+    const isRec = score>0 && score>best;
     if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
     ovTitle.textContent='GAME OVER';
     legend.style.display='none';

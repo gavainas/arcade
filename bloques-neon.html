@@ -307,6 +307,7 @@
   function start(){
     reset();
     started=true; running=true; paused=false; gameOverFlag=false;
+    legend.style.display='';
     overlay.classList.add('hidden');
     last=performance.now();
     requestAnimationFrame(loop);
@@ -314,7 +315,7 @@
 
   function gameOver(){
     running=false; started=false; gameOverFlag=true;
-    const isRec = score>0 && score>=best;
+    const isRec = score>0 && score>best;
     if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
     ovTitle.textContent='GAME OVER';
     legend.style.display='none';

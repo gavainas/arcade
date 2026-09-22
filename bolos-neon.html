@@ -415,6 +415,7 @@
   function start(){
     newGame();
     started=true; running=true; paused=false;
+    legend.style.display='';
     overlay.classList.add('hidden');
     beginRoll();
     last=performance.now();

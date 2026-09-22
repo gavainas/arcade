@@ -178,7 +178,7 @@
   function gameOver(){
     running=false; started=false;
     shake=14;
-    const isRec = score>0 && score>=best;
+    const isRec = score>0 && score>best;
     if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
     ovTitle.textContent='GAME OVER';
     ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span>`+

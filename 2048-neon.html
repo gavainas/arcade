@@ -162,6 +162,7 @@
   }
 
   let grid, score, best2, running, started, gameOverFlag, won, keepPlaying, idCounter;
+  let prevBest=best; // récord al empezar la partida: el de esta partida ya se guarda en vivo
   let tileEls;
 
   function emptyGrid(){
@@ -406,6 +407,7 @@
   }
 
   function start(){
+    prevBest=best;
     reset();
     overlay.classList.add('hidden');
     running=true; started=true;
@@ -431,7 +433,7 @@
 
   function gameOver(){
     running=false; started=false; gameOverFlag=true;
-    const isRec = score>0 && score>=best;
+    const isRec = score>0 && score>prevBest;
     overlay.innerHTML='';
     const h2=document.createElement('h2'); h2.textContent='GAME OVER';
     const p=document.createElement('p');

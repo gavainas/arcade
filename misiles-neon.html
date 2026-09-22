@@ -103,7 +103,7 @@
         <div class="legend" id="legend">
           <span><i class="dot" style="background:var(--cyan);"></i> Tocá o cliqueá cualquier punto de la pantalla para lanzar un misil desde la base antiaérea más cercana.</span>
           <span><i class="dot" style="background:var(--gold);"></i> El misil explota justo donde apuntaste: todo misil enemigo que cruce esa explosión se destruye.</span>
-          <span><i class="dot" style="background:var(--pink);"></i> Cada base tiene munición limitada que se recarga al superar la oleada; si se queda sin balas, no dispara más.</span>
+          <span><i class="dot" style="background:var(--pink);"></i> Cada silo tiene munición limitada. Al superar una oleada se recargan todos y se reconstruye un silo destruido.</span>
           <span><i class="dot" style="background:var(--red);"></i> Las oleadas traen más misiles y más rápidos; desde la oleada 4 algunos se dividen en el aire en dos.</span>
         </div>
         <button class="btn" id="startBtn">DEFENDER ▶</button>
@@ -191,6 +191,7 @@
   function start(){
     reset();
     started=true; running=true; paused=false;
+    legend.style.display='';
     overlay.classList.add('hidden');
     last=performance.now();
     requestAnimationFrame(loop);
@@ -207,6 +208,23 @@
     let t=0;
     bases.forEach(b=>{ if(b.type==='silo'&&b.alive) t+=b.ammo; });
     return t;
+  }
+
+  function anySiloAlive(){
+    return bases.some(b=>b.type==='silo'&&b.alive);
+  }
+
+  // Sin silos el jugador no tiene ninguna acción posible, así que cada oleada
+  // superada devuelve uno: convierte la peor racha en una remontada y da el
+  // margen de munición que las oleadas altas necesitan.
+  function rebuildOneSilo(){
+    const dead=[];
+    for(let i=0;i<SLOTS;i++) if(bases[i].type==='silo'&&!bases[i].alive) dead.push(i);
+    if(!dead.length) return false;
+    const idx=dead[Math.floor(Math.random()*dead.length)];
+    bases[idx].alive=true;
+    addBurst(baseX(idx),GROUND_Y,'#27e8ff',14);
+    return true;
   }
 
   function impactAt(m){
@@ -266,7 +284,7 @@
         if(d<bestDist){ bestDist=d; bestIdx=i; }
       }
     });
-    if(bestIdx===-1){ flashMsg('SIN MUNICIÓN'); return; }
+    if(bestIdx===-1){ flashMsg(anySiloAlive()?'SIN MUNICIÓN':'SILOS DESTRUIDOS'); return; }
     bases[bestIdx].ammo--;
     const x0=baseX(bestIdx), y0=GROUND_Y-10;
     const dist=Math.hypot(tx-x0,ty-y0);
@@ -279,8 +297,9 @@
     const bonus=ammoBonus+cityBonus+wave*20;
     score+=bonus;
     scoreEl.textContent=score;
-    flashMsg('OLEADA '+wave+' SUPERADA · +'+bonus);
+    const rebuilt=rebuildOneSilo();
     bases.forEach(b=>{ if(b.type==='silo'&&b.alive) b.ammo=MAX_AMMO; });
+    flashMsg('OLEADA '+wave+' SUPERADA · +'+bonus+(rebuilt?' · SILO RECONSTRUIDO':''));
     wave++;
     waveEl.textContent=wave;
     levelDelay=1500;
@@ -291,7 +310,7 @@
 
   function gameOver(){
     running=false; started=false;
-    const isRec = score>0 && score>=best;
+    const isRec = score>0 && score>best;
     if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
     ovTitle.textContent='CIUDADES DESTRUIDAS';
     legend.style.display='none';
@@ -502,6 +521,20 @@
 
     drawCrosshair();
 
+    // Mientras no quede ningún silo no se puede disparar: avisarlo todo el
+    // tiempo, para que no parezca que el juego se colgó.
+    if(running && !anySiloAlive()){
+      ctx.fillStyle='#ff5470';
+      ctx.font='900 17px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.shadowColor='#ff5470'; ctx.shadowBlur=14;
+      ctx.fillText('SIN SILOS',W/2,H*0.5-8);
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#7fa6c8';
+      ctx.font='600 12.5px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText('aguantá: al superar la oleada se reconstruye uno',W/2,H*0.5+14);
+    }
+
     if(msgTimer>0){
       ctx.globalAlpha=Math.min(1,msgTimer/300);
       ctx.fillStyle='#ffd23b';
@@ -514,6 +547,20 @@
     }
   }
 
+  function drawPaused(){
+    ctx.fillStyle='rgba(5,7,15,.72)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#27e8ff';
+    ctx.font='900 30px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.shadowColor='#27e8ff'; ctx.shadowBlur=18;
+    ctx.fillText('PAUSA',W/2,H/2-4);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#7fa6c8';
+    ctx.font='600 13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('P o el botón para seguir',W/2,H/2+24);
+  }
+
   function loop(ts){
     if(!running){ return; }
     if(!paused){
@@ -523,6 +570,8 @@
       draw();
     }else{
       last=ts;
+      draw();
+      drawPaused();
     }
     requestAnimationFrame(loop);
   }
@@ -549,6 +598,7 @@
   const CROSSHAIR_SPEED=0.45;
   let keyUp,keyDown,keyLeft,keyRight;
   window.addEventListener('keydown',e=>{
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) e.preventDefault();
     if(['ArrowLeft','a','A'].includes(e.key)) keyLeft=true;
     if(['ArrowRight','d','D'].includes(e.key)) keyRight=true;
     if(['ArrowUp','w','W'].includes(e.key)) keyUp=true;

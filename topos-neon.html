@@ -276,7 +276,7 @@
 
   function gameOver(reason){
     running=false; started=false;
-    const isRec = score>0 && score>=best;
+    const isRec = score>0 && score>best;
     if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
     ovTitle.textContent='GAME OVER';
     const motivo = reason==='vidas' ? 'Te quedaste sin vidas.' : '¡Se acabó el tiempo!';
