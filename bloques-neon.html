@@ -307,7 +307,6 @@
   function start(){
     reset();
     started=true; running=true; paused=false; gameOverFlag=false;
-    legend.style.display='';
     overlay.classList.add('hidden');
     last=performance.now();
     requestAnimationFrame(loop);

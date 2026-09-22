@@ -107,6 +107,7 @@
           <span><i class="dot" style="background:var(--red);"></i> Las oleadas traen más misiles y más rápidos; desde la oleada 4 algunos se dividen en el aire en dos.</span>
         </div>
         <button class="btn" id="startBtn">DEFENDER ▶</button>
+        <button class="mini" id="rulesBtn" hidden>¿Cómo se juega?</button>
         <p class="hint" id="ovHint">Click/toque apunta y dispara · Flechas/WASD mueven la mira + ESPACIO dispara · en mobile, tocá donde querés la explosión.</p>
       </div>
     </div>
@@ -135,6 +136,7 @@
   const legend=document.getElementById('legend');
   const startBtn=document.getElementById('startBtn');
   const pauseBtn=document.getElementById('pauseBtn');
+  const rulesBtn=document.getElementById('rulesBtn');
 
   const BEST_KEY='neon-misiles-best';
   let best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
@@ -191,7 +193,10 @@
   function start(){
     reset();
     started=true; running=true; paused=false;
+    // Volver al estado "intro": reglas a la vista y sin el botón para abrirlas.
     legend.style.display='';
+    rulesBtn.hidden=true;
+    rulesBtn.textContent='¿Cómo se juega?';
     overlay.classList.add('hidden');
     last=performance.now();
     requestAnimationFrame(loop);
@@ -313,7 +318,10 @@
     const isRec = score>0 && score>best;
     if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
     ovTitle.textContent='CIUDADES DESTRUIDAS';
+    // Las reglas se esconden para que la pantalla de fin entre en el canvas,
+    // pero quedan a un click: sin esto no había forma de releerlas sin recargar.
     legend.style.display='none';
+    rulesBtn.hidden=false;
     ovText.innerHTML=`<span class="final">Puntaje: <b>${score}</b></span> · Llegaste a la oleada <b>${wave}</b>`+
       (isRec ? `<br><span class="newrec">¡NUEVO RÉCORD!</span>` : `<br>Récord: ${best}`);
     startBtn.textContent='JUGAR DE NUEVO';
@@ -630,6 +638,11 @@
   }
   pauseBtn.addEventListener('click',togglePause);
   startBtn.addEventListener('click',start);
+  rulesBtn.addEventListener('click',()=>{
+    const open=legend.style.display==='none';
+    legend.style.display=open?'':'none';
+    rulesBtn.textContent=open?'Ocultar reglas':'¿Cómo se juega?';
+  });
 
   best=parseInt(localStorage.getItem(BEST_KEY)||'0',10);
   bestEl.textContent=best;
