@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CICLOS DE LUZ · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:560px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,7vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:3px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.p2 b{color:var(--pink);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.92); backdrop-filter:blur(3px); gap:10px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.5; max-width:360px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:6px; font-size:12px; color:var(--ink); text-align:left; max-width:340px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:12px; height:12px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.hidden{display:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none; padding:11px 22px;}
+  .btn.ghost.active{border-color:var(--cyan); color:var(--cyan); background:rgba(39,232,255,.14);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:24px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .modes{display:flex; flex-direction:column; gap:6px; width:100%; max-width:300px; margin-top:2px;}
+  .modes.hidden{display:none;}
+  .modelbl{font-size:10.5px; letter-spacing:1.5px; color:var(--muted); margin-top:4px;}
+  .diffrow{display:flex; gap:8px;}
+  .diffrow .btn{flex:1; padding:10px 4px; font-size:12px;}
+
+  .padrow{margin-top:14px; display:flex; flex-wrap:wrap; justify-content:center; gap:18px;}
+  .padgrp{display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .padgrp.hidden{display:none;}
+  .padlbl{font-size:10.5px; letter-spacing:1px; color:var(--muted);}
+  .dpad{display:grid; grid-template-columns:36px 36px 36px; grid-template-rows:36px 36px 36px; gap:4px;}
+  .dbtn{cursor:pointer; border-radius:9px; border:1px solid rgba(39,232,255,.4);
+    background:rgba(39,232,255,.12); color:var(--ink); font-size:15px; font-weight:900; line-height:1;}
+  .dbtn:active{background:rgba(39,232,255,.28);}
+  .dpad .p2 .dbtn{border-color:rgba(255,43,214,.4); background:rgba(255,43,214,.12);}
+  .dpad .p2 .dbtn:active{background:rgba(255,43,214,.28);}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5; text-align:center;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">CICLOS DE LUZ</div>
+      <div class="sub">T R O N &nbsp;·&nbsp; E S T E L A S &nbsp;·&nbsp; A R E N A</div>
+    </header>
+
+    <div class="hud">
+      <div class="box" id="hudBox1"><span id="hudLbl1">RACHA</span><b id="hudVal1">0</b></div>
+      <div class="box rec" id="hudBox2"><span id="hudLbl2">RÉCORD</span><b id="hudVal2">0</b></div>
+      <div class="box p2" id="hudBox3"><span id="hudLbl3">RONDA</span><b id="hudVal3">1</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="480" height="360"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">CICLOS DE LUZ</h2>
+        <p id="ovText">Motos de luz estilo Tron: dejan una estela sólida detrás que se convierte en pared. Esquivá tu propia estela, la del rival y los bordes de la arena el mayor tiempo posible.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> No podés cruzar ninguna estela, ni girar 180°</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> El primero en chocar pierde la ronda</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> La velocidad sube con cada ronda</span>
+          <span><i class="dot" style="color:var(--green);background:var(--green)"></i> Racha de rondas ganadas y récord por dificultad</span>
+        </div>
+        <div class="modes" id="modeButtons">
+          <div class="modelbl">VS COMPUTADORA</div>
+          <div class="diffrow">
+            <button class="btn ghost" data-mode="cpu" data-diff="facil">FÁCIL</button>
+            <button class="btn ghost active" data-mode="cpu" data-diff="normal">NORMAL</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="dificil">DIFÍCIL</button>
+          </div>
+          <div class="modelbl">O DE A DOS</div>
+          <button class="btn ghost" data-mode="2p">2 JUGADORES</button>
+        </div>
+        <button class="btn" id="startBtn">JUGAR ▶</button>
+        <p class="hint" id="ovHint">Flechas / WASD cambian de dirección · no podés girar 180°.</p>
+      </div>
+    </div>
+
+    <div class="padrow" id="padrow">
+      <div class="padgrp" id="pad1Grp">
+        <div class="padlbl" id="pad1Lbl">MOVERTE</div>
+        <div class="dpad">
+          <span></span><button class="dbtn" data-p="1" data-d="up">▲</button><span></span>
+          <button class="dbtn" data-p="1" data-d="left">◀</button><span></span><button class="dbtn" data-p="1" data-d="right">▶</button>
+          <span></span><button class="dbtn" data-p="1" data-d="down">▼</button><span></span>
+        </div>
+      </div>
+      <div class="padgrp hidden" id="pad2Grp">
+        <div class="padlbl">JUGADOR 2</div>
+        <div class="dpad p2">
+          <span></span><button class="dbtn" data-p="2" data-d="up">▲</button><span></span>
+          <button class="dbtn" data-p="2" data-d="left">◀</button><span></span><button class="dbtn" data-p="2" data-d="right">▶</button>
+          <span></span><button class="dbtn" data-p="2" data-d="down">▼</button><span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint" id="keyHint">VS CPU: Flechas o WASD mueven tu moto · 2 JUGADORES: J1 usa WASD, J2 usa las Flechas.</div>
+    </div>
+
+    <footer>NEON ARCADE · Ciclos de Luz</footer>
+  </div>
+
+<script>
+(()=>{
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const CELL=12, COLS=W/CELL, ROWS=H/CELL;
+
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const ovHint=document.getElementById('ovHint');
+  const legend=document.getElementById('legend');
+  const modeButtons=document.getElementById('modeButtons');
+  const startBtn=document.getElementById('startBtn');
+  const keyHint=document.getElementById('keyHint');
+  const pad1Grp=document.getElementById('pad1Grp');
+  const pad2Grp=document.getElementById('pad2Grp');
+  const pad1Lbl=document.getElementById('pad1Lbl');
+  const padrow=document.getElementById('padrow');
+
+  const hudLbl1=document.getElementById('hudLbl1'), hudVal1=document.getElementById('hudVal1');
+  const hudLbl2=document.getElementById('hudLbl2'), hudVal2=document.getElementById('hudVal2');
+  const hudLbl3=document.getElementById('hudLbl3'), hudVal3=document.getElementById('hudVal3');
+
+  const BEST_KEY='neon-ciclos-neon-best';
+  function loadBest(){
+    try{ const m=JSON.parse(localStorage.getItem(BEST_KEY)||'{}'); return {facil:m.facil||0, normal:m.normal||0, dificil:m.dificil||0}; }
+    catch(_){ return {facil:0,normal:0,dificil:0}; }
+  }
+  function saveBest(){ localStorage.setItem(BEST_KEY, JSON.stringify(best)); }
+  let best=loadBest();
+
+  const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+  const OPP={up:'down',down:'up',left:'right',right:'left'};
+  const DIRLIST=['up','down','left','right'];
+  const NEIGH=[[1,0],[-1,0],[0,1],[0,-1]];
+
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+  function inBounds(x,y){ return x>=0&&x<COLS&&y>=0&&y<ROWS; }
+
+  let grid; // grid[x][y] = 0 empty, 1 p1, 2 p2
+  function makeGrid(){
+    const g=new Array(COLS);
+    for(let x=0;x<COLS;x++) g[x]=new Uint8Array(ROWS);
+    return g;
+  }
+  function cellFree(x,y){ return inBounds(x,y) && grid[x][y]===0; }
+
+  // buffers reused for flood-fill AI evaluation
+  const floodVisited=new Uint8Array(COLS*ROWS);
+  const floodQX=new Int16Array(COLS*ROWS), floodQY=new Int16Array(COLS*ROWS);
+  function floodArea(sx,sy,cap){
+    floodVisited.fill(0);
+    let qh=0, qt=0, count=0;
+    for(const [dx,dy] of NEIGH){
+      const nx=sx+dx, ny=sy+dy;
+      if(cellFree(nx,ny)){
+        const idx=nx*ROWS+ny;
+        if(!floodVisited[idx]){ floodVisited[idx]=1; floodQX[qt]=nx; floodQY[qt]=ny; qt++; count++; }
+      }
+    }
+    while(qh<qt){
+      if(cap && count>=cap) break;
+      const cx=floodQX[qh], cy=floodQY[qh]; qh++;
+      for(const [dx,dy] of NEIGH){
+        const nx=cx+dx, ny=cy+dy;
+        if(!cellFree(nx,ny)) continue;
+        const idx=nx*ROWS+ny;
+        if(floodVisited[idx]) continue;
+        floodVisited[idx]=1; count++;
+        floodQX[qt]=nx; floodQY[qt]=ny; qt++;
+        if(cap && count>=cap) break;
+      }
+    }
+    return count;
+  }
+
+  function chooseCpuDir(cpu, human, diffLevel){
+    const cands=DIRLIST.filter(d=>{
+      if(d===OPP[cpu.dir]) return false;
+      const [dx,dy]=DIRS[d];
+      return cellFree(cpu.x+dx, cpu.y+dy);
+    });
+    if(!cands.length) return cpu.dir;
+    if(diffLevel==='facil'){
+      if(cands.includes(cpu.dir) && Math.random()<0.55) return cpu.dir;
+      return cands[(Math.random()*cands.length)|0];
+    }
+    const cap = diffLevel==='normal' ? 220 : 0;
+    let scored=[];
+    for(const d of cands){
+      const [dx,dy]=DIRS[d];
+      const nx=cpu.x+dx, ny=cpu.y+dy;
+      grid[nx][ny]=9;
+      let score=floodArea(nx,ny,cap);
+      if(diffLevel==='dificil'){
+        const oppArea=floodArea(human.x,human.y,0);
+        score=score-oppArea*0.6;
+      }
+      grid[nx][ny]=0;
+      const noise=diffLevel==='normal' ? (Math.random()*6-3) : (Math.random()*2-1);
+      scored.push({d, score:score+noise});
+    }
+    scored.sort((a,b)=>b.score-a.score);
+    return scored[0].d;
+  }
+
+  // offscreen canvas: baked walls (only redrawn when a new cell is vacated)
+  const trailCanvas=document.createElement('canvas');
+  trailCanvas.width=W; trailCanvas.height=H;
+  const tctx=trailCanvas.getContext('2d');
+  function clearTrail(){ tctx.clearRect(0,0,W,H); }
+  function bakeWall(x,y,playerId){
+    const color = playerId===1 ? '#27e8ff' : '#ff2bd6';
+    tctx.save();
+    tctx.shadowColor=color; tctx.shadowBlur=8;
+    tctx.fillStyle=color; tctx.globalAlpha=0.85;
+    tctx.beginPath();
+    tctx.roundRect(x*CELL+1, y*CELL+1, CELL-2, CELL-2, 3);
+    tctx.fill();
+    tctx.restore();
+  }
+
+  let particles=[];
+  function addBurst(px,py,color,n){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=1+Math.random()*3.5;
+      particles.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color});
+    }
+  }
+  function updateParticles(){
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.x+=p.vx; p.y+=p.vy; p.vx*=0.96; p.vy*=0.96; p.life-=0.03;
+      if(p.life<=0) particles.splice(i,1);
+    }
+  }
+
+  let mode='cpu', diff='normal';
+  let p1={x:6,y:10,dir:'right',pending:null};
+  let p2={x:COLS-7,y:19,dir:'left',pending:null};
+  let roundNum=1, racha=0, scoreP1=0, scoreP2=0;
+  const WIN_TARGET=3;
+  let state={started:false, running:false};
+  let msg='', msgTimer=0;
+  let last=0, acc=0;
+
+  function currentTickMs(){ return clamp(150-(roundNum-1)*8,70,150); }
+  function flashMsg(t){ msg=t; msgTimer=1400; }
+
+  function refreshHUD(){
+    if(mode==='cpu'){
+      hudLbl1.textContent='RACHA'; hudVal1.textContent=racha;
+      hudLbl2.textContent='RÉCORD'; hudVal2.textContent=best[diff]||0;
+      hudLbl3.textContent='RONDA'; hudVal3.textContent=roundNum;
+    }else{
+      hudLbl1.textContent='JUGADOR 1'; hudVal1.textContent=scoreP1;
+      hudLbl2.textContent='JUGADOR 2'; hudVal2.textContent=scoreP2;
+      hudLbl3.textContent='RONDA'; hudVal3.textContent=roundNum;
+    }
+  }
+
+  function updateModeUI(){
+    if(mode==='2p'){
+      pad2Grp.classList.remove('hidden');
+      pad1Lbl.textContent='JUGADOR 1';
+      keyHint.textContent='Jugador 1: WASD · Jugador 2: Flechas. No podés girar 180°.';
+    }else{
+      pad2Grp.classList.add('hidden');
+      pad1Lbl.textContent='MOVERTE';
+      keyHint.textContent='Flechas o WASD mueven tu moto · no podés girar 180°.';
+    }
+    refreshHUD();
+  }
+
+  function startRound(){
+    grid=makeGrid();
+    clearTrail();
+    particles=[];
+    p1={x:6,y:10,dir:'right',pending:null};
+    p2={x:COLS-7,y:19,dir:'left',pending:null};
+    grid[p1.x][p1.y]=1; grid[p2.x][p2.y]=2;
+    state.running=true;
+    flashMsg('RONDA '+roundNum);
+    refreshHUD();
+  }
+
+  function start(){
+    if(!mode) return;
+    legend.style.display='';
+    overlay.classList.add('hidden');
+    roundNum=1; racha=0; scoreP1=0; scoreP2=0;
+    state.started=true;
+    startRound();
+    last=performance.now(); acc=0;
+    requestAnimationFrame(loop);
+  }
+
+  function gameOverShow(reasonText,isRec){
+    state.started=false; state.running=false;
+    ovTitle.textContent='CICLO DESTRUIDO';
+    legend.style.display='none';
+    modeButtons.classList.add('hidden');
+    ovText.innerHTML=reasonText+'<br><span class="final">Racha: <b>'+racha+'</b> rondas</span>'+
+      (isRec ? '<br><span class="newrec">¡NUEVO RÉCORD!</span>' : '<br>Récord: '+(best[diff]||0));
+    startBtn.classList.remove('hidden');
+    startBtn.textContent='JUGAR DE NUEVO';
+    overlay.classList.remove('hidden');
+    refreshHUD();
+  }
+
+  function matchOverShow(winnerLabel){
+    state.started=false; state.running=false;
+    ovTitle.textContent=winnerLabel+' GANÓ LA PARTIDA';
+    legend.style.display='none';
+    modeButtons.classList.add('hidden');
+    ovText.innerHTML='<span class="final">'+scoreP1+' - '+scoreP2+'</span>';
+    startBtn.classList.remove('hidden');
+    startBtn.textContent='JUGAR DE NUEVO';
+    overlay.classList.remove('hidden');
+    refreshHUD();
+  }
+
+  function endRound(p1Dead,p2Dead){
+    state.running=false;
+    if(mode==='cpu'){
+      if(p2Dead && !p1Dead){
+        racha++;
+        if(racha>(best[diff]||0)){ best[diff]=racha; saveBest(); }
+        refreshHUD();
+        flashMsg('¡RONDA GANADA!');
+        roundNum++;
+        setTimeout(startRound,1400);
+      }else{
+        const isRec = racha>0 && racha>=(best[diff]||0);
+        gameOverShow(p1Dead&&p2Dead ? '¡CHOCARON LOS DOS!' : 'TE ESTRELLASTE', isRec);
+      }
+    }else{
+      if(p1Dead && p2Dead){
+        flashMsg('¡EMPATE!');
+        roundNum++;
+        refreshHUD();
+        setTimeout(startRound,1400);
+        return;
+      }
+      if(p1Dead){ scoreP2++; } else { scoreP1++; }
+      refreshHUD();
+      if(scoreP1>=WIN_TARGET){ matchOverShow('JUGADOR 1'); return; }
+      if(scoreP2>=WIN_TARGET){ matchOverShow('JUGADOR 2'); return; }
+      flashMsg(p1Dead ? '¡PUNTO JUGADOR 2!' : '¡PUNTO JUGADOR 1!');
+      roundNum++;
+      setTimeout(startRound,1400);
+    }
+  }
+
+  function applyPending(p){
+    if(p.pending && p.pending!==OPP[p.dir]) p.dir=p.pending;
+    p.pending=null;
+  }
+
+  function moveTick(){
+    applyPending(p1);
+    if(mode==='cpu'){ p2.dir=chooseCpuDir(p2,p1,diff); }
+    else { applyPending(p2); }
+
+    const [d1x,d1y]=DIRS[p1.dir], [d2x,d2y]=DIRS[p2.dir];
+    const n1={x:p1.x+d1x,y:p1.y+d1y};
+    const n2={x:p2.x+d2x,y:p2.y+d2y};
+    const n1blocked = !inBounds(n1.x,n1.y) || grid[n1.x][n1.y]!==0;
+    const n2blocked = !inBounds(n2.x,n2.y) || grid[n2.x][n2.y]!==0;
+    const headOn = inBounds(n1.x,n1.y) && inBounds(n2.x,n2.y) && n1.x===n2.x && n1.y===n2.y;
+    const p1Dead = n1blocked || headOn;
+    const p2Dead = n2blocked || headOn;
+
+    if(p1Dead || p2Dead){
+      if(inBounds(n1.x,n1.y)) addBurst(n1.x*CELL+CELL/2, n1.y*CELL+CELL/2, '#27e8ff', 16);
+      if(inBounds(n2.x,n2.y)) addBurst(n2.x*CELL+CELL/2, n2.y*CELL+CELL/2, '#ff2bd6', 16);
+      endRound(p1Dead,p2Dead);
+      return;
+    }
+
+    bakeWall(p1.x,p1.y,1);
+    bakeWall(p2.x,p2.y,2);
+    p1.x=n1.x; p1.y=n1.y; grid[p1.x][p1.y]=1;
+    p2.x=n2.x; p2.y=n2.y; grid[p2.x][p2.y]=2;
+  }
+
+  function drawHead(p,color){
+    const cx=p.x*CELL+CELL/2, cy=p.y*CELL+CELL/2;
+    ctx.save();
+    ctx.shadowColor=color; ctx.shadowBlur=14;
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.arc(cx,cy,CELL*0.55,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    const [dx,dy]=DIRS[p.dir];
+    ctx.fillStyle='#fff';
+    ctx.beginPath();
+    ctx.arc(cx+dx*CELL*0.35, cy+dy*CELL*0.35, 2.2, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#05070f';
+    ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle='rgba(138,75,255,.08)'; ctx.lineWidth=1;
+    ctx.beginPath();
+    for(let gx=0;gx<=COLS;gx+=4){ ctx.moveTo(gx*CELL,0); ctx.lineTo(gx*CELL,H); }
+    for(let gy=0;gy<=ROWS;gy+=4){ ctx.moveTo(0,gy*CELL); ctx.lineTo(W,gy*CELL); }
+    ctx.stroke();
+
+    ctx.drawImage(trailCanvas,0,0);
+
+    if(state.started){
+      drawHead(p1,'#27e8ff');
+      drawHead(p2,'#ff2bd6');
+    }
+
+    for(const p of particles){
+      ctx.globalAlpha=Math.max(p.life,0);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(p.x-2,p.y-2,4,4);
+      ctx.globalAlpha=1;
+    }
+
+    if(msgTimer>0){
+      ctx.globalAlpha=Math.min(1,msgTimer/300);
+      ctx.fillStyle='#ffd23b';
+      ctx.font='900 22px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';
+      ctx.shadowColor='#ffd23b'; ctx.shadowBlur=16;
+      ctx.fillText(msg,W/2,H/2);
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+  }
+
+  function loop(ts){
+    if(!state.started) return;
+    const dt=Math.min(40,ts-last);
+    last=ts;
+    if(state.running){
+      acc+=dt;
+      const tickMs=currentTickMs();
+      let guard=0;
+      while(acc>=tickMs && state.running && guard<5){ moveTick(); acc-=tickMs; guard++; }
+    }
+    if(msgTimer>0) msgTimer-=dt;
+    updateParticles();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function trySetDir(p,dir){
+    if(!state.running) return;
+    if(dir===OPP[p.dir]) return;
+    p.pending=dir;
+  }
+
+  const ARROW_MAP={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+  const WASD_MAP={w:'up',s:'down',a:'left',d:'right'};
+  window.addEventListener('keydown', e=>{
+    if(ARROW_MAP[e.key]){
+      e.preventDefault();
+      const target = mode==='2p' ? p2 : p1;
+      trySetDir(target, ARROW_MAP[e.key]);
+      return;
+    }
+    const lower=e.key.toLowerCase();
+    if(WASD_MAP[lower]){
+      trySetDir(p1, WASD_MAP[lower]);
+    }
+  });
+
+  padrow.addEventListener('click', e=>{
+    const b=e.target.closest('.dbtn'); if(!b) return;
+    const target = b.dataset.p==='2' ? p2 : p1;
+    trySetDir(target, b.dataset.d);
+  });
+
+  modeButtons.addEventListener('click', e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    modeButtons.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode=btn.dataset.mode;
+    diff=btn.dataset.diff || diff;
+    startBtn.classList.remove('hidden');
+    updateModeUI();
+  });
+
+  startBtn.addEventListener('click', start);
+
+  updateModeUI();
+  draw();
+})();
+</script>
+</body>
+</html>

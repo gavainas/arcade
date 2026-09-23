@@ -501,6 +501,13 @@
       desc: "Missile Command: defendé tus 6 ciudades lanzando misiles interceptores desde 3 bases antiaéreas hacia donde apuntes; el interceptor explota ahí y destruye todo misil enemigo que cruce la nube. Munición limitada por base (se recarga al superar la oleada); oleadas cada vez más numerosas y rápidas, y desde la oleada 4 algunos misiles se dividen en dos en pleno vuelo. Puntaje por cada misil derribado más bonus de fin de oleada por ciudades y munición sobrevivientes, con récord guardado.",
       controles: "Click / toque en la pantalla; o flechas/WASD para mover la mira + ESPACIO para disparar", fecha: "2026-09-22",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "ciclos-neon", titulo: "Ciclos de Luz", archivo: "ciclos-neon.html",
+      emoji: "🏍️", categoria: "arcade", tags: ["tron", "motos de luz", "estelas", "supervivencia", "2 jugadores", "cpu"],
+      desc: "Motos de luz estilo Tron: dejan una estela sólida detrás que se convierte en pared; esquivá tu propia estela, la del rival y los bordes de la arena el mayor tiempo posible (y no podés girar 180°). Contra una CPU con 3 dificultades (la difícil calcula qué dirección te deja más área libre para intentar encerrarte) o de a dos en el mismo dispositivo. La velocidad sube con cada ronda, con racha de rondas ganadas seguidas y récord guardado por dificultad.",
+      controles: "Flechas o WASD mueven tu moto; en 2 jugadores, J1 usa WASD y J2 las flechas; también hay cruceta táctil en pantalla", fecha: "2026-09-23",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
