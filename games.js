@@ -508,6 +508,13 @@
       desc: "Motos de luz estilo Tron: dejan una estela sólida detrás que se convierte en pared; esquivá tu propia estela, la del rival y los bordes de la arena el mayor tiempo posible (y no podés girar 180°). Contra una CPU con 3 dificultades (la difícil calcula qué dirección te deja más área libre para intentar encerrarte) o de a dos en el mismo dispositivo. La velocidad sube con cada ronda, con racha de rondas ganadas seguidas y récord guardado por dificultad.",
       controles: "Flechas o WASD mueven tu moto; en 2 jugadores, J1 usa WASD y J2 las flechas; también hay cruceta táctil en pantalla", fecha: "2026-09-23",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "trivia-neon", titulo: "Trivia Neón", archivo: "trivia-neon.html",
+      emoji: "🎓", categoria: "mental", tags: ["trivia", "preguntas", "cultura general", "quiz", "contrarreloj"],
+      desc: "Quiz de opción múltiple: respondé preguntas de cultura general (geografía, ciencia, historia, entretenimiento, deportes, naturaleza) antes de que se acabe el tiempo. Las rachas de aciertos multiplican el puntaje, tenés 3 comodines por partida (50/50, saltar pregunta y tiempo extra, uno de cada uno) y 3 vidas: fallar o dejar correr el reloj te cuesta una. 3 dificultades que acortan el tiempo por pregunta y suben la proporción de preguntas difíciles, con récord de puntaje guardado por dificultad.",
+      controles: "Click / toque en una opción, o teclas 1-4", fecha: "2026-09-24",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
