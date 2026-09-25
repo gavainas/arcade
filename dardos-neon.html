@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DARDOS NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,42px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--gold),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; letter-spacing:1px; margin-top:2px;}
+  .hud .box.p1 b{color:var(--cyan);}
+  .hud .box.p2 b{color:var(--pink);}
+  .hud .box.rec b{color:var(--gold); font-size:16px;}
+
+  .turn{text-align:center; margin:2px 0 4px; font-size:14px; font-weight:800; letter-spacing:1px; min-height:20px;}
+  .turn.p1{color:var(--cyan);}
+  .turn.p2{color:var(--pink);}
+  .msgline{text-align:center; margin:0 0 8px; font-size:13px; font-weight:700; letter-spacing:.5px; min-height:18px; color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:10px; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,6vw,26px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:330px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:5px; font-size:11.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .modes{display:flex; flex-direction:column; gap:7px; width:100%; max-width:290px; margin-top:2px;}
+  .modes.hidden{display:none;}
+  .modelbl{font-size:11px; letter-spacing:1.5px; color:var(--muted); margin-top:4px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.3);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.hidden{display:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none;}
+  .btn.ghost.active{border-color:var(--cyan); color:var(--cyan); background:rgba(39,232,255,.14);}
+  .diffrow{display:flex; gap:8px;}
+  .diffrow .btn{flex:1; padding:10px 6px; font-size:12px;}
+  .final{font-size:14px; color:var(--ink);}
+  .final b{font-size:19px; color:var(--gold);}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:12.5px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:flex-end; gap:8px;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:8px;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">DARDOS NEÓN</div>
+      <div class="sub">3 0 1 &nbsp;A &nbsp;D O B L E</div>
+    </header>
+
+    <div class="hud">
+      <div class="box p1">VOS<b id="scoreUser">301</b></div>
+      <div class="box p2" id="rivalBox">CPU<b id="scoreRival">301</b></div>
+      <div class="box rec">RÉCORD<b id="recBox">—</b></div>
+    </div>
+    <div class="turn" id="turnText">&nbsp;</div>
+    <div class="msgline" id="msgLine">&nbsp;</div>
+
+    <div class="panel">
+      <canvas id="game" width="420" height="420"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">DARDOS NEÓN</h2>
+        <p id="ovText">Dardos 501… bah, 301 a doble: mantené presionado sobre el tablero para apuntar — un aro de precisión palpita alrededor de la mira — y soltá cuando esté chico para clavarla justo ahí; grande, y el dardo se desvía. Turnos de 3 dardos: restá lo que anotás hasta llegar justo a 0 con un doble o el centro dorado (bullseye). Si te pasás, llegás a 1, o no cerrás con doble, se anula todo el turno.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--green);background:var(--green)"></i> Aro grande = tiro impreciso, aro chico = tiro clavado</span>
+          <span><i class="dot" style="color:var(--gold);background:var(--gold)"></i> Centro dorado (bullseye) vale 50 y cierra como doble</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Anillo exterior fino = doble, anillo del medio = triple</span>
+        </div>
+        <div class="modes" id="modeButtons">
+          <div class="modelbl">VS COMPUTADORA</div>
+          <div class="diffrow">
+            <button class="btn ghost" data-mode="cpu" data-diff="facil">FÁCIL</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="media">MEDIA</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="dificil">DIFÍCIL</button>
+          </div>
+          <div class="modelbl">O DE A DOS</div>
+          <button class="btn ghost" data-mode="2p">2 JUGADORES</button>
+        </div>
+        <button class="btn hidden" id="startBtn">JUGAR ▶</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="mini" id="restartBtn">Reiniciar</button>
+    </div>
+    <div class="hint">Mantené presionado sobre el tablero (o <b>ESPACIO</b>) para apuntar y soltá cuando el aro esté chico · flechas mueven la mira con teclado.</div>
+
+    <footer>NEON ARCADE · Dardos Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  "use strict";
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const scoreUserEl=document.getElementById('scoreUser');
+  const scoreRivalEl=document.getElementById('scoreRival');
+  const rivalBox=document.getElementById('rivalBox');
+  const recEl=document.getElementById('recBox');
+  const turnText=document.getElementById('turnText');
+  const msgLine=document.getElementById('msgLine');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const legend=document.getElementById('legend');
+  const modeButtons=document.getElementById('modeButtons');
+  const startBtn=document.getElementById('startBtn');
+  const restartBtn=document.getElementById('restartBtn');
+
+  const COL_CYAN='#27e8ff', COL_PINK='#ff2bd6', COL_GOLD='#ffd23b', COL_GREEN='#39ff9e', COL_RED='#ff5470', COL_PURPLE='#8a4bff';
+
+  const SECTORS=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+  const CX=210, CY=210, OUTER_R=190;
+  const INNER_BULL_R=8, OUTER_BULL_R=18, TRIPLE_IN=110, TRIPLE_OUT=128, DOUBLE_IN=176;
+  const START_SCORE=301;
+  const RING_MIN=12, RING_MAX=64, PULSE_PERIOD=900;
+  const DIFF_DEV={facil:66, media:36, dificil:15};
+  const DIFF_LABEL={facil:'FÁCIL', media:'MEDIA', dificil:'DIFÍCIL'};
+
+  function bestKey(diff){ return 'neon-dardos-neon-best-'+diff; }
+
+  let mode=null, difficulty=null;
+  let scores={A:START_SCORE,B:START_SCORE};
+  let current='A';
+  let turnStartScore=START_SCORE;
+  let dartsThisTurn=0;
+  let dartsTotalA=0, dartsTotalB=0;
+  let aimX=CX, aimY=CY;
+  let holding=false, holdStart=0;
+  let throwing=false;
+  let flightFrom={x:CX,y:H-6}, flightTo={x:CX,y:CY}, flightStart=0, flightDur=260;
+  let pendingLanding=null;
+  let landedDarts=[];
+  let cpuPending=false;
+  let state='intro'; // intro | playing | gameover
+  let running=false;
+  let msgTimer=0;
+  let keys={left:false,right:false,up:false,down:false};
+  let last=0;
+  let dragPointerId=null;
+
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+  function clampXY(x,y){ return {x:clamp(x,0,W), y:clamp(y,0,H)}; }
+
+  function isHumanTurn(){ return mode==='2p' || current==='A'; }
+  function canThrow(){ return state==='playing' && !throwing && !cpuPending && isHumanTurn(); }
+
+  function sectorAt(dx,dy){
+    const r=Math.hypot(dx,dy);
+    if(r>OUTER_R) return {value:0,label:'FUERA',ring:'miss',mult:0,sector:null};
+    if(r<=INNER_BULL_R) return {value:50,label:'BULL',ring:'bull50',mult:2,sector:null};
+    if(r<=OUTER_BULL_R) return {value:25,label:'25',ring:'bull25',mult:1,sector:null};
+    let theta=Math.atan2(dx,-dy); if(theta<0) theta+=Math.PI*2;
+    const idx=Math.round(theta/(Math.PI/10))%20;
+    const sector=SECTORS[idx];
+    if(r>=TRIPLE_IN && r<=TRIPLE_OUT) return {value:sector*3,label:'T'+sector,ring:'triple',mult:3,sector};
+    if(r>=DOUBLE_IN && r<=OUTER_R) return {value:sector*2,label:'D'+sector,ring:'double',mult:2,sector};
+    return {value:sector,label:String(sector),ring:'single',mult:1,sector};
+  }
+
+  function polarPoint(r,idx){
+    const theta=idx*(Math.PI/10);
+    return {x:CX+r*Math.sin(theta), y:CY-r*Math.cos(theta)};
+  }
+
+  function sectorRingPoint(sector,ring){
+    let r;
+    if(ring==='bull50') return {x:CX,y:CY};
+    if(ring==='bull25') r=(INNER_BULL_R+OUTER_BULL_R)/2;
+    else if(ring==='triple') r=(TRIPLE_IN+TRIPLE_OUT)/2;
+    else if(ring==='double') r=(DOUBLE_IN+OUTER_R)/2;
+    else r=(OUTER_BULL_R+TRIPLE_IN)/2;
+    const idx=SECTORS.indexOf(sector);
+    return polarPoint(r, idx<0?0:idx);
+  }
+
+  function currentRingR(nowMs){
+    if(!holding) return RING_MAX;
+    const held=nowMs-holdStart;
+    const w=(Math.PI*2)/PULSE_PERIOD;
+    return RING_MIN+(RING_MAX-RING_MIN)*(0.5+0.5*Math.sin(Math.PI/2 - held*w));
+  }
+
+  function updateHud(){
+    scoreUserEl.textContent=scores.A;
+    scoreRivalEl.textContent=scores.B;
+    if(state==='playing'){
+      const who = current==='A' ? 'TU TURNO' : (mode==='2p' ? 'TURNO JUGADOR 2' : 'TURNO CPU');
+      turnText.textContent = who+' · DARDO '+(dartsThisTurn+1)+'/3';
+      turnText.className='turn '+(current==='A'?'p1':'p2');
+    }
+  }
+
+  function showMsg(text,color){
+    msgLine.textContent=text;
+    msgLine.style.color=color||'var(--gold)';
+    msgTimer=2200;
+  }
+
+  function beginHold(px,py){
+    if(!canThrow()) return;
+    const p=clampXY(px,py);
+    aimX=p.x; aimY=p.y;
+    holding=true; holdStart=performance.now();
+  }
+  function updateHold(px,py){
+    if(!holding) return;
+    const p=clampXY(px,py);
+    aimX=p.x; aimY=p.y;
+  }
+  function releaseHold(){
+    if(!holding) return;
+    const ringR=currentRingR(performance.now());
+    holding=false;
+    doThrowFrom(aimX,aimY,ringR);
+  }
+
+  function doThrowFrom(x,y,ringR){
+    throwing=true;
+    const t=clamp((ringR-RING_MIN)/(RING_MAX-RING_MIN),0,1);
+    const devMax=4+t*66;
+    const dev=Math.random()*devMax;
+    const ang=Math.random()*Math.PI*2;
+    const lx=x+Math.cos(ang)*dev, ly=y+Math.sin(ang)*dev;
+    flightFrom={x:CX,y:H-6}; flightTo={x:lx,y:ly};
+    flightStart=performance.now(); flightDur=260;
+    pendingLanding={x:lx,y:ly};
+  }
+
+  function cpuTargetPoint(remaining){
+    let sector=20, ring='triple';
+    if(remaining===50){ ring='bull50'; sector=null; }
+    else if(remaining<=40 && remaining>0 && remaining%2===0){ sector=remaining/2; ring='double'; }
+    else if(remaining>40){
+      let t=Math.round(remaining/3);
+      t=clamp(t,1,20);
+      sector=t; ring='triple';
+    } else {
+      sector = remaining>=1 && remaining<=20 ? remaining : 20;
+      ring='single';
+    }
+    return sectorRingPoint(sector,ring);
+  }
+
+  function cpuThrow(){
+    if(state!=='playing') return;
+    const remaining=scores.B;
+    const target=cpuTargetPoint(remaining);
+    throwing=true;
+    const devMax=DIFF_DEV[difficulty];
+    const dev=Math.random()*devMax;
+    const ang=Math.random()*Math.PI*2;
+    const lx=clamp(target.x+Math.cos(ang)*dev,0,W), ly=clamp(target.y+Math.sin(ang)*dev,0,H);
+    flightFrom={x:CX,y:H-6}; flightTo={x:lx,y:ly};
+    flightStart=performance.now(); flightDur=260;
+    pendingLanding={x:lx,y:ly};
+  }
+
+  function prepareNextThrow(){
+    aimX=CX; aimY=CY; holding=false;
+    if(mode==='cpu' && current==='B' && state==='playing'){
+      cpuPending=true;
+      turnText.textContent='CPU APUNTANDO…'; turnText.className='turn p2';
+      setTimeout(()=>{
+        if(state==='playing' && cpuPending){ cpuPending=false; cpuThrow(); }
+      }, 650);
+    }
+  }
+
+  function endTurn(){
+    landedDarts=[]; dartsThisTurn=0;
+    current = current==='A' ? 'B' : 'A';
+    turnStartScore=scores[current];
+    updateHud();
+    prepareNextThrow();
+  }
+
+  function endMatch(winner){
+    state='gameover'; running=false;
+    const winnerDarts = winner==='A' ? dartsTotalA : dartsTotalB;
+    let isRec=false, recVal=null;
+    if(mode==='cpu' && winner==='A'){
+      const key=bestKey(difficulty);
+      const prev=parseInt(localStorage.getItem(key)||'0',10);
+      if(!prev || winnerDarts<prev){ localStorage.setItem(key,String(winnerDarts)); isRec=true; }
+      recVal=parseInt(localStorage.getItem(key),10);
+      recEl.textContent=recVal;
+    }
+    const winnerLabel = winner==='A' ? '¡GANASTE!' : (mode==='cpu' ? 'GANÓ LA CPU' : 'GANÓ JUGADOR 2');
+    ovTitle.textContent=winnerLabel;
+    let detail='Cerró la partida en <b>'+winnerDarts+'</b> dardos.';
+    if(isRec) detail+='<br><span class="newrec">¡NUEVO RÉCORD! ('+DIFF_LABEL[difficulty]+')</span>';
+    ovText.innerHTML='<span class="final">'+detail+'</span>';
+    legend.style.display='none';
+    modeButtons.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+    startBtn.textContent='REVANCHA ▶';
+    overlay.classList.remove('hidden');
+  }
+
+  function applyThrowResult(res,lx,ly){
+    landedDarts.push({x:lx,y:ly,who:current});
+    dartsThisTurn++;
+    if(current==='A') dartsTotalA++; else dartsTotalB++;
+    const before=scores[current];
+    const after=before-res.value;
+    let bust=false, finish=false;
+    if(after<0 || after===1) bust=true;
+    else if(after===0){
+      if(res.mult===2 || res.ring==='bull50') finish=true; else bust=true;
+    }
+    const labelTxt = res.value===0 ? 'FUERA (0)' : res.label+' = '+res.value;
+    if(bust){
+      scores[current]=turnStartScore;
+      showMsg(labelTxt+' — ¡PASADA! turno anulado', COL_RED);
+      updateHud();
+      endTurn();
+      return;
+    }
+    scores[current]=after;
+    showMsg(labelTxt, res.value>0?COL_GOLD:'var(--muted)');
+    updateHud();
+    if(finish){ endMatch(current); return; }
+    if(dartsThisTurn>=3) endTurn();
+    else prepareNextThrow();
+  }
+
+  function resolveThrow(lx,ly){
+    const dx=lx-CX, dy=ly-CY;
+    const res=sectorAt(dx,dy);
+    applyThrowResult(res,lx,ly);
+  }
+
+  function sectorAngles(idx){
+    const half=Math.PI/20, theta=idx*(Math.PI/10);
+    return {a0:theta-half, a1:theta+half};
+  }
+  function ringSectorPath(rIn,rOut,thetaA,thetaB){
+    const a0=thetaA-Math.PI/2, a1=thetaB-Math.PI/2;
+    ctx.beginPath();
+    ctx.arc(CX,CY,rOut,a0,a1,false);
+    ctx.arc(CX,CY,rIn,a1,a0,true);
+    ctx.closePath();
+  }
+
+  function drawBoard(){
+    ctx.save();
+    ctx.beginPath(); ctx.arc(CX,CY,OUTER_R+8,0,Math.PI*2);
+    ctx.fillStyle='#0c1230'; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle='rgba(138,75,255,.5)'; ctx.stroke();
+
+    for(let i=0;i<20;i++){
+      const {a0,a1}=sectorAngles(i);
+      const base = i%2===0 ? '#121a3c' : '#0a1024';
+      ringSectorPath(OUTER_BULL_R,TRIPLE_IN,a0,a1); ctx.fillStyle=base; ctx.fill();
+      ringSectorPath(TRIPLE_OUT,DOUBLE_IN,a0,a1); ctx.fillStyle=base; ctx.fill();
+      const tripleColor = i%2===0 ? COL_GREEN : COL_PURPLE;
+      ringSectorPath(TRIPLE_IN,TRIPLE_OUT,a0,a1); ctx.globalAlpha=.85; ctx.fillStyle=tripleColor; ctx.fill(); ctx.globalAlpha=1;
+      const doubleColor = i%2===0 ? COL_PINK : COL_CYAN;
+      ringSectorPath(DOUBLE_IN,OUTER_R,a0,a1); ctx.globalAlpha=.85; ctx.fillStyle=doubleColor; ctx.fill(); ctx.globalAlpha=1;
+    }
+
+    ctx.strokeStyle='rgba(5,7,15,.85)'; ctx.lineWidth=1.4;
+    for(let i=0;i<20;i++){
+      const thetaB=i*(Math.PI/10)-Math.PI/20;
+      const p1={x:CX+OUTER_BULL_R*Math.sin(thetaB), y:CY-OUTER_BULL_R*Math.cos(thetaB)};
+      const p2={x:CX+OUTER_R*Math.sin(thetaB), y:CY-OUTER_R*Math.cos(thetaB)};
+      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+    }
+
+    ctx.lineWidth=1.6; ctx.strokeStyle='rgba(5,7,15,.6)';
+    [OUTER_BULL_R,TRIPLE_IN,TRIPLE_OUT,DOUBLE_IN,OUTER_R].forEach(rr=>{
+      ctx.beginPath(); ctx.arc(CX,CY,rr,0,Math.PI*2); ctx.stroke();
+    });
+
+    ctx.beginPath(); ctx.arc(CX,CY,OUTER_BULL_R,0,Math.PI*2); ctx.fillStyle=COL_GREEN; ctx.fill();
+    ctx.beginPath(); ctx.arc(CX,CY,INNER_BULL_R,0,Math.PI*2); ctx.fillStyle=COL_GOLD; ctx.fill();
+
+    ctx.font='700 15px "Segoe UI", sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#e8f6ff';
+    for(let i=0;i<20;i++){
+      const p=polarPoint(OUTER_R+16,i);
+      ctx.fillText(String(SECTORS[i]), p.x, p.y);
+    }
+    ctx.restore();
+  }
+
+  function drawDartMarker(x,y,color){
+    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+    ctx.lineWidth=1; ctx.strokeStyle='#05070f'; ctx.stroke();
+  }
+
+  function drawReticle(x,y,r){
+    const col = current==='A' ? COL_CYAN : COL_PINK;
+    ctx.save();
+    ctx.strokeStyle=col; ctx.lineWidth=2; ctx.shadowColor=col; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.moveTo(x-10,y); ctx.lineTo(x+10,y); ctx.moveTo(x,y-10); ctx.lineTo(x,y+10); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFlyingDart(x,y){
+    const col = current==='A' ? COL_CYAN : COL_PINK;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(4,4); ctx.lineTo(-4,4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    drawBoard();
+    landedDarts.forEach(d=>drawDartMarker(d.x,d.y, d.who==='A'?COL_CYAN:COL_PINK));
+    if(throwing){
+      const t=clamp((performance.now()-flightStart)/flightDur,0,1);
+      const x=flightFrom.x+(flightTo.x-flightFrom.x)*t;
+      const y=flightFrom.y+(flightTo.y-flightFrom.y)*t - Math.sin(t*Math.PI)*46;
+      drawFlyingDart(x,y);
+    } else if(state==='playing' && isHumanTurn() && !cpuPending){
+      drawReticle(aimX,aimY, holding?currentRingR(performance.now()):RING_MAX);
+    }
+  }
+
+  function loop(now){
+    const dt = last ? now-last : 16; last=now;
+    if(running && state==='playing' && throwing && now-flightStart>=flightDur){
+      throwing=false;
+      const p=pendingLanding; pendingLanding=null;
+      resolveThrow(p.x,p.y);
+    }
+    if(state==='playing' && !throwing && isHumanTurn() && !cpuPending){
+      const step=0.32*dt;
+      if(keys.left) aimX-=step;
+      if(keys.right) aimX+=step;
+      if(keys.up) aimY-=step;
+      if(keys.down) aimY+=step;
+      const p=clampXY(aimX,aimY); aimX=p.x; aimY=p.y;
+    }
+    render();
+    if(msgTimer>0){ msgTimer-=dt; if(msgTimer<=0){ msgLine.textContent=' '; } }
+    requestAnimationFrame(loop);
+  }
+
+  function canvasPos(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    return { x:(clientX-rect.left)*(W/rect.width), y:(clientY-rect.top)*(H/rect.height) };
+  }
+
+  canvas.addEventListener('pointerdown', e=>{
+    if(!canThrow()) return;
+    const p=canvasPos(e.clientX,e.clientY);
+    dragPointerId=e.pointerId;
+    try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+    beginHold(p.x,p.y);
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!holding || e.pointerId!==dragPointerId) return;
+    const p=canvasPos(e.clientX,e.clientY);
+    updateHold(p.x,p.y);
+  });
+  function endPointer(e){
+    if(holding && e.pointerId===dragPointerId) releaseHold();
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+
+  window.addEventListener('keydown', e=>{
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+    if(e.key==='ArrowLeft') keys.left=true;
+    if(e.key==='ArrowRight') keys.right=true;
+    if(e.key==='ArrowUp') keys.up=true;
+    if(e.key==='ArrowDown') keys.down=true;
+    if(e.key===' '){ if(!holding && canThrow()) beginHold(aimX,aimY); }
+  });
+  window.addEventListener('keyup', e=>{
+    if(e.key==='ArrowLeft') keys.left=false;
+    if(e.key==='ArrowRight') keys.right=false;
+    if(e.key==='ArrowUp') keys.up=false;
+    if(e.key==='ArrowDown') keys.down=false;
+    if(e.key===' '){ if(holding) releaseHold(); }
+  });
+
+  modeButtons.addEventListener('click', e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    modeButtons.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode=btn.dataset.mode;
+    difficulty=btn.dataset.diff || null;
+    startBtn.classList.remove('hidden');
+  });
+
+  function startMatch(){
+    if(!mode) return;
+    scores={A:START_SCORE,B:START_SCORE};
+    dartsTotalA=0; dartsTotalB=0;
+    current='A'; turnStartScore=START_SCORE; dartsThisTurn=0; landedDarts=[];
+    holding=false; throwing=false; cpuPending=false; pendingLanding=null;
+    aimX=CX; aimY=CY;
+    rivalBox.childNodes[0].textContent = mode==='2p' ? 'JUGADOR 2' : 'CPU';
+    if(mode==='cpu'){
+      const v=localStorage.getItem(bestKey(difficulty));
+      recEl.textContent = v ? v : '—';
+    } else {
+      recEl.textContent='—';
+    }
+    msgLine.textContent=' ';
+    legend.style.display='';
+    modeButtons.classList.remove('hidden');
+    overlay.classList.add('hidden');
+    state='playing'; running=true;
+    updateHud();
+    prepareNextThrow();
+    last=0;
+  }
+
+  startBtn.addEventListener('click', startMatch);
+  restartBtn.addEventListener('click', ()=>{ if(mode) startMatch(); });
+
+  state='intro'; running=false;
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

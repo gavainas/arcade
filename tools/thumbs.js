@@ -148,7 +148,13 @@ const OVERRIDES = {
   "hanoi-neon": { steps: [".lvl-card", "#peg0", "#peg2"], wait: 300 },
   // Esperamos un poco más para que ya hayan bajado un par de misiles y se vea
   // el rastro en pantalla, no sólo el tablero vacío recién arrancado.
-  "misiles-neon": { steps: ["#startBtn"], wait: 2800 }
+  "misiles-neon": { steps: ["#startBtn"], wait: 2800 },
+  // Elegimos dificultad y tiramos un par de dardos para que la miniatura
+  // muestre el tablero con dardos clavados, no sólo el menú de modos.
+  "dardos-neon": {
+    steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.5, 0.22] }, { canvas: [0.35, 0.65] }],
+    wait: 400
+  }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

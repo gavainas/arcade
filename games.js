@@ -515,6 +515,13 @@
       desc: "Quiz de opción múltiple: respondé preguntas de cultura general (geografía, ciencia, historia, entretenimiento, deportes, naturaleza) antes de que se acabe el tiempo. Las rachas de aciertos multiplican el puntaje, tenés 3 comodines por partida (50/50, saltar pregunta y tiempo extra, uno de cada uno) y 3 vidas: fallar o dejar correr el reloj te cuesta una. 3 dificultades que acortan el tiempo por pregunta y suben la proporción de preguntas difíciles, con récord de puntaje guardado por dificultad.",
       controles: "Click / toque en una opción, o teclas 1-4", fecha: "2026-09-24",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "dardos-neon", titulo: "Dardos Neón", archivo: "dardos-neon.html",
+      emoji: "🎯", categoria: "deportes", tags: ["dardos", "darts", "501", "puntería", "cpu", "2 jugadores"],
+      desc: "Dardos 301 a doble: mantené presionado sobre el tablero para apuntar — un aro de precisión palpita alrededor de la mira — y soltá cuando esté chico para clavarla justo ahí; grande, y el dardo se desvía. Turnos de 3 dardos: restá lo que anotás hasta llegar justo a 0 con un doble o el centro dorado (bullseye); si te pasás, llegás a 1, o no cerrás con doble, se anula todo el turno. Contra una CPU con 3 dificultades (mejor puntería cuanto más difícil) o de a dos en el mismo dispositivo, con récord de menos dardos para cerrar la partida guardado por dificultad.",
+      controles: "Mantené presionado (mouse/touch) o ESPACIO para apuntar y soltá para tirar, flechas mueven la mira", fecha: "2026-09-25",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
