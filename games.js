@@ -522,6 +522,13 @@
       desc: "Dardos 301 a doble: mantené presionado sobre el tablero para apuntar — un aro de precisión palpita alrededor de la mira — y soltá cuando esté chico para clavarla justo ahí; grande, y el dardo se desvía. Turnos de 3 dardos: restá lo que anotás hasta llegar justo a 0 con un doble o el centro dorado (bullseye); si te pasás, llegás a 1, o no cerrás con doble, se anula todo el turno. Contra una CPU con 3 dificultades (mejor puntería cuanto más difícil) o de a dos en el mismo dispositivo, con récord de menos dardos para cerrar la partida guardado por dificultad.",
       controles: "Mantené presionado (mouse/touch) o ESPACIO para apuntar y soltá para tirar, flechas mueven la mira", fecha: "2026-09-25",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "gomoku-neon", titulo: "Gomoku Neón", archivo: "gomoku-neon.html",
+      emoji: "⚪", categoria: "logica", tags: ["gomoku", "cinco en linea", "five in a row", "tablero", "cpu", "2 jugadores", "estrategia"],
+      desc: "Cinco en línea sobre un tablero de intersecciones de 15×15: por turnos colocá una ficha en cualquier cruce libre y ganá alineando 5 fichas propias seguidas en horizontal, vertical o diagonal. Sin capturas: sólo importa quién arma la línea primero, y si se llena el tablero sin ganador es empate. Contra una CPU con 3 dificultades (detecta jugadas ganadoras y bloqueos inmediatos, y en las más altas busca con minimax y poda alfa-beta sobre una heurística de amenazas) o de a dos en el mismo dispositivo.",
+      controles: "Click / toque en una intersección; flechas + Enter con teclado", fecha: "2026-09-26",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

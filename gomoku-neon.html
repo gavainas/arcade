@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GOMOKU NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 6px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; letter-spacing:1px; margin-top:2px;}
+  .hud .box.p1 b{color:var(--cyan);}
+  .hud .box.p2 b{color:var(--pink);}
+  .hud .box.tie b{color:var(--gold);}
+
+  .turn{text-align:center; margin:2px 0 10px; font-size:14px; font-weight:800; letter-spacing:1px; min-height:20px;}
+  .turn.p1{color:var(--cyan);}
+  .turn.p2{color:var(--pink);}
+  .turn.warn{color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  canvas{display:block; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none; width:100%; height:auto; max-width:420px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px 16px; gap:9px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:2; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(19px,5.6vw,27px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:330px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:5px; font-size:11.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .modes{display:flex; flex-direction:column; gap:7px; width:100%; max-width:290px; margin-top:2px;}
+  .modelbl{font-size:11px; letter-spacing:1.5px; color:var(--muted); margin-top:4px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.3);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.hidden{display:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none;}
+  .btn.ghost.active{border-color:var(--cyan); color:var(--cyan); background:rgba(39,232,255,.14);}
+  .diffrow{display:flex; gap:8px;}
+  .diffrow .btn{flex:1; padding:10px 6px; font-size:12px;}
+  .final{font-size:14px; color:var(--ink);}
+  .final b{font-size:19px;}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">GOMOKU NEÓN</div>
+      <div class="sub">C I N C O &nbsp;E N &nbsp;L Í N E A &nbsp;·&nbsp; 15 × 15</div>
+    </header>
+
+    <div class="hud">
+      <div class="box p1">VOS<b id="p1wins">0</b></div>
+      <div class="box tie">EMPATES<b id="ties">0</b></div>
+      <div class="box p2">RIVAL<b id="p2wins">0</b></div>
+    </div>
+    <div class="turn" id="turnText">&nbsp;</div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="440"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">GOMOKU NEÓN</h2>
+        <p id="ovText">Por turnos, colocá una ficha en cualquier intersección libre del tablero. Gana quien primero logre alinear 5 fichas propias seguidas: en horizontal, vertical o diagonal. No hay capturas ni saltos: sólo importa quién arma la línea de 5 primero. Si se llena el tablero sin ganador, es empate.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Tus fichas</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Fichas rivales</span>
+        </div>
+        <div class="modes" id="modeButtons">
+          <div class="modelbl">VS COMPUTADORA</div>
+          <div class="diffrow">
+            <button class="btn ghost" data-mode="cpu" data-diff="facil">FÁCIL</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="medio">MEDIO</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="dificil">DIFÍCIL</button>
+          </div>
+          <div class="modelbl">O DE A DOS</div>
+          <button class="btn ghost" data-mode="2p">2 JUGADORES</button>
+        </div>
+        <button class="btn hidden" id="startBtn">JUGAR ▶</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Click / toque en una intersección para jugar · flechas + <b>ENTER</b> con teclado.</div>
+      <button class="mini" id="restartBtn">Reiniciar</button>
+    </div>
+
+    <footer>NEON ARCADE · Gomoku Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  "use strict";
+  const SIZE=15;
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const MARGIN=24;
+  const CELL=(W-2*MARGIN)/(SIZE-1);
+
+  const p1winsEl=document.getElementById('p1wins');
+  const p2winsEl=document.getElementById('p2wins');
+  const tiesEl=document.getElementById('ties');
+  const turnText=document.getElementById('turnText');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const legend=document.getElementById('legend');
+  const modeButtons=document.getElementById('modeButtons');
+  const startBtn=document.getElementById('startBtn');
+  const restartBtn=document.getElementById('restartBtn');
+
+  const COLORS={1:'#27e8ff', 2:'#ff2bd6'};
+  const GLOW={1:'rgba(39,232,255,.75)', 2:'rgba(255,43,214,.75)'};
+
+  const STATS_KEY='neon-gomoku-stats';
+  function loadStats(){
+    try{ return JSON.parse(localStorage.getItem(STATS_KEY))||{p1:0,p2:0,ties:0}; }
+    catch(e){ return {p1:0,p2:0,ties:0}; }
+  }
+  let stats=loadStats();
+  function saveStats(){ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
+  function renderStats(){
+    p1winsEl.textContent=stats.p1;
+    p2winsEl.textContent=stats.p2;
+    tiesEl.textContent=stats.ties;
+  }
+  renderStats();
+
+  // ---------- Reglas del juego (Gomoku / 5 en línea, estilo libre) ----------
+  const WIN_LEN=5;
+  const DIRS=[[0,1],[1,0],[1,1],[1,-1]];
+  function inB(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+  function otherPlayer(p){ return p===1?2:1; }
+
+  function emptyBoard(){ return Array.from({length:SIZE},()=>Array(SIZE).fill(0)); }
+
+  function applyMove(bd,r,c,player){
+    const nb=bd.map(row=>row.slice());
+    nb[r][c]=player;
+    return nb;
+  }
+
+  function isBoardFull(bd){
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(bd[r][c]===0) return false;
+    return true;
+  }
+
+  function checkWinAt(bd,r,c,player){
+    for(const [dr,dc] of DIRS){
+      let count=1;
+      let rr=r+dr, cc=c+dc;
+      while(inB(rr,cc) && bd[rr][cc]===player){ count++; rr+=dr; cc+=dc; }
+      rr=r-dr; cc=c-dc;
+      while(inB(rr,cc) && bd[rr][cc]===player){ count++; rr-=dr; cc-=dc; }
+      if(count>=WIN_LEN) return true;
+    }
+    return false;
+  }
+
+  function winLineAt(bd,r,c,player){
+    for(const [dr,dc] of DIRS){
+      const line=[[r,c]];
+      let rr=r+dr, cc=c+dc;
+      while(inB(rr,cc) && bd[rr][cc]===player){ line.push([rr,cc]); rr+=dr; cc+=dc; }
+      rr=r-dr; cc=c-dc;
+      while(inB(rr,cc) && bd[rr][cc]===player){ line.unshift([rr,cc]); rr-=dr; cc-=dc; }
+      if(line.length>=WIN_LEN) return line;
+    }
+    return null;
+  }
+
+  // ---------- Evaluación por ventanas de 5 (heurística clásica de gomoku) ----------
+  const WINDOWS=(()=>{
+    const wins=[];
+    const dirs=[[0,1],[1,0],[1,1],[1,-1]];
+    for(const [dr,dc] of dirs){
+      for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+        const pts=[];
+        let ok=true;
+        for(let k=0;k<WIN_LEN;k++){
+          const rr=r+dr*k, cc=c+dc*k;
+          if(!inB(rr,cc)){ ok=false; break; }
+          pts.push([rr,cc]);
+        }
+        if(ok) wins.push(pts);
+      }
+    }
+    return wins;
+  })();
+
+  const SCORE_TABLE={0:0,1:1,2:12,3:110,4:2200,5:500000};
+
+  function evaluate(bd, aiPlayer){
+    const opp=otherPlayer(aiPlayer);
+    let score=0;
+    for(const win of WINDOWS){
+      let cAi=0, cOp=0;
+      for(const [r,c] of win){
+        const v=bd[r][c];
+        if(v===aiPlayer) cAi++;
+        else if(v===opp) cOp++;
+      }
+      if(cAi>0 && cOp>0) continue;
+      if(cAi>0) score+=SCORE_TABLE[cAi];
+      else if(cOp>0) score-=SCORE_TABLE[cOp];
+    }
+    return score;
+  }
+
+  // ---------- Candidatos: sólo celdas vacías cerca de fichas ya puestas ----------
+  const RADIUS=2;
+  function candidateCells(bd){
+    let any=false;
+    const set=new Set();
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+      if(bd[r][c]===0) continue;
+      any=true;
+      for(let dr=-RADIUS;dr<=RADIUS;dr++) for(let dc=-RADIUS;dc<=RADIUS;dc++){
+        const rr=r+dr, cc=c+dc;
+        if(inB(rr,cc) && bd[rr][cc]===0) set.add(rr*SIZE+cc);
+      }
+    }
+    if(!any) return [{r:7,c:7}];
+    const out=[];
+    set.forEach(v=>out.push({r:Math.floor(v/SIZE), c:v%SIZE}));
+    return out;
+  }
+
+  function topCandidates(bd, scorePlayer, limit){
+    const cells=candidateCells(bd);
+    const scored=cells.map(m=>({m, s:evaluate(applyMove(bd,m.r,m.c,scorePlayer), scorePlayer)}));
+    scored.sort((a,b)=>b.s-a.s);
+    return scored.slice(0,limit).map(x=>x.m);
+  }
+
+  // ---------- CPU: amenazas inmediatas + minimax con poda alfa-beta ----------
+  const DIFF_DEPTH={facil:1, medio:2, dificil:3};
+  const DIFF_ROOT_LIMIT={facil:8, medio:10, dificil:12};
+  const INNER_LIMIT=8;
+  const NODE_BUDGET=9000;
+  let nodeCount=0;
+
+  function minimax(bd, depth, alpha, beta, maximizing, aiPlayer, currentPlayer){
+    nodeCount++;
+    if(depth<=0 || nodeCount>NODE_BUDGET) return evaluate(bd,aiPlayer);
+    const moves=topCandidates(bd, aiPlayer, INNER_LIMIT);
+    if(moves.length===0) return evaluate(bd,aiPlayer);
+    const other=otherPlayer(currentPlayer);
+    if(maximizing){
+      let value=-Infinity;
+      for(const m of moves){
+        const nb=applyMove(bd,m.r,m.c,currentPlayer);
+        if(checkWinAt(nb,m.r,m.c,currentPlayer)){
+          value=Math.max(value, currentPlayer===aiPlayer ? 1000000+depth : -1000000-depth);
+        } else {
+          value=Math.max(value, minimax(nb, depth-1, alpha, beta, false, aiPlayer, other));
+        }
+        alpha=Math.max(alpha,value);
+        if(alpha>=beta) break;
+      }
+      return value;
+    } else {
+      let value=Infinity;
+      for(const m of moves){
+        const nb=applyMove(bd,m.r,m.c,currentPlayer);
+        if(checkWinAt(nb,m.r,m.c,currentPlayer)){
+          value=Math.min(value, currentPlayer===aiPlayer ? 1000000+depth : -1000000-depth);
+        } else {
+          value=Math.min(value, minimax(nb, depth-1, alpha, beta, true, aiPlayer, other));
+        }
+        beta=Math.min(beta,value);
+        if(alpha>=beta) break;
+      }
+      return value;
+    }
+  }
+
+  function chooseCpuMove(){
+    const aiPlayer=2, human=1;
+    const candidates=candidateCells(board);
+    if(!candidates.length) return null;
+
+    for(const m of candidates){
+      if(checkWinAt(applyMove(board,m.r,m.c,aiPlayer),m.r,m.c,aiPlayer)) return m;
+    }
+    for(const m of candidates){
+      if(checkWinAt(applyMove(board,m.r,m.c,human),m.r,m.c,human)) return m;
+    }
+
+    if(difficulty==='facil' && Math.random()<0.4){
+      return candidates[Math.floor(Math.random()*candidates.length)];
+    }
+
+    nodeCount=0;
+    const depth=DIFF_DEPTH[difficulty];
+    const rootMoves=topCandidates(board, aiPlayer, DIFF_ROOT_LIMIT[difficulty]);
+    let best=rootMoves[0], bestScore=-Infinity;
+    for(const m of rootMoves){
+      const nb=applyMove(board,m.r,m.c,aiPlayer);
+      const val=minimax(nb, depth-1, -Infinity, Infinity, false, aiPlayer, human);
+      if(val>bestScore){ bestScore=val; best=m; }
+    }
+    return best;
+  }
+
+  // ---------- Estado de partida ----------
+  let mode=null, difficulty=null;
+  let board, current, running, gameOver;
+  let lastMove=null, winLine=null;
+  let cursor={r:7,c:7};
+  let pulse=0;
+
+  function updateTurnText(){
+    if(!running || gameOver) return;
+    if(mode==='cpu'){
+      turnText.textContent = current===1 ? 'TU TURNO' : 'PENSANDO…';
+      turnText.className='turn '+(current===1?'p1':'p2');
+    } else {
+      turnText.textContent = current===1 ? 'TURNO JUGADOR 1' : 'TURNO JUGADOR 2';
+      turnText.className='turn '+(current===1?'p1':'p2');
+    }
+  }
+
+  function reset(){
+    board=emptyBoard();
+    current=1;
+    running=true; gameOver=false;
+    lastMove=null; winLine=null;
+    updateTurnText();
+    render();
+    if(mode==='cpu' && current===2) setTimeout(cpuMove, 480);
+  }
+
+  function endGame(winner){
+    running=false; gameOver=true;
+    if(winner===0) stats.ties++; else if(winner===1) stats.p1++; else stats.p2++;
+    saveStats(); renderStats(); render();
+    ovTitle.textContent = winner===0 ? 'EMPATE' : (winner===1 ? '¡GANASTE!' : (mode==='cpu' ? 'GANÓ LA CPU' : 'GANÓ JUGADOR 2'));
+    let detail;
+    if(winner===0) detail='Se llenó el tablero sin línea de 5. ¡Qué defensa!';
+    else{
+      const wLabel = winner===1 ? 'Vos' : (mode==='cpu' ? 'La CPU' : 'Jugador 2');
+      detail=wLabel+' alineó 5 fichas seguidas.';
+    }
+    ovText.innerHTML='<span class="final">'+detail+'</span>';
+    legend.style.display='none';
+    modeButtons.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+    startBtn.textContent='REVANCHA ▶';
+    overlay.classList.remove('hidden');
+  }
+
+  function playMove(r,c){
+    board=applyMove(board,r,c,current);
+    lastMove={r,c};
+    if(checkWinAt(board,r,c,current)){
+      winLine=winLineAt(board,r,c,current);
+      endGame(current);
+      return;
+    }
+    if(isBoardFull(board)){
+      endGame(0);
+      return;
+    }
+    current=otherPlayer(current);
+    updateTurnText();
+    render();
+    if(mode==='cpu' && current===2) setTimeout(cpuMove, 480);
+  }
+
+  function handleCellClick(r,c){
+    if(!running || gameOver) return;
+    if(mode==='cpu' && current===2) return;
+    if(board[r][c]!==0) return;
+    playMove(r,c);
+  }
+
+  function cpuMove(){
+    if(gameOver) return;
+    const move=chooseCpuMove();
+    if(!move) return;
+    playMove(move.r,move.c);
+  }
+
+  // ---------- Render ----------
+  function pt(r,c){ return {x:MARGIN+c*CELL, y:MARGIN+r*CELL}; }
+  const STAR_POINTS=[[3,3],[3,11],[11,3],[11,11],[7,7]];
+
+  function render(){
+    ctx.clearRect(0,0,W,H);
+
+    ctx.strokeStyle='rgba(138,75,255,.35)';
+    ctx.lineWidth=1;
+    for(let i=0;i<SIZE;i++){
+      const x=MARGIN+i*CELL, y=MARGIN+i*CELL;
+      ctx.beginPath(); ctx.moveTo(x,MARGIN); ctx.lineTo(x,H-MARGIN); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(MARGIN,y); ctx.lineTo(W-MARGIN,y); ctx.stroke();
+    }
+    ctx.fillStyle='rgba(39,232,255,.55)';
+    for(const [r,c] of STAR_POINTS){
+      const {x,y}=pt(r,c);
+      ctx.beginPath(); ctx.arc(x,y,2.4,0,Math.PI*2); ctx.fill();
+    }
+
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+      if(board[r][c]) drawStone(r,c,board[r][c]);
+    }
+
+    if(winLine){
+      ctx.strokeStyle='rgba(255,210,59,.9)';
+      ctx.lineWidth=3;
+      ctx.beginPath();
+      const a=pt(winLine[0][0],winLine[0][1]);
+      const b=pt(winLine[winLine.length-1][0],winLine[winLine.length-1][1]);
+      ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.stroke();
+    } else if(lastMove){
+      const {x,y}=pt(lastMove.r,lastMove.c);
+      const p=0.55+0.35*Math.sin(pulse);
+      ctx.beginPath();
+      ctx.arc(x,y,CELL*0.44,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(232,246,255,${p})`;
+      ctx.lineWidth=2.5;
+      ctx.stroke();
+    }
+
+    if(running && !gameOver && !(mode==='cpu' && current===2)){
+      const {x,y}=pt(cursor.r,cursor.c);
+      ctx.beginPath();
+      ctx.arc(x,y,CELL*0.4,0,Math.PI*2);
+      ctx.strokeStyle='rgba(232,246,255,.5)';
+      ctx.lineWidth=1.6;
+      ctx.stroke();
+    }
+  }
+
+  function drawStone(r,c,player){
+    const {x,y}=pt(r,c);
+    const rad=CELL*0.42;
+    ctx.save();
+    ctx.shadowColor=GLOW[player];
+    ctx.shadowBlur=12;
+    const grad=ctx.createRadialGradient(x-rad*0.3,y-rad*0.3,rad*0.15,x,y,rad);
+    grad.addColorStop(0, player===1 ? '#bdfaff' : '#ffcaf3');
+    grad.addColorStop(1, COLORS[player]);
+    ctx.beginPath();
+    ctx.arc(x,y,rad,0,Math.PI*2);
+    ctx.fillStyle=grad;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.lineWidth=2;
+    ctx.strokeStyle='rgba(5,7,15,.55)';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function loop(){
+    pulse+=0.09;
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Input ----------
+  function eventToPoint(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+    const x=(clientX-rect.left)*scaleX, y=(clientY-rect.top)*scaleY;
+    let bestR=-1,bestC=-1,bestD=Infinity;
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+      const {x:px,y:py}=pt(r,c);
+      const d=(px-x)*(px-x)+(py-y)*(py-y);
+      if(d<bestD){ bestD=d; bestR=r; bestC=c; }
+    }
+    if(bestD > (CELL*0.55)*(CELL*0.55)) return null;
+    return {r:bestR,c:bestC};
+  }
+
+  canvas.addEventListener('click', e=>{
+    const cell=eventToPoint(e.clientX,e.clientY);
+    if(cell) handleCellClick(cell.r,cell.c);
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(!running || gameOver) return;
+    if(mode==='cpu' && current===2) return;
+    let handled=true;
+    switch(e.key){
+      case 'ArrowUp': cursor.r=Math.max(0,cursor.r-1); break;
+      case 'ArrowDown': cursor.r=Math.min(SIZE-1,cursor.r+1); break;
+      case 'ArrowLeft': cursor.c=Math.max(0,cursor.c-1); break;
+      case 'ArrowRight': cursor.c=Math.min(SIZE-1,cursor.c+1); break;
+      case 'Enter': case ' ': handleCellClick(cursor.r,cursor.c); break;
+      default: handled=false;
+    }
+    if(handled) e.preventDefault();
+  });
+
+  // ---------- Overlay: elegir modo y arrancar ----------
+  modeButtons.addEventListener('click', e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    modeButtons.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode=btn.dataset.mode;
+    difficulty=btn.dataset.diff || null;
+    startBtn.classList.remove('hidden');
+  });
+
+  function startGame(){
+    if(!mode) return;
+    legend.style.display='';
+    overlay.classList.add('hidden');
+    reset();
+  }
+
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', startGame);
+
+  // estado inicial: mostrar overlay de selección de modo
+  running=false; gameOver=false;
+  board=emptyBoard();
+  lastMove=null; winLine=null;
+  render();
+  loop();
+})();
+</script>
+</body>
+</html>

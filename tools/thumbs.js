@@ -154,6 +154,13 @@ const OVERRIDES = {
   "dardos-neon": {
     steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.5, 0.22] }, { canvas: [0.35, 0.65] }],
     wait: 400
+  },
+  // Jugamos una ficha en el centro y dejamos que la CPU responda sola para que
+  // la miniatura muestre el tablero de intersecciones con un par de fichas,
+  // no sólo el menú de modos.
+  "gomoku-neon": {
+    steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.5, 0.5] }],
+    wait: 900
   }
 };
 
