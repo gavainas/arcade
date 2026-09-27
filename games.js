@@ -529,6 +529,13 @@
       desc: "Cinco en línea sobre un tablero de intersecciones de 15×15: por turnos colocá una ficha en cualquier cruce libre y ganá alineando 5 fichas propias seguidas en horizontal, vertical o diagonal. Sin capturas: sólo importa quién arma la línea primero, y si se llena el tablero sin ganador es empate. Contra una CPU con 3 dificultades (detecta jugadas ganadoras y bloqueos inmediatos, y en las más altas busca con minimax y poda alfa-beta sobre una heurística de amenazas) o de a dos en el mismo dispositivo.",
       controles: "Click / toque en una intersección; flechas + Enter con teclado", fecha: "2026-09-26",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "tubos-neon", titulo: "Tubos Neón", archivo: "tubos-neon.html",
+      emoji: "🚰", categoria: "logica", tags: ["pipe mania", "caños", "rotar piezas", "flujo", "contrarreloj", "niveles"],
+      desc: "Pipe Mania neón: la grilla arranca con caños ya colocados pero girados al azar; tocalos para rotarlos 90° y armar el camino continuo desde el generador celeste hasta el desagüe dorado antes de que se acabe la cuenta regresiva. Ahí arranca el flujo solo, avanzando caño por caño (los que ya atravesó quedan bloqueados): si llega a uno mal orientado es fuga y se termina la partida. Cada nivel superado agranda la grilla, acelera el flujo y acorta la cuenta regresiva, con puntaje según el largo del camino y el nivel alcanzado, y récord guardado.",
+      controles: "Click / toque en un caño para rotarlo 90°; flechas mueven el foco y Enter/espacio lo rota", fecha: "2026-09-27",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TUBOS NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:560px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.score b{color:var(--gold);}
+  .hud .box.flow b{color:var(--green); transition:color .2s ease;}
+  .hud .box.flow.running b{color:var(--pink); animation:pulse .6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+
+  .panel{
+    position:relative; border-radius:20px; padding:18px 14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  .grid{display:grid; touch-action:manipulation; user-select:none; border-radius:10px; overflow:hidden;}
+  .cell{
+    position:relative; border:1px solid rgba(138,75,255,.16);
+    background:rgba(232,246,255,.03); cursor:pointer;
+    transition:background .15s ease;
+  }
+  .cell:active{background:rgba(138,75,255,.14);}
+  .cell.locked{cursor:default;}
+  .cell.focused{outline:2px dashed rgba(232,246,255,.6); outline-offset:-2px; z-index:2;}
+  .cell.leak{animation:shake .5s ease;}
+  @keyframes shake{0%,100%{transform:translate(0,0);}25%{transform:translate(-2px,1px);}50%{transform:translate(2px,-1px);}75%{transform:translate(-1px,-1px);}}
+
+  .arm{position:absolute; background:rgba(138,75,255,.55); border-radius:2px; transition:background .18s ease, box-shadow .18s ease;}
+  .arm.lit{background:var(--green); box-shadow:0 0 10px var(--green), 0 0 18px rgba(57,255,158,.6);}
+  .arm.leak{background:var(--red) !important; box-shadow:0 0 10px var(--red);}
+  .hub{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); border-radius:50%; background:rgba(138,75,255,.55); transition:background .18s ease, box-shadow .18s ease;}
+  .hub.lit{background:var(--green); box-shadow:0 0 10px var(--green), 0 0 18px rgba(57,255,158,.6);}
+  .hub.leak{background:var(--red) !important; box-shadow:0 0 12px var(--red);}
+  .hub.source{background:var(--cyan); box-shadow:0 0 14px var(--cyan), 0 0 26px rgba(39,232,255,.6);}
+  .hub.sink{background:var(--gold); box-shadow:0 0 14px var(--gold), 0 0 26px rgba(255,210,59,.6);}
+  .hub.sink.lit{background:var(--green); box-shadow:0 0 16px var(--green), 0 0 30px rgba(57,255,158,.75);}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse2 1s ease-in-out infinite;}
+  @keyframes pulse2{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .toast{position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:5;
+    background:rgba(5,7,15,.9); border:1px solid rgba(57,255,158,.5); color:var(--green);
+    font-weight:800; letter-spacing:1px; font-size:13px; padding:8px 16px; border-radius:999px;
+    box-shadow:0 0 18px rgba(57,255,158,.35); opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(4px);}
+
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center; margin-top:12px;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">TUBOS NEÓN</div>
+      <div class="sub">P I P E &nbsp; F L O W</div>
+    </header>
+
+    <section id="game">
+      <div class="hud">
+        <div class="box lvl">NIVEL<b id="hudLevel">1</b></div>
+        <div class="box score">PUNTAJE<b id="hudScore">0</b></div>
+        <div class="box flow" id="hudFlowBox">FLUJO EN<b id="hudFlow">-</b></div>
+      </div>
+      <div class="panel">
+        <div class="grid" id="board"></div>
+        <div class="toast" id="toast">¡NIVEL SUPERADO!</div>
+
+        <div class="overlay" id="startOverlay">
+          <div class="picture">🚰</div>
+          <h2>TUBOS NEÓN</h2>
+          <p>La grilla arranca con caños ya colocados pero girados al azar. Tocá uno para
+          rotarlo 90° y armar el camino continuo desde el generador celeste hasta el
+          desagüe dorado antes de que se acabe la cuenta regresiva. Ahí arranca el flujo
+          solo, caño por caño (los que atraviesa quedan bloqueados): si llega a uno mal
+          orientado, es fuga y se acaba la partida.</p>
+          <div class="btnrow">
+            <button class="btn" id="btnStart">▶ JUGAR</button>
+          </div>
+        </div>
+
+        <div class="overlay hidden" id="overOverlay">
+          <div class="picture">💥</div>
+          <h2>¡FUGA!</h2>
+          <div class="final">Nivel alcanzado: <b id="overLevel">1</b></div>
+          <div class="final">Puntaje: <b id="overScore">0</b></div>
+          <div class="newrec hidden" id="overRecord">⭐ ¡NUEVO RÉCORD!</div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn" id="btnRetry">REINTENTAR</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint">Click / toque en un caño para rotarlo 90° · Flechas mueven el foco,
+      Enter/espacio lo rota. El generador y el desagüe ya están fijos, no se pueden girar.</p>
+    </section>
+
+    <footer>Neon Arcade · Pipe puzzle hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LS_BEST = "tubos-neon-best";
+  function loadBest(){ try{ return parseInt(localStorage.getItem(LS_BEST),10) || 0; }catch(e){ return 0; } }
+  function saveBest(v){ try{ localStorage.setItem(LS_BEST, String(v)); }catch(e){} }
+
+  var DIRS = ["N","E","S","W"];
+  var OPP = { N:"S", S:"N", E:"W", W:"E" };
+  var DELTA = { N:[-1,0], S:[1,0], E:[0,1], W:[0,-1] };
+  // Elbow ('L') open-side pairs por cada paso de rotación (0/90/180/270).
+  var L_SEQ = [["N","E"],["E","S"],["S","W"],["W","N"]];
+
+  function key(r,c){ return r + "," + c; }
+  function shuffle(arr){
+    for(var i=arr.length-1; i>0; i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function openSidesFor(type, rot){
+    if(type === "stub") return [rot]; // acá "rot" guarda el único lado fijo
+    if(type === "I") return (Math.floor(rot/90) % 2 === 0) ? ["N","S"] : ["E","W"];
+    // 'L'
+    var idx = (Math.floor(rot/90) % 4 + 4) % 4;
+    return L_SEQ[idx].slice();
+  }
+
+  // ---------- Generación del camino ----------
+  function randomPath(size, minLen, maxLen){
+    for(var tries = 0; tries < 40; tries++){
+      var sr = Math.floor(Math.random()*size), sc = Math.floor(Math.random()*size);
+      var visited = {}; visited[key(sr,sc)] = true;
+      var path = [[sr,sc]];
+      var cur = [sr,sc];
+      while(path.length < maxLen){
+        var candidates = [];
+        shuffle(DIRS.slice()).forEach(function(d){
+          var delta = DELTA[d];
+          var nr = cur[0] + delta[0], nc = cur[1] + delta[1];
+          if(nr>=0 && nr<size && nc>=0 && nc<size && !visited[key(nr,nc)]) candidates.push([nr,nc]);
+        });
+        if(!candidates.length) break;
+        var next = candidates[0];
+        path.push(next);
+        visited[key(next[0],next[1])] = true;
+        cur = next;
+        if(path.length >= minLen && Math.random() < 0.22) break;
+      }
+      if(path.length >= minLen) return path;
+    }
+    return null;
+  }
+
+  function dirBetween(a, b){
+    if(b[0] < a[0]) return "N";
+    if(b[0] > a[0]) return "S";
+    if(b[1] > a[1]) return "E";
+    return "W";
+  }
+
+  // Arma la grilla completa: piezas del camino (con la rotación mezclada) +
+  // piezas señuelo al azar en las celdas restantes.
+  function buildLevel(size, minLen, maxLen){
+    var cells = randomPath(size, minLen, maxLen);
+    if(!cells) return buildLevel(size, Math.max(3, minLen-1), maxLen);
+
+    var steps = cells.map(function(pos, i){
+      var entry = i === 0 ? null : OPP[dirBetween(cells[i-1], pos)];
+      var exit = i === cells.length-1 ? null : dirBetween(pos, cells[i+1]);
+      return { r: pos[0], c: pos[1], entry: entry, exit: exit };
+    });
+
+    var grid = [];
+    for(var r=0; r<size; r++){
+      var row = [];
+      for(var c=0; c<size; c++) row.push({ type:"I", rot:0, locked:false, decoy:true });
+      grid.push(row);
+    }
+
+    steps.forEach(function(s, i){
+      var cell = grid[s.r][s.c];
+      cell.decoy = false;
+      if(i === 0){
+        cell.type = "stub"; cell.rot = s.exit; cell.locked = true; cell.role = "source";
+      } else if(i === steps.length-1){
+        cell.type = "stub"; cell.rot = s.entry; cell.locked = true; cell.role = "sink";
+      } else if(s.entry === OPP[s.exit]){
+        cell.type = "I";
+        var correct = (s.entry === "N" || s.entry === "S") ? 0 : 90;
+        var options = [0, 90].filter(function(v){ return v !== correct; });
+        cell.rot = options[Math.floor(Math.random()*options.length)];
+      } else {
+        var pairIdx = -1;
+        for(var k=0; k<L_SEQ.length; k++){
+          var pair = L_SEQ[k];
+          if((pair[0]===s.entry && pair[1]===s.exit) || (pair[1]===s.entry && pair[0]===s.exit)){ pairIdx = k; break; }
+        }
+        cell.type = "L";
+        var opts = [0,90,180,270].filter(function(v){ return v !== pairIdx*90; });
+        cell.rot = opts[Math.floor(Math.random()*opts.length)];
+      }
+    });
+
+    // Señuelos: piezas al azar en el resto de las celdas.
+    for(var rr=0; rr<size; rr++){
+      for(var cc=0; cc<size; cc++){
+        var g = grid[rr][cc];
+        if(g.decoy){
+          g.type = Math.random() < 0.5 ? "I" : "L";
+          g.rot = [0,90,180,270][Math.floor(Math.random()*4)];
+        }
+      }
+    }
+
+    return { size: size, grid: grid, steps: steps };
+  }
+
+  // ---------- Estado del juego ----------
+  var els = {
+    board: document.getElementById("board"),
+    hudLevel: document.getElementById("hudLevel"),
+    hudScore: document.getElementById("hudScore"),
+    hudFlow: document.getElementById("hudFlow"),
+    hudFlowBox: document.getElementById("hudFlowBox"),
+    startOverlay: document.getElementById("startOverlay"),
+    overOverlay: document.getElementById("overOverlay"),
+    overLevel: document.getElementById("overLevel"),
+    overScore: document.getElementById("overScore"),
+    overRecord: document.getElementById("overRecord"),
+    toast: document.getElementById("toast")
+  };
+
+  var level = 1, score = 0, best = loadBest();
+  var lvl = null;           // { size, grid, steps }
+  var flowIndex = -1;
+  var running = false, over = true;
+  var countdownTimer = null, flowTimer = null;
+  var focusR = 0, focusC = 0;
+
+  function paramsForLevel(n){
+    var size = Math.max(5, Math.min(9, 5 + Math.floor((n-1)/2)));
+    return {
+      size: size,
+      minLen: Math.max(6, Math.floor(size*1.25)),
+      maxLen: Math.max(9, Math.floor(size*1.9)),
+      countdown: Math.max(3, 8 - Math.floor((n-1)/2)),
+      flowStep: Math.max(240, 640 - (n-1)*22)
+    };
+  }
+
+  function startLevel(n){
+    level = n;
+    var p = paramsForLevel(n);
+    lvl = buildLevel(p.size, p.minLen, p.maxLen);
+    flowIndex = 0; // el generador ya está "lleno"
+    running = false;
+    focusR = 0; focusC = 0;
+    clearTimers();
+    updateHud();
+    els.hudFlow.textContent = p.countdown;
+    els.hudFlowBox.classList.remove("running");
+    renderBoard();
+    var remaining = p.countdown;
+    countdownTimer = setInterval(function(){
+      remaining--;
+      if(remaining <= 0){
+        clearInterval(countdownTimer);
+        els.hudFlow.textContent = "¡EN CURSO!";
+        els.hudFlowBox.classList.add("running");
+        beginFlow(p.flowStep);
+      } else {
+        els.hudFlow.textContent = remaining;
+      }
+    }, 1000);
+  }
+
+  function beginFlow(stepMs){
+    running = true;
+    flowTimer = setInterval(function(){ advanceFlow(); }, stepMs);
+  }
+
+  function clearTimers(){
+    if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; }
+    if(flowTimer){ clearInterval(flowTimer); flowTimer = null; }
+  }
+
+  function advanceFlow(){
+    if(over) return;
+    var nextIdx = flowIndex + 1;
+    var step = lvl.steps[nextIdx];
+    var cell = lvl.grid[step.r][step.c];
+    var open = openSidesFor(cell.type, cell.rot);
+    var ok = true;
+    if(step.entry && open.indexOf(step.entry) === -1) ok = false;
+    if(step.exit && open.indexOf(step.exit) === -1) ok = false;
+    if(!ok){
+      leakAt(step.r, step.c);
+      return;
+    }
+    cell.locked = true;
+    flowIndex = nextIdx;
+    if(nextIdx === lvl.steps.length - 1){
+      clearTimers();
+      running = false;
+      renderBoard();
+      showToast();
+      score += lvl.steps.length * 10 + level * 15;
+      updateHud();
+      setTimeout(function(){ if(!over) startLevel(level + 1); }, 900);
+    } else {
+      renderBoard();
+    }
+  }
+
+  function leakAt(r, c){
+    clearTimers();
+    running = false;
+    var el = els.board.querySelector('[data-r="'+r+'"][data-c="'+c+'"]');
+    if(el){
+      el.classList.add("leak");
+      el.querySelectorAll(".arm, .hub").forEach(function(n){ n.classList.add("leak"); });
+    }
+    setTimeout(gameOver, 550);
+  }
+
+  function showToast(){
+    els.toast.classList.add("show");
+    setTimeout(function(){ els.toast.classList.remove("show"); }, 850);
+  }
+
+  function gameOver(){
+    over = true;
+    clearTimers();
+    var isNew = score > best;
+    if(isNew){ best = score; saveBest(best); }
+    els.overLevel.textContent = level;
+    els.overScore.textContent = score;
+    els.overRecord.classList.toggle("hidden", !isNew);
+    els.overOverlay.classList.remove("hidden");
+  }
+
+  function updateHud(){
+    els.hudLevel.textContent = level;
+    els.hudScore.textContent = score;
+  }
+
+  function onCellAction(r, c){
+    if(over || !lvl) return;
+    var cell = lvl.grid[r][c];
+    if(cell.locked) return;
+    cell.rot = (cell.rot + 90) % 360;
+    renderBoard();
+  }
+
+  function renderBoard(){
+    var size = lvl.size;
+    var cellPx = Math.max(34, Math.min(72, Math.floor(420 / size)));
+    var wrap = els.board;
+    wrap.style.gridTemplateColumns = "repeat(" + size + ", " + cellPx + "px)";
+    wrap.innerHTML = "";
+    for(var r=0; r<size; r++){
+      for(var c=0; c<size; c++){
+        var data = lvl.grid[r][c];
+        var cellEl = document.createElement("div");
+        cellEl.className = "cell" + (data.locked ? " locked" : "") + (r===focusR && c===focusC ? " focused" : "");
+        cellEl.style.width = cellPx + "px";
+        cellEl.style.height = cellPx + "px";
+        cellEl.setAttribute("data-r", r);
+        cellEl.setAttribute("data-c", c);
+
+        var open = openSidesFor(data.type, data.rot);
+        var flooded = isFlooded(r, c);
+        var thick = Math.max(6, Math.round(cellPx * 0.22));
+
+        open.forEach(function(dir){
+          var arm = document.createElement("div");
+          arm.className = "arm" + (flooded ? " lit" : "");
+          if(dir === "N"){ arm.style.left = "50%"; arm.style.top = "0"; arm.style.width = thick+"px"; arm.style.height = "50%"; arm.style.transform = "translateX(-50%)"; }
+          else if(dir === "S"){ arm.style.left = "50%"; arm.style.bottom = "0"; arm.style.width = thick+"px"; arm.style.height = "50%"; arm.style.transform = "translateX(-50%)"; }
+          else if(dir === "E"){ arm.style.top = "50%"; arm.style.right = "0"; arm.style.height = thick+"px"; arm.style.width = "50%"; arm.style.transform = "translateY(-50%)"; }
+          else { arm.style.top = "50%"; arm.style.left = "0"; arm.style.height = thick+"px"; arm.style.width = "50%"; arm.style.transform = "translateY(-50%)"; }
+          cellEl.appendChild(arm);
+        });
+
+        var hub = document.createElement("div");
+        var hubSize = data.type === "stub" ? Math.round(cellPx*0.42) : Math.round(thick*1.3);
+        hub.className = "hub" + (flooded ? " lit" : "") + (data.role ? " " + data.role : "");
+        hub.style.width = hubSize + "px";
+        hub.style.height = hubSize + "px";
+        cellEl.appendChild(hub);
+
+        cellEl.addEventListener("click", (function(rr, cc){ return function(){ onCellAction(rr, cc); }; })(r, c));
+        wrap.appendChild(cellEl);
+      }
+    }
+  }
+
+  function isFlooded(r, c){
+    for(var i=0; i<=flowIndex; i++){
+      var s = lvl.steps[i];
+      if(s.r === r && s.c === c) return true;
+    }
+    return false;
+  }
+
+  function goMenu(){
+    els.overOverlay.classList.add("hidden");
+    els.startOverlay.classList.remove("hidden");
+    over = true;
+    clearTimers();
+  }
+
+  function newGame(){
+    score = 0;
+    over = false;
+    els.startOverlay.classList.add("hidden");
+    els.overOverlay.classList.add("hidden");
+    startLevel(1);
+  }
+
+  // ---------- Input ----------
+  document.addEventListener("keydown", function(e){
+    if(!lvl || over) return;
+    var size = lvl.size;
+    var k = e.key;
+    if(k === "ArrowRight"){ focusC = (focusC+1) % size; renderBoard(); e.preventDefault(); }
+    else if(k === "ArrowLeft"){ focusC = (focusC-1+size) % size; renderBoard(); e.preventDefault(); }
+    else if(k === "ArrowDown"){ focusR = (focusR+1) % size; renderBoard(); e.preventDefault(); }
+    else if(k === "ArrowUp"){ focusR = (focusR-1+size) % size; renderBoard(); e.preventDefault(); }
+    else if(k === "Enter" || k === " "){ onCellAction(focusR, focusC); e.preventDefault(); }
+  });
+
+  document.getElementById("btnStart").addEventListener("click", newGame);
+  document.getElementById("btnMenu").addEventListener("click", goMenu);
+  document.getElementById("btnRetry").addEventListener("click", newGame);
+
+  updateHud();
+})();
+</script>
+</body>
+</html>
