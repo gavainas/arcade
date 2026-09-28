@@ -536,6 +536,13 @@
       desc: "Pipe Mania neón: la grilla arranca con caños ya colocados pero girados al azar; tocalos para rotarlos 90° y armar el camino continuo desde el generador celeste hasta el desagüe dorado antes de que se acabe la cuenta regresiva. Ahí arranca el flujo solo, avanzando caño por caño (los que ya atravesó quedan bloqueados): si llega a uno mal orientado es fuga y se termina la partida. Cada nivel superado agranda la grilla, acelera el flujo y acorta la cuenta regresiva, con puntaje según el largo del camino y el nivel alcanzado, y récord guardado.",
       controles: "Click / toque en un caño para rotarlo 90°; flechas mueven el foco y Enter/espacio lo rota", fecha: "2026-09-27",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "aterrizaje-neon", titulo: "Aterrizaje Neón", archivo: "aterrizaje-neon.html",
+      emoji: "🛸", categoria: "reflejos", tags: ["lunar lander", "fisica", "nave", "combustible", "pilotaje", "niveles"],
+      desc: "Lunar Lander neón: rotá la nave y usá el impulso del motor para contrarrestar la gravedad y posarte en una de las plataformas del terreno, llegando derecho, lento y centrado. Las plataformas angostas rinden más puntos pero exigen más precisión; tocar el suelo fuera de una, muy rápido, ladeado o contra los bordes es choque y perdés una vida (3 en total). El combustible no se recarga en el aire, cada nivel trae un terreno nuevo con más gravedad y plataformas más chicas, con récord de puntaje guardado.",
+      controles: "Flechas/WASD rotan e impulsan (arriba/W/espacio); en mobile, botones de rotar e impulso en pantalla", fecha: "2026-09-28",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
