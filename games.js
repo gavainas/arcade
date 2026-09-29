@@ -543,6 +543,13 @@
       desc: "Lunar Lander neón: rotá la nave y usá el impulso del motor para contrarrestar la gravedad y posarte en una de las plataformas del terreno, llegando derecho, lento y centrado. Las plataformas angostas rinden más puntos pero exigen más precisión; tocar el suelo fuera de una, muy rápido, ladeado o contra los bordes es choque y perdés una vida (3 en total). El combustible no se recarga en el aire, cada nivel trae un terreno nuevo con más gravedad y plataformas más chicas, con récord de puntaje guardado.",
       controles: "Flechas/WASD rotan e impulsan (arriba/W/espacio); en mobile, botones de rotar e impulso en pantalla", fecha: "2026-09-28",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "celulas-neon", titulo: "Células Neón", archivo: "celulas-neon.html",
+      emoji: "🦠", categoria: "arcade", tags: ["agar.io", "celulas", "crecer", "bots", "supervivencia"],
+      desc: "Agar.io neón: movete con el dedo/mouse (o flechas/WASD) por una arena llena de células rivales. Comé puntitos y células más chicas (verdes) para crecer; las más grandes (rojas) te devoran, y cuanto más masa tenés, más lento te movés. Dash con ESPACIO a cambio de un poco de masa. Los bots huyen, cazan y se comen entre sí; récord de masa máxima guardado.",
+      controles: "Mouse/dedo o flechas/WASD para moverte; ESPACIO o botón DASH para el empujón; P pausa", fecha: "2026-09-29",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
