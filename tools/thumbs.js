@@ -161,6 +161,11 @@ const OVERRIDES = {
   "gomoku-neon": {
     steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.5, 0.5] }],
     wait: 900
+  },
+  // Jugamos una esfera y dejamos que la CPU conteste para que se vean las dos.
+  "reaccion-neon": {
+    steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.5, 0.5] }],
+    wait: 1500
   }
 };
 

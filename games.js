@@ -550,6 +550,13 @@
       desc: "Agar.io neón: movete con el dedo/mouse (o flechas/WASD) por una arena llena de células rivales. Comé puntitos y células más chicas (verdes) para crecer; las más grandes (rojas) te devoran, y cuanto más masa tenés, más lento te movés. Dash con ESPACIO a cambio de un poco de masa. Los bots huyen, cazan y se comen entre sí; récord de masa máxima guardado.",
       controles: "Mouse/dedo o flechas/WASD para moverte; ESPACIO o botón DASH para el empujón; P pausa", fecha: "2026-09-29",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "reaccion-neon", titulo: "Reacción Neón", archivo: "reaccion-neon.html",
+      emoji: "⚛️", categoria: "logica", tags: ["reaccion en cadena", "chain reaction", "explosiones", "tablero", "cpu", "2 jugadores", "estrategia"],
+      desc: "Reacción en cadena por turnos: sumá una esfera a una celda vacía o tuya; al llegar a su masa crítica (2 en esquinas, 3 en bordes, 4 en el centro) la celda explota, reparte una esfera a cada vecina y las convierte a tu color, disparando cadenas. Ganá eliminando todas las esferas rival en un tablero de 6×8. Contra una CPU con 3 dificultades (la difícil mira dos jugadas adelante) o de a dos en el mismo dispositivo, con récord de racha de victorias guardado.",
+      controles: "Click / toque en una celda; flechas + Enter con teclado; R reinicia", fecha: "2026-09-30",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>REACCIÓN NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 6px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; letter-spacing:1px; margin-top:2px;}
+  .hud .box.p1 b{color:var(--cyan);}
+  .hud .box.p2 b{color:var(--pink);}
+  .hud .box.tie b{color:var(--gold);}
+
+  .turn{text-align:center; margin:2px 0 10px; font-size:14px; font-weight:800; letter-spacing:1px; min-height:20px;}
+  .turn.p1{color:var(--cyan);}
+  .turn.p2{color:var(--pink);}
+  .turn.warn{color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  canvas{display:block; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none; width:100%; height:auto; max-width:420px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px 16px; gap:9px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:2; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(19px,5.6vw,27px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:330px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:5px; font-size:11.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .modes{display:flex; flex-direction:column; gap:7px; width:100%; max-width:290px; margin-top:2px;}
+  .modelbl{font-size:11px; letter-spacing:1.5px; color:var(--muted); margin-top:4px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.3);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.hidden{display:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none;}
+  .btn.ghost.active{border-color:var(--cyan); color:var(--cyan); background:rgba(39,232,255,.14);}
+  .diffrow{display:flex; gap:8px;}
+  .diffrow .btn{flex:1; padding:10px 6px; font-size:12px;}
+  .final{font-size:14px; color:var(--ink);}
+  .final b{font-size:19px;}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">REACCIÓN NEÓN</div>
+      <div class="sub">R E A C C I Ó N &nbsp;E N &nbsp;C A D E N A</div>
+    </header>
+
+    <div class="hud">
+      <div class="box p1"><span id="l1">VOS</span><b id="o1">0</b></div>
+      <div class="box tie">RACHA RÉCORD<b id="best">0</b></div>
+      <div class="box p2"><span id="l2">RIVAL</span><b id="o2">0</b></div>
+    </div>
+    <div class="turn" id="turnText">&nbsp;</div>
+
+    <div class="panel">
+      <canvas id="game" width="420" height="560"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">REACCIÓN NEÓN</h2>
+        <p id="ovText">Por turnos, sumá una esfera a una celda vacía o tuya. Cada celda tiene una <b>masa crítica</b> (2 en las esquinas, 3 en los bordes, 4 en el centro): al alcanzarla explota y reparte una esfera a cada vecina, ¡convirtiéndolas a tu color y provocando reacciones en cadena! Gana quien elimine todas las esferas del rival.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Tus esferas</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Esferas rivales</span>
+        </div>
+        <div class="modes" id="modeButtons">
+          <div class="modelbl">VS COMPUTADORA</div>
+          <div class="diffrow">
+            <button class="btn ghost" data-mode="cpu" data-diff="facil">FÁCIL</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="medio">MEDIO</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="dificil">DIFÍCIL</button>
+          </div>
+          <div class="modelbl">O DE A DOS</div>
+          <button class="btn ghost" data-mode="2p">2 JUGADORES</button>
+        </div>
+        <button class="btn hidden" id="startBtn">JUGAR ▶</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Click / toque en una celda · flechas + <b>ENTER</b> con teclado · <b>R</b> reinicia.</div>
+      <button class="mini" id="restartBtn">Reiniciar</button>
+    </div>
+
+    <footer>NEON ARCADE · Reacción Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  "use strict";
+  const COLS=6, ROWS=8, CS=70;
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const $=id=>document.getElementById(id);
+  const o1El=$('o1'), o2El=$('o2'), bestEl=$('best'), l1El=$('l1'), l2El=$('l2');
+  const turnText=$('turnText'), overlay=$('overlay'), ovTitle=$('ovTitle'), ovText=$('ovText');
+  const legend=$('legend'), modeButtons=$('modeButtons'), startBtn=$('startBtn'), restartBtn=$('restartBtn');
+  const COLORS={1:'#27e8ff',2:'#ff2bd6'};
+  const STEP_MS=240;
+
+  const KEY='neon-reaccion-stats';
+  function loadStats(){ try{ return Object.assign({streak:0,best:0},JSON.parse(localStorage.getItem(KEY))||{}); }catch(e){ return {streak:0,best:0}; } }
+  let stats=loadStats();
+  function saveStats(){ try{ localStorage.setItem(KEY,JSON.stringify(stats)); }catch(e){} }
+  bestEl.textContent=stats.best;
+
+  let actx=null;
+  function beep(f,d,type,v){
+    try{
+      actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type=type||'sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(v||.05,actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);
+      o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+d);
+    }catch(e){}
+  }
+
+  // ---------- Reglas ----------
+  const cap=(r,c)=>(r>0)+(r<ROWS-1)+(c>0)+(c<COLS-1);
+  const other=p=>p===1?2:1;
+  const newBoard=()=>Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({n:0,o:0})));
+  const cloneBoard=b=>b.map(row=>row.map(x=>({n:x.n,o:x.o})));
+  function count(b,p){ let s=0; for(const row of b) for(const x of row) if(x.o===p) s+=x.n; return s; }
+  function cells(b,p){ let s=0; for(const row of b) for(const x of row) if(x.o===p) s++; return s; }
+  function neighbors(r,c){
+    const l=[];
+    if(r>0) l.push([r-1,c]); if(r<ROWS-1) l.push([r+1,c]);
+    if(c>0) l.push([r,c-1]); if(c<COLS-1) l.push([r,c+1]);
+    return l;
+  }
+  // Saca las esferas de las celdas que llegaron a su masa crítica y devuelve las explosiones.
+  function explodeStep(b){
+    const list=[];
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      const k=cap(r,c);
+      if(b[r][c].n>=k) list.push({r,c,t:neighbors(r,c)});
+    }
+    for(const e of list){
+      const x=b[e.r][e.c];
+      x.n-=cap(e.r,e.c);
+      if(x.n===0) x.o=0;
+    }
+    return list;
+  }
+  function applyStep(b,list,p){
+    for(const e of list) for(const [r,c] of e.t){ b[r][c].n++; b[r][c].o=p; }
+  }
+  // Simulación instantánea (para la CPU). moves = jugadas hechas incluida ésta.
+  function simulate(bd,r,c,p,moves){
+    const b=cloneBoard(bd);
+    b[r][c].n++; b[r][c].o=p;
+    for(let i=0;i<300;i++){
+      const list=explodeStep(b);
+      if(!list.length) break;
+      applyStep(b,list,p);
+      if(moves>=2 && count(b,other(p))===0) return {b,win:true};
+    }
+    return {b,win:moves>=2 && count(b,other(p))===0};
+  }
+  function validMoves(b,p){
+    const l=[];
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(b[r][c].o===0||b[r][c].o===p) l.push([r,c]);
+    return l;
+  }
+  function evaluate(b,me){
+    const o=other(me);
+    let s=(count(b,me)-count(b,o))+0.5*(cells(b,me)-cells(b,o));
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      const x=b[r][c];
+      if(x.o && x.n===cap(r,c)-1){
+        // celda a punto de explotar: peligrosa si un vecino rival la puede detonar
+        const vuln=neighbors(r,c).some(([a,d])=>b[a][d].o===other(x.o)&&b[a][d].n===cap(a,d)-1);
+        s+= (x.o===me?1:-1)*(vuln?-1.2:0.3);
+      }
+    }
+    return s;
+  }
+
+  // ---------- CPU ----------
+  function cpuChoose(){
+    const me=2, moves=validMoves(board,me);
+    const mv=moves.length? moves : [];
+    if(diff==='facil' && Math.random()<0.6) return mv[Math.floor(Math.random()*mv.length)];
+    let best=null, bestScore=-Infinity;
+    for(const [r,c] of mv){
+      const s=simulate(board,r,c,me,nMoves+1);
+      let score;
+      if(s.win) score=1000;
+      else if(diff==='dificil'){
+        let worst=Infinity;
+        for(const [a,d] of validMoves(s.b,1)){
+          const t=simulate(s.b,a,d,1,nMoves+2);
+          const v=t.win?-1000:evaluate(t.b,me);
+          if(v<worst) worst=v;
+          if(worst<bestScore) break;
+        }
+        score=worst===Infinity?evaluate(s.b,me):worst;
+      } else score=evaluate(s.b,me);
+      score+=Math.random()*(diff==='dificil'?0.2:diff==='medio'?0.8:2);
+      if(score>bestScore){ bestScore=score; best=[r,c]; }
+    }
+    return best;
+  }
+
+  // ---------- Estado ----------
+  let board=newBoard(), turn=1, nMoves=0, busy=false, over=false, playing=false;
+  let mode='cpu', diff='facil', selMode=null, selDiff=null;
+  let cursor={r:3,c:2}, flights=[], sparks=[], lastPlaced=null, cpuTimer=null;
+
+  function updateHud(){
+    o1El.textContent=count(board,1);
+    o2El.textContent=count(board,2);
+    if(over) return;
+    if(!playing){ turnText.innerHTML='&nbsp;'; turnText.className='turn'; return; }
+    if(busy && turn===1 && mode==='cpu'){ /* mantiene el mensaje */ }
+    if(mode==='cpu'){
+      turnText.textContent= turn===1?'▶ TU TURNO':'CPU PENSANDO…';
+    } else turnText.textContent='▶ TURNO DEL JUGADOR '+turn;
+    turnText.className='turn p'+turn;
+  }
+
+  function newGame(){
+    clearTimeout(cpuTimer);
+    board=newBoard(); turn=1; nMoves=0; busy=false; over=false; playing=true;
+    flights=[]; sparks=[]; lastPlaced=null;
+    l1El.textContent= mode==='cpu'?'VOS':'JUGADOR 1';
+    l2El.textContent= mode==='cpu'?'CPU':'JUGADOR 2';
+    overlay.classList.add('hidden');
+    updateHud();
+  }
+
+  function showOverlay(title,text,final){
+    ovTitle.textContent=title; ovText.innerHTML=text;
+    legend.style.display=final?'none':'';
+    overlay.classList.remove('hidden');
+    startBtn.classList.remove('hidden');
+    startBtn.textContent=final?'REVANCHA ▶':'JUGAR ▶';
+    modeButtons.style.display='flex';
+  }
+
+  function place(r,c){
+    if(busy||over||!playing) return;
+    const x=board[r][c];
+    if(x.o!==0 && x.o!==turn) return;
+    if(mode==='cpu' && turn===2) return;
+    doMove(r,c);
+  }
+
+  function doMove(r,c){
+    busy=true; nMoves++;
+    const p=turn, x=board[r][c];
+    x.n++; x.o=p; lastPlaced={r,c,t:performance.now()};
+    beep(p===1?520:390,.09,'triangle');
+    updateHud();
+    let guard=0;
+    (function loop(){
+      const list=explodeStep(board);
+      if(!list.length || guard++>300){ endTurn(p); return; }
+      const now=performance.now();
+      for(const e of list){
+        for(const [tr,tc] of e.t) flights.push({fr:e.r,fc:e.c,tr,tc,t0:now,p});
+        for(let i=0;i<10;i++){
+          const a=Math.random()*Math.PI*2, v=40+Math.random()*90;
+          sparks.push({x:e.c*CS+CS/2,y:e.r*CS+CS/2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t0:now,p});
+        }
+      }
+      beep(180+Math.min(guard,12)*50,.14,'sawtooth',.04);
+      setTimeout(()=>{
+        applyStep(board,list,p);
+        updateHud();
+        if(nMoves>=2 && count(board,other(p))===0){ finish(p); return; }
+        loop();
+      },STEP_MS);
+    })();
+  }
+
+  function endTurn(p){
+    if(nMoves>=2 && count(board,other(p))===0){ finish(p); return; }
+    turn=other(p); busy=false; updateHud();
+    if(mode==='cpu' && turn===2){
+      busy=true;
+      cpuTimer=setTimeout(()=>{ busy=false; const m=cpuChoose(); if(m) doMove(m[0],m[1]); },450);
+    }
+  }
+
+  function finish(p){
+    over=true; busy=false; playing=false;
+    let title, text;
+    if(mode==='cpu'){
+      if(p===1){
+        stats.streak++; if(stats.streak>stats.best) stats.best=stats.streak;
+        title='¡GANASTE!'; text='Eliminaste todas las esferas de la CPU en '+nMoves+' jugadas en total.<br>Racha de victorias: <b>'+stats.streak+'</b>';
+        beep(660,.3,'triangle',.06); setTimeout(()=>beep(880,.3,'triangle',.06),150);
+      } else {
+        stats.streak=0; title='PERDISTE'; text='La CPU se quedó con todo el tablero. ¡Probá otra vez!';
+        beep(200,.4,'sawtooth',.05);
+      }
+      saveStats(); bestEl.textContent=stats.best;
+    } else {
+      title='¡GANA EL JUGADOR '+p+'!'; text='Se quedó con todas las esferas del tablero.';
+      beep(660,.3,'triangle',.06);
+    }
+    turnText.textContent=title; turnText.className='turn p'+p;
+    setTimeout(()=>showOverlay(title,text,true),900);
+  }
+
+  // ---------- Input ----------
+  function cellFromEvent(e){
+    const rc=canvas.getBoundingClientRect();
+    const x=(e.clientX-rc.left)*canvas.width/rc.width, y=(e.clientY-rc.top)*canvas.height/rc.height;
+    return {r:Math.floor(y/CS), c:Math.floor(x/CS)};
+  }
+  canvas.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    const {r,c}=cellFromEvent(e);
+    if(r<0||r>=ROWS||c<0||c>=COLS) return;
+    cursor={r,c}; place(r,c);
+  });
+  document.addEventListener('keydown',e=>{
+    const k=e.key;
+    if(k==='r'||k==='R'){ if(selMode) newGame(); return; }
+    if(!playing) { if((k==='Enter')&&!startBtn.classList.contains('hidden')) startBtn.click(); return; }
+    if(k==='ArrowUp'){ cursor.r=(cursor.r+ROWS-1)%ROWS; e.preventDefault(); }
+    else if(k==='ArrowDown'){ cursor.r=(cursor.r+1)%ROWS; e.preventDefault(); }
+    else if(k==='ArrowLeft'){ cursor.c=(cursor.c+COLS-1)%COLS; e.preventDefault(); }
+    else if(k==='ArrowRight'){ cursor.c=(cursor.c+1)%COLS; e.preventDefault(); }
+    else if(k==='Enter'||k===' '){ e.preventDefault(); place(cursor.r,cursor.c); }
+  });
+
+  modeButtons.querySelectorAll('.btn').forEach(b=>b.addEventListener('click',()=>{
+    modeButtons.querySelectorAll('.btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    selMode=b.dataset.mode; selDiff=b.dataset.diff||null;
+    startBtn.classList.remove('hidden');
+  }));
+  startBtn.addEventListener('click',()=>{
+    if(!selMode) return;
+    mode=selMode; if(selDiff) diff=selDiff;
+    newGame();
+  });
+  restartBtn.addEventListener('click',()=>{
+    if(selMode) newGame(); else showOverlay('REACCIÓN NEÓN',ovText.innerHTML,false);
+  });
+
+  // ---------- Dibujo ----------
+  function orbPositions(n,t,crit){
+    const d=13, out=[];
+    const base=[[],[[0,0]],[[-d,0],[d,0]],[[0,-d*0.9],[-d,d*0.7],[d,d*0.7]]][Math.min(n,3)] || [];
+    const ang=crit? t*0.006 : 0;
+    const wob=crit? 2.2:0;
+    base.forEach(([x,y],i)=>{
+      const ca=Math.cos(ang), sa=Math.sin(ang);
+      let rx=x*ca-y*sa, ry=x*sa+y*ca;
+      rx+=Math.sin(t*0.03+i*2)*wob; ry+=Math.cos(t*0.028+i*3)*wob;
+      out.push([rx,ry]);
+    });
+    return out;
+  }
+  function drawOrb(x,y,col,rad){
+    const g=ctx.createRadialGradient(x-rad*.3,y-rad*.3,rad*.1,x,y,rad);
+    g.addColorStop(0,'#fff'); g.addColorStop(.35,col); g.addColorStop(1,col+'55');
+    ctx.shadowColor=col; ctx.shadowBlur=14;
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,rad,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  function draw(now){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const cur= playing&&!over ? COLORS[turn] : '#8a4bff';
+    // grilla
+    ctx.strokeStyle=cur; ctx.globalAlpha=.55; ctx.lineWidth=1.5;
+    ctx.shadowColor=cur; ctx.shadowBlur=8;
+    for(let r=0;r<=ROWS;r++){ ctx.beginPath(); ctx.moveTo(0,r*CS); ctx.lineTo(COLS*CS,r*CS); ctx.stroke(); }
+    for(let c=0;c<=COLS;c++){ ctx.beginPath(); ctx.moveTo(c*CS,0); ctx.lineTo(c*CS,ROWS*CS); ctx.stroke(); }
+    ctx.shadowBlur=0; ctx.globalAlpha=1;
+    // celdas
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      const x=board[r][c], cx=c*CS+CS/2, cy=r*CS+CS/2;
+      if(x.o){
+        ctx.fillStyle=COLORS[x.o]+'14'; ctx.fillRect(c*CS+2,r*CS+2,CS-4,CS-4);
+      }
+      if(lastPlaced&&lastPlaced.r===r&&lastPlaced.c===c){
+        const a=1-Math.min(1,(now-lastPlaced.t)/500);
+        if(a>0){ ctx.strokeStyle='rgba(255,255,255,'+(a*.7)+')'; ctx.lineWidth=2; ctx.strokeRect(c*CS+4,r*CS+4,CS-8,CS-8); }
+      }
+      if(x.n>0){
+        const crit=x.n===cap(r,c)-1;
+        orbPositions(x.n,now,crit).forEach(([dx,dy])=>drawOrb(cx+dx,cy+dy,COLORS[x.o],10));
+      }
+    }
+    // cursor de teclado / jugadas válidas
+    if(playing&&!over){
+      ctx.strokeStyle='#ffd23b'; ctx.lineWidth=2; ctx.setLineDash([6,5]);
+      ctx.strokeRect(cursor.c*CS+3,cursor.r*CS+3,CS-6,CS-6); ctx.setLineDash([]);
+    }
+    // esferas en vuelo
+    flights=flights.filter(f=>now-f.t0<STEP_MS);
+    for(const f of flights){
+      const k=Math.min(1,(now-f.t0)/(STEP_MS-30)), e=k*k*(3-2*k);
+      const x=(f.fc+(f.tc-f.fc)*e)*CS+CS/2, y=(f.fr+(f.tr-f.fr)*e)*CS+CS/2;
+      drawOrb(x,y,COLORS[f.p],9);
+    }
+    // chispas
+    sparks=sparks.filter(s=>now-s.t0<450);
+    for(const s of sparks){
+      const t=(now-s.t0)/1000, a=1-(now-s.t0)/450;
+      ctx.globalAlpha=Math.max(0,a); ctx.fillStyle=COLORS[s.p];
+      ctx.beginPath(); ctx.arc(s.x+s.vx*t,s.y+s.vy*t,2.2,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+  updateHud();
+})();
+</script>
+</body>
+</html>
