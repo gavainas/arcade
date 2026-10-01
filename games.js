@@ -557,6 +557,13 @@
       desc: "Reacción en cadena por turnos: sumá una esfera a una celda vacía o tuya; al llegar a su masa crítica (2 en esquinas, 3 en bordes, 4 en el centro) la celda explota, reparte una esfera a cada vecina y las convierte a tu color, disparando cadenas. Ganá eliminando todas las esferas rival en un tablero de 6×8. Contra una CPU con 3 dificultades (la difícil mira dos jugadas adelante) o de a dos en el mismo dispositivo, con récord de racha de victorias guardado.",
       controles: "Click / toque en una celda; flechas + Enter con teclado; R reinicia", fecha: "2026-09-30",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "dinamita-neon", titulo: "Dinamita Neón", archivo: "dinamita-neon.html",
+      emoji: "🧨", categoria: "accion", tags: ["bomberman", "bombas", "laberinto", "explosiones", "enemigos", "mejoras", "niveles"],
+      desc: "Bomberman neón: plantá dinamitas para volar los bloques y a los bichos del laberinto. Las explosiones hacen reacción en cadena y también te alcanzan a vos, así que escapá antes de que estalle. Matá a todos los enemigos y entrá por la puerta dorada escondida bajo un bloque; los bloques sueltan mejoras de alcance, bombas extra y velocidad. Niveles con más enemigos que te persiguen, 3 vidas, tiempo límite y récord guardado.",
+      controles: "Flechas/WASD para moverte, ESPACIO planta dinamita, P pausa; en mobile, cruceta y botón de bomba en pantalla", fecha: "2026-10-01",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

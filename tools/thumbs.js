@@ -166,7 +166,9 @@ const OVERRIDES = {
   "reaccion-neon": {
     steps: ['[data-mode="cpu"][data-diff="facil"]', "#startBtn", { canvas: [0.5, 0.5] }],
     wait: 1500
-  }
+  },
+  // Un ratito de juego para que se vea el laberinto con bichos en movimiento.
+  "dinamita-neon": { steps: ["#startBtn"], wait: 1200 }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];
