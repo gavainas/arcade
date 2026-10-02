@@ -82,6 +82,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🦠 Células Neón | [`celulas-neon.html`](celulas-neon.html) | Agar.io neón: movete con el dedo/mouse (o flechas/WASD) por una arena llena de células rivales. Comé puntitos y células más chicas (verdes) para crecer; las más grandes (rojas) te devoran, y cuanto más masa tenés, más lento te movés. Dash con ESPACIO a cambio de un poco de masa. Los bots huyen, cazan y se comen entre sí; récord de masa máxima guardado. |
 | ⚛️ Reacción Neón | [`reaccion-neon.html`](reaccion-neon.html) | Reacción en cadena por turnos: sumá una esfera a una celda vacía o tuya; al llegar a su masa crítica (2 esquinas, 3 bordes, 4 centro) explota, reparte una esfera a cada vecina y las convierte a tu color. Ganá eliminando todas las esferas rivales. CPU con 3 dificultades o de a dos, con récord de racha guardado. |
 | 🧨 Dinamita Neón | [`dinamita-neon.html`](dinamita-neon.html) | Bomberman neón: plantá dinamitas para volar bloques y enemigos con reacciones en cadena, juntá mejoras (alcance, bombas, velocidad) y entrá por la puerta dorada. 3 vidas, tiempo límite y récord guardado. |
+| ⛏️ Minero Neón | [`minero-neon.html`](minero-neon.html) | Gold Miner neón: un garfio oscila y lo lanzás para pescar oro, rocas, diamantes y bolsas sorpresa; lo pesado sube lento, los barriles TNT explotan y tenés 2 dinamitas por nivel para soltar lo que estorba. Meta de puntos por nivel contra reloj, con récord guardado. |
 
 ## Sopa de Letras
 

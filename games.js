@@ -564,6 +564,13 @@
       desc: "Bomberman neón: plantá dinamitas para volar los bloques y a los bichos del laberinto. Las explosiones hacen reacción en cadena y también te alcanzan a vos, así que escapá antes de que estalle. Matá a todos los enemigos y entrá por la puerta dorada escondida bajo un bloque; los bloques sueltan mejoras de alcance, bombas extra y velocidad. Niveles con más enemigos que te persiguen, 3 vidas, tiempo límite y récord guardado.",
       controles: "Flechas/WASD para moverte, ESPACIO planta dinamita, P pausa; en mobile, cruceta y botón de bomba en pantalla", fecha: "2026-10-01",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "minero-neon", titulo: "Minero Neón", archivo: "minero-neon.html",
+      emoji: "⛏️", categoria: "reflejos", tags: ["gold miner", "minero", "garfio", "oro", "timing", "dinamita"],
+      desc: "Gold Miner neón: el garfio oscila solo y vos elegís el momento de lanzarlo. El oro grande vale mucho pero sube lento, las rocas pesan y casi no valen, los diamantes suben volando, las bolsas sorpresa regalan puntos, tiempo o dinamita, y los barriles TNT explotan y vuelan todo lo cercano. Tenés 2 dinamitas por nivel para soltar lo que te estorba. Juntá la meta antes de que se acabe el tiempo: cada nivel exige más. Récord guardado.",
+      controles: "Toque en el canvas / ESPACIO / flecha abajo lanza el garfio; flecha arriba o D usa dinamita; P pausa; botones táctiles abajo", fecha: "2026-10-02",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
