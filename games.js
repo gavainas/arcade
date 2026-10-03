@@ -571,6 +571,14 @@
       desc: "Gold Miner neón: el garfio oscila solo y vos elegís el momento de lanzarlo. El oro grande vale mucho pero sube lento, las rocas pesan y casi no valen, los diamantes suben volando, las bolsas sorpresa regalan puntos, tiempo o dinamita, y los barriles TNT explotan y vuelan todo lo cercano. Tenés 2 dinamitas por nivel para soltar lo que te estorba. Juntá la meta antes de que se acabe el tiempo: cada nivel exige más. Récord guardado.",
       controles: "Toque en el canvas / ESPACIO / flecha abajo lanza el garfio; flecha arriba o D usa dinamita; P pausa; botones táctiles abajo", fecha: "2026-10-02",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "hielo-neon", titulo: "Hielo Neón", archivo: "hielo-neon.html",
+      emoji: "❄️", categoria: "logica", tags: ["hielo", "deslizar", "puzzle", "rocas", "portal", "niveles"],
+      desc: "Puzzle de hielo resbaloso: no podés frenar a voluntad, te deslizás en línea recta hasta chocar con una roca o el borde. Planificá el recorrido para frenar justo en el portal dorado con la menor cantidad de deslizamientos. 8 niveles con mapas generados al azar (siempre resolubles, el óptimo se calcula con búsqueda en amplitud), con deshacer, otro mapa y récord guardado por nivel.",
+      controles: "Flechas/WASD, deslizar el dedo o tocar hacia donde querés ir; Z deshace, R reinicia",
+      fecha: "2026-10-03",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

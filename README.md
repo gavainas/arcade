@@ -83,6 +83,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ⚛️ Reacción Neón | [`reaccion-neon.html`](reaccion-neon.html) | Reacción en cadena por turnos: sumá una esfera a una celda vacía o tuya; al llegar a su masa crítica (2 esquinas, 3 bordes, 4 centro) explota, reparte una esfera a cada vecina y las convierte a tu color. Ganá eliminando todas las esferas rivales. CPU con 3 dificultades o de a dos, con récord de racha guardado. |
 | 🧨 Dinamita Neón | [`dinamita-neon.html`](dinamita-neon.html) | Bomberman neón: plantá dinamitas para volar bloques y enemigos con reacciones en cadena, juntá mejoras (alcance, bombas, velocidad) y entrá por la puerta dorada. 3 vidas, tiempo límite y récord guardado. |
 | ⛏️ Minero Neón | [`minero-neon.html`](minero-neon.html) | Gold Miner neón: un garfio oscila y lo lanzás para pescar oro, rocas, diamantes y bolsas sorpresa; lo pesado sube lento, los barriles TNT explotan y tenés 2 dinamitas por nivel para soltar lo que estorba. Meta de puntos por nivel contra reloj, con récord guardado. |
+| ❄️ Hielo Neón | [`hielo-neon.html`](hielo-neon.html) | Puzzle de hielo resbaloso: te deslizás en línea recta hasta chocar con una roca o el borde; llegá al portal dorado con la menor cantidad de deslizamientos. 8 niveles con mapas al azar siempre resolubles (óptimo por BFS), con deshacer y récord por nivel. |
 
 ## Sopa de Letras
 
