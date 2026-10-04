@@ -579,6 +579,14 @@
       controles: "Flechas/WASD, deslizar el dedo o tocar hacia donde querés ir; Z deshace, R reinicia",
       fecha: "2026-10-03",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "orbitas-neon", titulo: "Órbitas Neón", archivo: "orbitas-neon.html",
+      emoji: "🪐", categoria: "puzzle", tags: ["gravedad", "órbitas", "planetas", "honda", "física", "puntería", "niveles"],
+      desc: "Lanzá la sonda como con una honda y dejá que la gravedad de los planetas curve su trayectoria hasta el portal dorado. Chocar con un planeta o perderte en el espacio gasta un tiro: tenés 3 por nivel. Cada nivel genera un sistema nuevo (siempre con solución) con más planetas; los tiros que te sobran suman bonus, con récord guardado.",
+      controles: "Arrastrá hacia atrás y soltá (mouse o dedo); teclado: ←/→ ángulo, ↑/↓ potencia, ESPACIO dispara, P pausa",
+      fecha: "2026-10-04",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
