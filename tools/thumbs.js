@@ -33,6 +33,7 @@ const SCALE = 1.5;
     []                      -> no clickear nada: se captura la portada
 */
 const OVERRIDES = {
+  "cadena-neon": { steps: ["#startBtn"], wait: 1800 },
   "orbitas-neon": { steps: ["#startBtn"], wait: 900 },
   "hielo-neon": { steps: [".lvl-card"], wait: 1200 },
   // El menú de Knight Quest está dibujado dentro del canvas: no hay nada que

@@ -587,6 +587,14 @@
       controles: "Arrastrá hacia atrás y soltá (mouse o dedo); teclado: ←/→ ángulo, ↑/↓ potencia, ESPACIO dispara, P pausa",
       fecha: "2026-10-04",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "cadena-neon", titulo: "Cadena Neón", archivo: "cadena-neon.html",
+      emoji: "🔮", categoria: "puzzle", tags: ["esferas", "zuma", "colores", "combos", "puntería", "espiral", "niveles"],
+      desc: "Una cadena de esferas de colores avanza en espiral hacia el agujero. Disparale esferas desde el centro: al juntar 3 o más del mismo color estallan, y si al cerrarse el hueco los extremos coinciden se arma una reacción en cadena con multiplicador. Cada nivel trae más esferas, más colores y más velocidad; 3 vidas y récord guardado.",
+      controles: "Mouse o dedo para apuntar y tocar para disparar (tocá el centro para cambiar de esfera); teclado: ←/→ apunta, ESPACIO dispara, S cambia, P pausa",
+      fecha: "2026-10-05",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

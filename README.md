@@ -85,6 +85,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ⛏️ Minero Neón | [`minero-neon.html`](minero-neon.html) | Gold Miner neón: un garfio oscila y lo lanzás para pescar oro, rocas, diamantes y bolsas sorpresa; lo pesado sube lento, los barriles TNT explotan y tenés 2 dinamitas por nivel para soltar lo que estorba. Meta de puntos por nivel contra reloj, con récord guardado. |
 | ❄️ Hielo Neón | [`hielo-neon.html`](hielo-neon.html) | Puzzle de hielo resbaloso: te deslizás en línea recta hasta chocar con una roca o el borde; llegá al portal dorado con la menor cantidad de deslizamientos. 8 niveles con mapas al azar siempre resolubles (óptimo por BFS), con deshacer y récord por nivel. |
 | 🪐 Órbitas Neón | [`orbitas-neon.html`](orbitas-neon.html) | Honda gravitacional: lanzá la sonda y curvá su trayectoria con la gravedad de los planetas hasta el portal dorado. 3 tiros por nivel, sistemas generados al azar (siempre con solución) y récord guardado. |
+| 🔮 Cadena Neón | [`cadena-neon.html`](cadena-neon.html) | Marble shooter estilo Zuma: una cadena de esferas avanza en espiral hacia el agujero; disparale esferas del mismo color para juntar 3+ y hacerlas estallar, y encadená reacciones cuando se cierran los huecos. Niveles con más colores y velocidad, 3 vidas y récord guardado. |
 
 ## Sopa de Letras
 
