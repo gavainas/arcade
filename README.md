@@ -86,6 +86,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ❄️ Hielo Neón | [`hielo-neon.html`](hielo-neon.html) | Puzzle de hielo resbaloso: te deslizás en línea recta hasta chocar con una roca o el borde; llegá al portal dorado con la menor cantidad de deslizamientos. 8 niveles con mapas al azar siempre resolubles (óptimo por BFS), con deshacer y récord por nivel. |
 | 🪐 Órbitas Neón | [`orbitas-neon.html`](orbitas-neon.html) | Honda gravitacional: lanzá la sonda y curvá su trayectoria con la gravedad de los planetas hasta el portal dorado. 3 tiros por nivel, sistemas generados al azar (siempre con solución) y récord guardado. |
 | 🔮 Cadena Neón | [`cadena-neon.html`](cadena-neon.html) | Marble shooter estilo Zuma: una cadena de esferas avanza en espiral hacia el agujero; disparale esferas del mismo color para juntar 3+ y hacerlas estallar, y encadená reacciones cuando se cierran los huecos. Niveles con más colores y velocidad, 3 vidas y récord guardado. |
+| 🪢 Liana Neón | [`liana-neon.html`](liana-neon.html) | Balanceo con soga y física de péndulo: mantené apretado para colgarte del ancla más cercana y soltá en el momento justo para volar sobre la lava; orbes, soga que se acorta y anclas cada vez más separadas. Récord guardado. |
 
 ## Sopa de Letras
 

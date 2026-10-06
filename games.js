@@ -595,6 +595,14 @@
       controles: "Mouse o dedo para apuntar y tocar para disparar (tocá el centro para cambiar de esfera); teclado: ←/→ apunta, ESPACIO dispara, S cambia, P pausa",
       fecha: "2026-10-05",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "liana-neon", titulo: "Liana Neón", archivo: "liana-neon.html",
+      emoji: "🪢", categoria: "arcade", tags: ["soga", "gancho", "péndulo", "balanceo", "lava", "física", "infinito"],
+      desc: "Colgado de un gancho de luz, balanceate de ancla en ancla sobre un mar de lava. Mantené apretado para lanzar la soga al punto más cercano y soltá en el momento justo para salir disparado con el impulso del péndulo. La soga se acorta mientras colgás, hay orbes para juntar y cada vez más distancia entre anclas; récord guardado.",
+      controles: "Mantené apretado (mouse, dedo o botón AGARRAR) para colgarte y soltá para saltar; teclado: ESPACIO/↑ mantenido, P pausa",
+      fecha: "2026-10-06",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
