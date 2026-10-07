@@ -603,6 +603,14 @@
       controles: "Mantené apretado (mouse, dedo o botón AGARRAR) para colgarte y soltá para saltar; teclado: ESPACIO/↑ mantenido, P pausa",
       fecha: "2026-10-06",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "enjambre-neon", titulo: "Enjambre Neón", archivo: "enjambre-neon.html",
+      emoji: "💫", categoria: "arcade", tags: ["supervivencia", "enjambre", "mejoras", "disparo automático", "survivors", "niveles", "jefes"],
+      desc: "Un enjambre de bichos neón te rodea y tu nave dispara sola al más cercano: vos sólo te movés. Juntá los cristales que sueltan para subir de nivel y elegir 1 de 3 mejoras (multidisparo, orbitales, nova, imán...). Aparecen jefes gigantes y cada minuto el enjambre es más denso. Récord guardado.",
+      controles: "Arrastrá el dedo o el mouse para moverte; teclado: WASD/flechas, 1-2-3 elige mejora, P pausa",
+      fecha: "2026-10-07",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
