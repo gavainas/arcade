@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PLINKO NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    -webkit-tap-highlight-color:transparent; user-select:none;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box.lvl b{color:var(--purple);}
+  .hud .box.liv b{color:var(--pink);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; height:auto; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,32px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:7px; font-size:12.5px; color:var(--ink); text-align:left; max-width:330px;}
+  .legend span{display:flex; align-items:flex-start; gap:8px;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none; margin-top:2px; box-shadow:0 0 10px currentColor;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 34px; font-size:15px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--purple)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.5);}
+  .btn:active{transform:translateY(0);}
+  .final{font-size:15px; color:var(--ink);} .final b{color:var(--gold); font-size:26px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+
+  .pad{display:none;}
+  .padbtn{
+    cursor:pointer; user-select:none; -webkit-user-select:none; touch-action:none;
+    border-radius:16px; padding:18px 0; text-align:center; font-size:22px; font-weight:900;
+    color:var(--ink); background:linear-gradient(180deg, rgba(20,28,58,.85), rgba(10,14,30,.85));
+    border:1px solid rgba(138,75,255,.35); transition:background .1s ease, border-color .1s ease;
+  }
+  .padbtn.thrust{color:var(--gold); font-size:15px; letter-spacing:2px;}
+  .padbtn.active{border-color:var(--cyan); background:linear-gradient(180deg, rgba(39,232,255,.28), rgba(10,14,30,.85)); box-shadow:0 0 18px rgba(39,232,255,.35);}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .cards{display:flex; flex-direction:column; gap:8px; width:100%; max-width:340px;}
+  .card{cursor:pointer; text-align:left; border-radius:12px; padding:10px 14px; color:var(--ink);
+    background:linear-gradient(180deg, rgba(20,28,58,.9), rgba(10,14,30,.9)); border:1px solid rgba(138,75,255,.45); font-family:inherit;}
+  .card:hover,.card:focus{border-color:var(--cyan); box-shadow:0 0 16px rgba(39,232,255,.3); outline:none;}
+  .card b{display:block; font-size:14px; color:var(--cyan);} .card span{font-size:12px; color:var(--muted);}
+  .card i{float:right; color:var(--gold); font-style:normal; font-size:11px;}
+  .row{display:flex; gap:8px; margin-top:12px; justify-content:center; flex-wrap:wrap;}
+  .seg{cursor:pointer; flex:1; min-width:58px; text-align:center; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:9px 4px; font-size:13px; font-weight:800; font-family:inherit; letter-spacing:.5px;}
+  .seg.on{border-color:var(--cyan); color:var(--cyan); background:rgba(39,232,255,.16); box-shadow:0 0 14px rgba(39,232,255,.3);}
+  .seg.risk.on{border-color:var(--pink); color:var(--pink); background:rgba(255,43,214,.15); box-shadow:0 0 14px rgba(255,43,214,.3);}
+  .drop{width:100%; margin-top:12px; padding:16px; font-size:18px;}
+  .lbl{width:100%; text-align:center; font-size:11px; letter-spacing:2px; color:var(--muted); margin-top:12px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">PLINKO NEÓN</div>
+      <div class="sub">S O L T Á &nbsp; · &nbsp; R E B O T Á</div>
+    </header>
+
+    <div class="hud">
+      <div class="box">FICHAS<b id="chips">1000</b></div>
+      <div class="box rec">RÉCORD<b id="best">0</b></div>
+      <div class="box lvl">ÚLTIMO<b id="last">-</b></div>
+      <div class="box liv">BOLAS<b id="balls">0</b></div>
+    </div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="560"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">PLINKO NEÓN</h2>
+        <p id="ovText">Soltá bolitas desde arriba: rebotan entre las clavijas y caen en un casillero con multiplicador.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="background:var(--cyan);"></i> Elegí la apuesta y el riesgo, apuntá moviendo el mouse/dedo arriba (o con ← →) y tocá SOLTAR.</span>
+          <span><i class="dot" style="background:var(--gold);"></i> Los casilleros de los bordes pagan mucho más, pero el centro es donde cae casi todo.</span>
+          <span><i class="dot" style="background:var(--red);"></i> Empezás con 1000 fichas. Si te quedás sin plata para la apuesta mínima, se acabó.</span>
+        </div>
+        <button class="btn" id="startBtn">EMPEZAR ▶</button>
+        <p class="hint" id="ovHint">El récord es el máximo de fichas que llegaste a tener.</p>
+      </div>
+    </div>
+
+    <div class="lbl">APUESTA</div>
+    <div class="row" id="bets"></div>
+    <div class="lbl">RIESGO</div>
+    <div class="row" id="risks"></div>
+    <button class="btn drop" id="dropBtn">SOLTAR ●</button>
+
+    <div class="controls">
+      <div class="hint"><b>Espacio</b> suelta · <b>← →</b> apunta · <b>1-4</b> apuesta · <b>R</b> riesgo.</div>
+      <button class="mini" id="autoBtn">Auto: NO</button>
+    </div>
+
+    <footer>NEON ARCADE · Plinko Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  const W=440,H=560,ROWS=10,SP=34,TOP=84,RS=36,CX=W/2,PR=4,BR=7;
+  const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+  const $=id=>document.getElementById(id);
+  const overlay=$('overlay'),ovTitle=$('ovTitle'),ovText=$('ovText'),legend=$('legend'),startBtn=$('startBtn'),ovHint=$('ovHint');
+  const KEY='plinko-neon-best';
+  let best=0;try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+  $('best').textContent=best;
+
+  // Multiplicadores de borde a centro (11 casilleros, simétricos)
+  const RISKS=[
+    {n:'BAJO',m:[6,3,1.5,1,0.8,0.5]},
+    {n:'MEDIO',m:[15,5,2,1,0.4,0.2]},
+    {n:'ALTO',m:[26,7,1.8,0.4,0.1,0.1]}
+  ];
+  const BETS=[10,25,50,100];
+  const BUCKET_Y=TOP+ROWS*RS+14, LEFT=CX-5.5*SP;
+  const mult=(risk,i)=>RISKS[risk].m[Math.min(i,10-i)];
+
+  const pegs=[];
+  for(let r=0;r<ROWS;r++){const n=r+3;for(let i=0;i<n;i++)pegs.push({x:CX+(i-(n-1)/2)*SP,y:TOP+r*RS,f:0});}
+
+  let chips,bet,risk,balls,aim,auto,state,dropped,hitFx,floaters,running,lastT,bucketFlash;
+  function reset(){chips=1000;bet=BETS[0];risk=1;balls=[];aim=0;auto=false;dropped=0;floaters=[];bucketFlash=new Array(11).fill(0);pegs.forEach(p=>p.f=0);
+    $('autoBtn').textContent='Auto: NO';$('last').textContent='-';refreshUI();}
+  const fmt=n=>Math.round(n*10)/10;
+
+  // ---- UI de selección
+  const betsEl=$('bets'),risksEl=$('risks');
+  BETS.forEach((b,i)=>{const e=document.createElement('button');e.className='seg';e.textContent=b;e.onclick=()=>setBet(i);betsEl.appendChild(e);});
+  RISKS.forEach((r,i)=>{const e=document.createElement('button');e.className='seg risk';e.textContent=r.n;e.onclick=()=>setRisk(i);risksEl.appendChild(e);});
+  function setBet(i){bet=BETS[i];refreshUI();}
+  function setRisk(i){risk=i;refreshUI();}
+  function refreshUI(){
+    $('chips').textContent=Math.floor(chips);$('balls').textContent=balls.length;
+    [...betsEl.children].forEach((e,i)=>e.classList.toggle('on',BETS[i]===bet));
+    [...risksEl.children].forEach((e,i)=>e.classList.toggle('on',i===risk));
+  }
+
+  // ---- Soltar
+  function drop(){
+    if(!running||chips<bet||balls.length>=12)return false;
+    chips-=bet;dropped++;
+    balls.push({x:CX+aim+(Math.random()-.5)*6,y:22,vx:(Math.random()-.5)*20,vy:0,bet,risk,trail:[]});
+    refreshUI();
+    return true;
+  }
+  function pump(){ if(auto&&running)drop(); }
+  setInterval(pump,450);
+
+  function land(b){
+    const i=Math.max(0,Math.min(10,Math.floor((b.x-LEFT)/SP)));
+    const m=mult(b.risk,i),win=b.bet*m;
+    chips+=win;bucketFlash[i]=1;
+    $('last').textContent='x'+m;
+    floaters.push({x:LEFT+(i+.5)*SP,y:BUCKET_Y-10,t:1,txt:(win>=b.bet?'+':'')+fmt(win-b.bet),c:win>=b.bet?'#39ff9e':'#ff5470'});
+    if(chips>best){best=Math.floor(chips);try{localStorage.setItem(KEY,best);}catch(e){}$('best').textContent=best;}
+    refreshUI();
+  }
+
+  // ---- Física
+  const G=900;
+  const hwAt=y=>(Math.max(0,Math.min(ROWS-1,(y-TOP)/RS))+2)/2*SP;
+  function step(dt){
+    for(const b of balls){
+      b.vy+=G*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vx*=1-3.5*dt;
+      // paredes laterales
+      const hw=hwAt(b.y)-BR*.5;
+      if(b.x<CX-hw){b.x=CX-hw;b.vx=Math.abs(b.vx)*.4;}
+      if(b.x>CX+hw){b.x=CX+hw;b.vx=-Math.abs(b.vx)*.4;}
+      if(b.y<BUCKET_Y-8){
+        for(const p of pegs){
+          const dx=b.x-p.x,dy=b.y-p.y,d2=dx*dx+dy*dy,R=BR+PR;
+          if(d2<R*R){
+            const d=Math.sqrt(d2)||.001,nx=dx/d,ny=dy/d;
+            b.x=p.x+nx*R;b.y=p.y+ny*R;
+            const vn=b.vx*nx+b.vy*ny;
+            if(vn<0){b.vx-=1.2*vn*nx;b.vy-=1.2*vn*ny;b.vx+=(Math.random()-.5)*10;}
+            p.f=1;
+          }
+        }
+      } else {
+        // dentro de los casilleros: tabiques
+        const rel=(b.x-LEFT)/SP,k=Math.round(rel);
+        if(Math.abs(rel-k)*SP<BR*.6&&k>0&&k<11){b.vx*=-.3;b.x+=(rel>k?1:-1)*1.5;}
+        b.vx*=.98;
+        b.vy*=.9;
+      }
+      b.trail.push(b.x,b.y);if(b.trail.length>16)b.trail.splice(0,2);
+    }
+    for(let i=balls.length-1;i>=0;i--){const b=balls[i];if(b.y>BUCKET_Y+22){land(b);balls.splice(i,1);}}
+  }
+
+  // ---- Fin de partida
+  function checkEnd(){
+    if(running&&!balls.length&&chips<BETS[0]){
+      running=false;
+      ovTitle.textContent='¡SIN FICHAS!';
+      ovText.innerHTML='Soltaste <b>'+dropped+'</b> bolitas.<br>Máximo de fichas: <b style="color:var(--gold)">'+best+'</b>';
+      legend.style.display='none';ovHint.textContent='Probá otro riesgo: el alto pega cada tanto un premazo.';
+      startBtn.textContent='OTRA VEZ ▶';overlay.classList.remove('hidden');
+    }
+  }
+
+  // ---- Dibujo
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0b1030');g.addColorStop(1,'#05070f');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // guía de apuntado
+    ctx.strokeStyle='rgba(39,232,255,.25)';ctx.setLineDash([4,6]);ctx.beginPath();ctx.moveTo(CX+aim,26);ctx.lineTo(CX+aim,TOP-14);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#27e8ff';ctx.shadowColor='#27e8ff';ctx.shadowBlur=14;ctx.beginPath();ctx.arc(CX+aim,16,6,0,7);ctx.fill();ctx.shadowBlur=0;
+    // clavijas
+    for(const p of pegs){
+      ctx.fillStyle=p.f>0?'#ffffff':'#8a4bff';ctx.shadowColor=p.f>0?'#ff2bd6':'#8a4bff';ctx.shadowBlur=6+p.f*14;
+      ctx.beginPath();ctx.arc(p.x,p.y,PR+p.f*1.5,0,7);ctx.fill();p.f=Math.max(0,p.f-.06);
+    }
+    ctx.shadowBlur=0;
+    // casilleros
+    for(let i=0;i<11;i++){
+      const m=mult(risk,i),x=LEFT+i*SP,hot=Math.min(1,Math.log(m*1.5+1)/Math.log(41));
+      const col=m>=1?`rgba(${Math.round(255*hot+39)},${Math.round(210-120*hot)},${Math.round(59+160*hot)},`:'rgba(60,90,130,';
+      ctx.fillStyle=col+(.22+.6*bucketFlash[i])+')';ctx.fillRect(x+1,BUCKET_Y,SP-2,44);
+      ctx.strokeStyle=col+'.9)';ctx.strokeRect(x+1.5,BUCKET_Y+.5,SP-3,43);
+      ctx.fillStyle='#e8f6ff';ctx.font='bold '+(m>=10?10:11)+'px Segoe UI,sans-serif';ctx.textAlign='center';ctx.fillText('x'+m,x+SP/2,BUCKET_Y+27);
+      bucketFlash[i]=Math.max(0,bucketFlash[i]-.04);
+    }
+    // bolitas
+    for(const b of balls){
+      ctx.strokeStyle='rgba(255,43,214,.35)';ctx.lineWidth=3;ctx.beginPath();
+      for(let i=0;i<b.trail.length;i+=2)i?ctx.lineTo(b.trail[i],b.trail[i+1]):ctx.moveTo(b.trail[i],b.trail[i+1]);ctx.stroke();ctx.lineWidth=1;
+      ctx.fillStyle='#ffd23b';ctx.shadowColor='#ffd23b';ctx.shadowBlur=14;ctx.beginPath();ctx.arc(b.x,b.y,BR,0,7);ctx.fill();ctx.shadowBlur=0;
+    }
+    // flotantes
+    for(let i=floaters.length-1;i>=0;i--){
+      const f=floaters[i];ctx.globalAlpha=Math.max(0,f.t);ctx.fillStyle=f.c;ctx.font='bold 15px Segoe UI,sans-serif';ctx.textAlign='center';ctx.fillText(f.txt,f.x,f.y-(1-f.t)*40);
+      ctx.globalAlpha=1;f.t-=.02;if(f.t<=0)floaters.splice(i,1);
+    }
+    ctx.textAlign='left';
+  }
+
+  function loop(t){
+    const dt=Math.min(.033,(t-lastT)/1000||.016);lastT=t;
+    for(let s=0;s<4;s++)step(dt/4);
+    draw();checkEnd();
+    requestAnimationFrame(loop);
+  }
+
+  // ---- Entradas
+  function aimFromEvent(e){
+    const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width;
+    aim=Math.max(-90,Math.min(90,x-CX));
+  }
+  canvas.addEventListener('pointermove',aimFromEvent);
+  canvas.addEventListener('pointerdown',e=>{aimFromEvent(e);});
+  $('dropBtn').onclick=()=>drop();
+  $('autoBtn').onclick=()=>{auto=!auto;$('autoBtn').textContent='Auto: '+(auto?'SÍ':'NO');};
+  addEventListener('keydown',e=>{
+    if(e.key===' '||e.key==='Enter'){if(running){e.preventDefault();drop();}}
+    else if(e.key==='ArrowLeft')aim=Math.max(-90,aim-8);
+    else if(e.key==='ArrowRight')aim=Math.min(90,aim+8);
+    else if(e.key>='1'&&e.key<='4')setBet(+e.key-1);
+    else if(e.key==='r'||e.key==='R')setRisk((risk+1)%3);
+  });
+  startBtn.onclick=()=>{reset();running=true;overlay.classList.add('hidden');};
+  reset();running=false;lastT=performance.now();
+  requestAnimationFrame(loop);
+  
+})();
+</script>
+</body>
+</html>

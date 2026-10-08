@@ -611,6 +611,14 @@
       controles: "Arrastrá el dedo o el mouse para moverte; teclado: WASD/flechas, 1-2-3 elige mejora, P pausa",
       fecha: "2026-10-07",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "plinko-neon", titulo: "Plinko Neón", archivo: "plinko-neon.html",
+      emoji: "🔴", categoria: "arcade", tags: ["plinko", "azar", "apuestas", "física", "fichas", "multiplicadores", "clavijas"],
+      desc: "Soltá bolitas desde arriba y mirá cómo rebotan entre las clavijas hasta caer en un casillero con multiplicador. Elegí la apuesta (10 a 100 fichas) y el riesgo: el bajo paga parejo, el alto casi siempre pierde pero los bordes pagan x26. Empezás con 1000 fichas; el récord es el máximo que llegaste a juntar.",
+      controles: "Mouse o dedo sobre el tablero (o ← →) para apuntar y botón SOLTAR (Espacio); teclado: 1-4 apuesta, R cambia el riesgo",
+      fecha: "2026-10-08",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

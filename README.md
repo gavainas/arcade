@@ -88,6 +88,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🔮 Cadena Neón | [`cadena-neon.html`](cadena-neon.html) | Marble shooter estilo Zuma: una cadena de esferas avanza en espiral hacia el agujero; disparale esferas del mismo color para juntar 3+ y hacerlas estallar, y encadená reacciones cuando se cierran los huecos. Niveles con más colores y velocidad, 3 vidas y récord guardado. |
 | 🪢 Liana Neón | [`liana-neon.html`](liana-neon.html) | Balanceo con soga y física de péndulo: mantené apretado para colgarte del ancla más cercana y soltá en el momento justo para volar sobre la lava; orbes, soga que se acorta y anclas cada vez más separadas. Récord guardado. |
 | 💫 Enjambre Neón | [`enjambre-neon.html`](enjambre-neon.html) | Survivor neón: tu nave dispara sola mientras te movés; juntá cristales, subí de nivel y elegí mejoras (multidisparo, orbitales, nova, imán) para aguantar al enjambre y a los jefes. Récord guardado. |
+| 🔴 Plinko Neón | [`plinko-neon.html`](plinko-neon.html) | Plinko: soltá bolitas que rebotan entre las clavijas y caen en casilleros con multiplicador. Apuesta de 10 a 100 fichas y 3 niveles de riesgo; empezás con 1000 y el récord es el máximo que juntaste. |
 
 ## Sopa de Letras
 
