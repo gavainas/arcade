@@ -33,6 +33,7 @@ const SCALE = 1.5;
     []                      -> no clickear nada: se captura la portada
 */
 const OVERRIDES = {
+  "domino-neon": { steps: ["#goBtn"], wait: 1500 },
   "cadena-neon": { steps: ["#startBtn"], wait: 1800 },
   "orbitas-neon": { steps: ["#startBtn"], wait: 900 },
   "hielo-neon": { steps: [".lvl-card"], wait: 1200 },

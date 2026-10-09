@@ -619,6 +619,14 @@
       controles: "Mouse o dedo sobre el tablero (o ← →) para apuntar y botón SOLTAR (Espacio); teclado: 1-4 apuesta, R cambia el riesgo",
       fecha: "2026-10-08",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "domino-neon", titulo: "Dominó Neón", archivo: "domino-neon.html",
+      emoji: "🁣", categoria: "logica", tags: ["dominó", "fichas", "cpu", "estrategia", "mesa", "azar", "clásico"],
+      desc: "Dominó doble seis contra la CPU: 7 fichas cada uno, jugá las que coincidan con alguna punta de la mesa, robá del pozo si no tenés y quedate sin fichas antes que ella. Quien hace dominó suma los puntos de la mano rival (o gana el que menos suma si el juego se traba). Primero en llegar a 100 gana; récord guardado.",
+      controles: "Tocá una ficha verde y, si entra de los dos lados, elegí la punta; botones ROBAR / PASAR; teclado: 1-9 juega esa ficha, D roba",
+      fecha: "2026-10-09",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

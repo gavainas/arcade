@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DOMINÓ NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--green:#39ff9e;--gold:#ffd23b;--red:#ff5470;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+  .stage{width:100%;max-width:520px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:12px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));background-size:300% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:4px;font-size:11px;}
+  .hud{display:flex;gap:8px;margin-bottom:8px;}
+  .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .box b{display:block;font-size:18px;font-weight:900;margin-top:2px;color:var(--cyan);}
+  .box.cpu b{color:var(--pink);} .box.rec b{color:var(--gold);}
+  .msg{text-align:center;font-weight:800;letter-spacing:1px;min-height:22px;margin:4px 0 8px;font-size:14px;}
+  .panel{border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(20,28,58,.72),rgba(10,14,30,.72));border:1px solid rgba(138,75,255,.3);box-shadow:0 14px 40px rgba(0,0,0,.5);margin-bottom:10px;}
+  .lbl{font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;}
+  .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:56px;align-items:center;}
+  #board{min-height:150px;gap:3px;align-content:center;}
+  .tile{display:flex;background:linear-gradient(160deg,#f3fbff,#bcd7ea);border-radius:7px;border:2px solid #0b1020;box-shadow:0 0 0 1px rgba(39,232,255,.5),0 3px 8px rgba(0,0,0,.5);width:62px;height:32px;position:relative;flex:none;}
+  .tile .h{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:3px;}
+  .tile .h+.h{border-left:2px solid #0b1020;}
+  .tile .p{width:6px;height:6px;border-radius:50%;background:#0b1020;place-self:center;}
+  .tile.dbl{width:32px;height:62px;flex-direction:column;}
+  .tile.dbl .h+.h{border-left:0;border-top:2px solid #0b1020;}
+  .tile.back{background:linear-gradient(160deg,#3a2a7a,#1a1240);box-shadow:0 0 0 1px rgba(255,43,214,.5);width:26px;height:40px;}
+  .hand .tile{cursor:pointer;transition:transform .12s;}
+  .hand .tile.ok{box-shadow:0 0 0 2px var(--green),0 0 14px var(--green);transform:translateY(-4px);}
+  .hand .tile.no{opacity:.45;cursor:default;}
+  .hand .tile.sel{box-shadow:0 0 0 3px var(--gold),0 0 16px var(--gold);}
+  .end{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:2px dashed var(--gold);color:var(--gold);font-weight:900;font-size:13px;cursor:pointer;background:rgba(255,210,59,.1);flex:none;}
+  .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .btn{font:inherit;font-weight:800;letter-spacing:1px;padding:11px 18px;border-radius:12px;border:1px solid var(--cyan);background:rgba(39,232,255,.12);color:var(--cyan);cursor:pointer;font-size:13px;}
+  .btn:disabled{opacity:.35;cursor:default;}
+  .btn.pink{border-color:var(--pink);color:var(--pink);background:rgba(255,43,214,.12);}
+  .overlay{position:fixed;inset:0;background:rgba(3,4,10,.86);display:flex;align-items:center;justify-content:center;z-index:5;padding:20px;}
+  .overlay.hidden{display:none;}
+  .card{max-width:380px;text-align:center;background:#0d1230;border:1px solid var(--purple);border-radius:20px;padding:26px 22px;box-shadow:0 0 40px rgba(138,75,255,.4);}
+  .card h2{font-size:26px;margin-bottom:10px;color:var(--cyan);} .card p{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">◄ Volver al arcade</a>
+  <header><div class="logo">DOMINÓ NEÓN</div><div class="sub">DOBLE SEIS · VS CPU</div></header>
+  <div class="hud">
+    <div class="box">VOS<b id="sMe">0</b></div>
+    <div class="box cpu">CPU<b id="sCpu">0</b></div>
+    <div class="box">POZO<b id="sPool">14</b></div>
+    <div class="box rec">RÉCORD<b id="sRec">0</b></div>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="panel"><div class="lbl"><span>CPU</span><span id="cpuN"></span></div><div class="row" id="cpuHand"></div></div>
+  <div class="panel"><div class="lbl"><span>MESA</span><span id="ends"></span></div><div class="row" id="board"></div></div>
+  <div class="panel"><div class="lbl"><span>TU MANO</span><span>tocá una ficha verde</span></div><div class="row hand" id="hand"></div></div>
+  <div class="btns"><button class="btn" id="drawBtn">ROBAR DEL POZO</button><button class="btn pink" id="passBtn">PASAR</button></div>
+</div>
+<div class="overlay" id="ov"><div class="card"><h2 id="ovT">🁣 DOMINÓ NEÓN</h2><p id="ovP">Doble seis, 7 fichas cada uno. Jugá una ficha cuyo número coincida con una punta de la mesa; si no tenés, robá del pozo. Quien se queda sin fichas gana las puntas de la mano rival. Primero en llegar a 100 puntos gana la partida.</p><button class="btn" id="goBtn">JUGAR ▶</button></div></div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var KEY="domino-neon-record", TARGET=100;
+  var PIPS={0:[],1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  var me,cpu,pool,chain,turn,over,score={me:0,cpu:0},sel=null,busy=false,round=0,passes=0;
+  var rec=0; try{rec=+localStorage.getItem(KEY)||0;}catch(e){}
+  $("sRec").textContent=rec;
+
+  function half(n){var h=document.createElement("div");h.className="h";for(var i=0;i<9;i++){var c=document.createElement("div");if(PIPS[n].indexOf(i)>=0)c.className="p";h.appendChild(c);}return h;}
+  function tileEl(t,flip){var e=document.createElement("div");e.className="tile"+(t[0]===t[1]?" dbl":"");e.appendChild(half(flip?t[1]:t[0]));e.appendChild(half(flip?t[0]:t[1]));return e;}
+  function say(s,c){var m=$("msg");m.textContent=s;m.style.color=c||"var(--ink)";}
+  function sum(h){return h.reduce(function(a,t){return a+t[0]+t[1];},0);}
+  function ends(){return chain.length?[chain[0][0],chain[chain.length-1][1]]:null;}
+  function fits(t){var e=ends();return !e||t[0]===e[0]||t[1]===e[0]||t[0]===e[1]||t[1]===e[1];}
+  function playable(h){return h.filter(fits);}
+
+  function newRound(){
+    var all=[];for(var a=0;a<=6;a++)for(var b=a;b<=6;b++)all.push([a,b]);
+    for(var i=all.length-1;i>0;i--){var j=Math.random()*(i+1)|0,x=all[i];all[i]=all[j];all[j]=x;}
+    me=all.splice(0,7);cpu=all.splice(0,7);pool=all;chain=[];passes=0;over=false;sel=null;busy=false;round++;
+    // abre quien tiene la ficha doble más alta (o la suma más alta)
+    function best(h){var m=-1;h.forEach(function(t){var v=(t[0]===t[1]?100:0)+t[0]+t[1];if(v>m)m=v;});return m;}
+    turn=best(me)>=best(cpu)?"me":"cpu";
+    say(turn==="me"?"Ronda "+round+": empezás vos":"Ronda "+round+": arranca la CPU",turn==="me"?"var(--cyan)":"var(--pink)");
+    render();
+    if(turn==="cpu")setTimeout(cpuMove,900);
+  }
+
+  function render(){
+    $("sMe").textContent=score.me;$("sCpu").textContent=score.cpu;$("sPool").textContent=pool.length;
+    var ch=$("cpuHand");ch.innerHTML="";cpu.forEach(function(){var e=document.createElement("div");e.className="tile back";ch.appendChild(e);});
+    $("cpuN").textContent=cpu.length+" fichas";
+    var bd=$("board");bd.innerHTML="";
+    var e=ends();$("ends").textContent=e?"puntas: "+e[0]+" · "+e[1]:"vacía";
+    if(sel&&e){addEnd(bd,"L");}
+    chain.forEach(function(t){bd.appendChild(tileEl(t,false));});
+    if(sel&&e){addEnd(bd,"R");}
+    if(!chain.length&&!sel){var s=document.createElement("span");s.style.color="var(--muted)";s.textContent="Tirá la primera ficha";bd.appendChild(s);}
+    var hd=$("hand");hd.innerHTML="";
+    me.forEach(function(t,i){var el=tileEl(t,false);var ok=turn==="me"&&!over&&!busy&&fits(t);el.classList.add(ok?"ok":"no");if(sel&&sel.i===i)el.classList.add("sel");
+      el.onclick=function(){if(ok)pick(i);};hd.appendChild(el);});
+    var canP=turn==="me"&&!over&&!busy;
+    $("drawBtn").disabled=!(canP&&!playable(me).length&&pool.length);
+    $("passBtn").disabled=!(canP&&!playable(me).length&&!pool.length);
+  }
+  function addEnd(bd,side){
+    var t=me[sel.i],e=ends();var ok=side==="L"?(t[0]===e[0]||t[1]===e[0]):(t[0]===e[1]||t[1]===e[1]);
+    var b=document.createElement("div");b.className="end";b.textContent=side==="L"?"◄":"►";
+    if(!ok){b.style.opacity=.25;b.style.cursor="default";}else b.onclick=function(){place("me",sel.i,side);};
+    bd.appendChild(b);
+  }
+  function pick(i){
+    if(!chain.length){place("me",i,"R");return;}
+    var t=me[i],e=ends(),L=t[0]===e[0]||t[1]===e[0],R=t[0]===e[1]||t[1]===e[1];
+    if(L&&!R){place("me",i,"L");return;} if(R&&!L){place("me",i,"R");return;}
+    if(L&&R&&e[0]===e[1]){place("me",i,"R");return;}
+    sel=(sel&&sel.i===i)?null:{i:i};render();say(sel?"Elegí de qué lado ponerla":"","var(--gold)");
+  }
+  function place(who,i,side){
+    var h=who==="me"?me:cpu,t=h.splice(i,1)[0];sel=null;passes=0;
+    if(!chain.length)chain.push(t);
+    else{var e=ends();
+      if(side==="L"){chain.unshift(t[1]===e[0]?[t[0],t[1]]:[t[1],t[0]]);}
+      else{chain.push(t[0]===e[1]?[t[0],t[1]]:[t[1],t[0]]);}
+    }
+    if(!h.length){endRound(who);return;}
+    turn=who==="me"?"cpu":"me";render();
+    if(turn==="cpu"){say("Piensa la CPU…","var(--pink)");setTimeout(cpuMove,800);}
+    else say(playable(me).length?"Tu turno":(pool.length?"No tenés: robá del pozo":"No tenés y no hay pozo: pasá"),"var(--cyan)");
+  }
+  function cpuMove(){
+    if(over)return;
+    var p=playable(cpu);
+    while(!p.length&&pool.length){cpu.push(pool.pop());p=playable(cpu);}
+    if(!p.length){
+      passes++;say("La CPU pasa","var(--pink)");turn="me";render();
+      if(passes>=2){blocked();return;}
+      if(!playable(me).length&&!pool.length){passes++;say("Nadie puede jugar","var(--gold)");blocked();}
+      return;
+    }
+    // elige la ficha de más puntos; prefiere dobles
+    var bi=0,bv=-1;cpu.forEach(function(t,i){if(!fits(t))return;var v=t[0]+t[1]+(t[0]===t[1]?2:0)+Math.random();if(v>bv){bv=v;bi=i;}});
+    var t=cpu[bi],e=ends(),side="R";
+    if(e){var L=t[0]===e[0]||t[1]===e[0],R=t[0]===e[1]||t[1]===e[1];side=L&&R?(Math.random()<.5?"L":"R"):(L?"L":"R");}
+    place("cpu",bi,side);
+  }
+  $("drawBtn").onclick=function(){if(pool.length&&!playable(me).length){me.push(pool.pop());render();say(playable(me).length?"Robaste una que sirve":"Seguí robando","var(--cyan)");}};
+  $("passBtn").onclick=function(){
+    if(playable(me).length||pool.length)return;
+    passes++;turn="cpu";render();
+    if(passes>=2){blocked();return;}
+    setTimeout(cpuMove,700);
+  };
+  function blocked(){
+    var a=sum(me),b=sum(cpu);
+    if(a===b){finishRound(null,0,"Juego trabado: empate");return;}
+    finishRound(a<b?"me":"cpu",Math.abs(a-b),"Juego trabado ("+a+" vs "+b+")");
+  }
+  function endRound(who){
+    var pts=sum(who==="me"?cpu:me);
+    finishRound(who,pts,who==="me"?"¡Dominó! Te quedaste sin fichas":"La CPU hizo dominó");
+  }
+  function finishRound(who,pts,txt){
+    over=true;render();
+    if(who)score[who]+=pts;
+    $("sMe").textContent=score.me;$("sCpu").textContent=score.cpu;
+    say(txt+(who?" · +"+pts+" para "+(who==="me"?"vos":"la CPU"):""),who==="me"?"var(--green)":who?"var(--red)":"var(--gold)");
+    var end=score.me>=TARGET||score.cpu>=TARGET;
+    if(score.me>rec){rec=score.me;try{localStorage.setItem(KEY,rec);}catch(e){}$("sRec").textContent=rec;}
+    setTimeout(function(){
+      $("ovT").textContent=end?(score.me>=TARGET?"🏆 ¡GANASTE!":"💀 PERDISTE"):(who==="me"?"✅ Ronda tuya":who?"❌ Ronda de la CPU":"🤝 Empate");
+      $("ovP").textContent=txt+". Marcador: vos "+score.me+" · CPU "+score.cpu+(end?"":" (se juega a "+TARGET+")")+".";
+      $("goBtn").textContent=end?"NUEVA PARTIDA":"SIGUIENTE RONDA ▶";
+      $("goBtn").dataset.end=end?"1":"";
+      $("ov").classList.remove("hidden");
+    },1400);
+  }
+  $("goBtn").onclick=function(){
+    if(this.dataset.end){score={me:0,cpu:0};round=0;}
+    $("ov").classList.add("hidden");newRound();
+  };
+  window.addEventListener("keydown",function(e){
+    var n=+e.key;if(n>=1&&n<=9&&turn==="me"&&!over&&me[n-1]&&fits(me[n-1]))pick(n-1);
+    if(e.key==="d"||e.key==="D")$("drawBtn").click();
+  });
+})();
+</script>
+</body>
+</html>

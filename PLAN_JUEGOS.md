@@ -122,6 +122,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 62 | 🪢 | Liana Neón | `liana-neon.html` | Arcade / Física | Balanceo con gancho y soga con física de péndulo: mantené apretado para lanzar la soga al ancla más cercana y soltá en el momento justo para salir disparado sobre un mar de lava; orbes verdes, soga que se acorta mientras colgás y anclas cada vez más separadas, con récord de distancia. | ✅ 2026-10-06 |
 | 69 | 💫 | Enjambre Neón | `enjambre-neon.html` | Arcade / Supervivencia | Survivor-like: disparo automático al enemigo más cercano, te movés arrastrando; los bichos sueltan cristales que dan niveles y mejoras a elección (multidisparo, orbitales, nova, imán), con jefes y récord de puntos. | ✅ 2026-10-07 |
 | 70 | 🔴 | Plinko Neón | `plinko-neon.html` | Azar / Física | Plinko: soltá bolitas que rebotan entre clavijas y caen en casilleros con multiplicador; apuesta de 10 a 100 fichas y 3 niveles de riesgo (bajo, medio, alto). Empezás con 1000 fichas; récord = máximo de fichas alcanzado. | ✅ 2026-10-08 |
+| 71 | 🁣 | Dominó Neón | `domino-neon.html` | Estrategia / Azar | Dominó doble seis vs CPU: 7 fichas cada uno, jugá a las puntas de la mesa, robá del pozo si no tenés; dominó o juego trabado suma puntos, primero a 100. | ✅ 2026-10-09 |
 
 ## Reglas para el juego del día
 
