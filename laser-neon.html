@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LÁSER NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:560px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .levels{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:26px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .name{margin-top:6px; font-size:14px; font-weight:800;}
+  .lvl-card .meta{margin-top:4px; font-size:11px; color:var(--muted); letter-spacing:.5px;}
+  .lvl-card .best{margin-top:6px; font-size:11.5px; color:var(--gold); font-weight:700; min-height:14px;}
+  .lvl-card.done{border-color:var(--green);}
+  .lvl-card.done .name::after{content:" ✓"; color:var(--green);}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.moves b{color:var(--pink);}
+  .hud .box.lights b{color:var(--green);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:18px 14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  .grid{display:grid; gap:8px; touch-action:manipulation; user-select:none;}
+  .cell{
+    border-radius:10px; border:2px solid rgba(138,75,255,.35); cursor:pointer;
+    background:rgba(232,246,255,.04); box-shadow:inset 0 0 10px rgba(0,0,0,.5);
+    transition:background .12s ease, box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+  }
+  .cell:active{transform:scale(.93);}
+  .cell.on{
+    background:radial-gradient(circle at 35% 30%, #fff8, transparent 60%), linear-gradient(160deg, var(--cyan), var(--purple));
+    border-color:var(--cyan); box-shadow:0 0 18px rgba(39,232,255,.75), inset 0 0 10px rgba(255,255,255,.25);
+  }
+  .cell.focused{outline:2px dashed rgba(232,246,255,.6); outline-offset:2px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+
+  canvas{display:block; border-radius:14px; touch-action:manipulation; background:rgba(5,7,15,.6); max-width:100%;}
+  .panel{padding:12px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">LÁSER NEÓN</div>
+      <div class="sub">E S P E J O S</div>
+    </header>
+
+    <section id="menu">
+      <p class="hint" style="margin-bottom:6px;">Tocá un espejo para girarlo (/ ↔ \) y guiá cada rayo láser hasta su blanco. Las paredes bloquean el haz. Hacelo con la menor cantidad de giros. Elegí un nivel:</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box lvl">NIVEL<b id="hudLevel">-</b></div>
+        <div class="box moves">GIROS<b id="hudMoves">0</b></div>
+        <div class="box lights">BLANCOS<b id="hudTargets">0/0</b></div>
+      </div>
+      <div class="panel">
+        <canvas id="cv"></canvas>
+        <div class="overlay hidden" id="winOverlay">
+          <div class="picture">🔦</div>
+          <h2>¡BLANCO ALCANZADO!</h2>
+          <div class="final">Giros: <b id="winMoves">0</b> · Par: <b id="winPar">0</b></div>
+          <div class="newrec hidden" id="winRecord">⭐ ¡NUEVO RÉCORD!</div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn ghost" id="btnRetry">OTRO TABLERO</button>
+            <button class="btn" id="btnNext">SIGUIENTE ▶</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="btnrow">
+          <button class="mini" id="btnLevels">☰ Niveles</button>
+          <button class="mini" id="btnReset">↺ Reiniciar</button>
+          <button class="mini" id="btnNew">🎲 Nuevo tablero</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Click / toque en un espejo para girarlo · Flechas mueven el foco, Enter/espacio gira · R reinicia.</p>
+    </section>
+
+    <footer>Neon Arcade · Láser Neón hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LEVELS = [
+    { name:"Primer rayo",   n:4, m:2, e:1, w:1, d:0 },
+    { name:"Zigzag",        n:5, m:3, e:1, w:2, d:1 },
+    { name:"Laberinto",     n:5, m:4, e:1, w:3, d:2 },
+    { name:"Muros y señuelos", n:6, m:5, e:1, w:4, d:3 },
+    { name:"Doble haz",     n:6, m:3, e:2, w:3, d:2 },
+    { name:"Gran espejo",   n:7, m:6, e:1, w:5, d:4 },
+    { name:"Dos rayos",     n:7, m:4, e:2, w:4, d:3 },
+    { name:"Catedral",      n:8, m:7, e:1, w:6, d:5 },
+    { name:"Doble catedral",n:8, m:4, e:2, w:5, d:4 },
+    { name:"Triple haz",    n:8, m:3, e:3, w:4, d:3 }
+  ];
+  var EMOJIS = ["🔦","🪞","💠","🔆","🌈","💎","✨","🔱","🔮","⚡"];
+  var BEAM_COLORS = ["#27e8ff", "#ff2bd6", "#ffd23b"];
+
+  var LS_BEST = "laser-neon-best", LS_DONE = "laser-neon-done";
+  function load(k){ try{ return JSON.parse(localStorage.getItem(k))||{}; }catch(e){ return {}; } }
+  function save(k,o){ try{ localStorage.setItem(k, JSON.stringify(o)); }catch(e){} }
+
+  //#LOGIC-START
+  // Espejos: 1 = "/", 2 = "\\". Direcciones como [dc, dr].
+  function reflect(t, d){ return t === 1 ? [-d[1], -d[0]] : [d[1], d[0]]; }
+  function shuffle(a){
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
+  var DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+
+  // Camina un rayo desde un emisor, doblando en cada espejo, y termina en el blanco.
+  function genPath(n, used, mirrors){
+    for(var attempt=0; attempt<80; attempt++){
+      var r, c, d;
+      var side = Math.floor(Math.random()*4);
+      var k = Math.floor(Math.random()*n);
+      if(side===0){ c=0; r=k; d=[1,0]; }
+      else if(side===1){ c=n-1; r=k; d=[-1,0]; }
+      else if(side===2){ r=0; c=k; d=[0,1]; }
+      else { r=n-1; c=k; d=[0,-1]; }
+      if(used[r+","+c]) continue;
+      var own = {}; own[r+","+c] = true;
+      var path = { emitter:{r:r,c:c,d:d}, mirrors:[], target:null };
+      var ok = true;
+      for(var step=0; step<=mirrors && ok; step++){
+        var lens = shuffle(Array.apply(null,{length:n-1}).map(function(_,i){return i+1;}));
+        var done = false;
+        for(var li=0; li<lens.length && !done; li++){
+          var L = lens[li], good = true, cells = [];
+          for(var s=1; s<=L; s++){
+            var rr=r+d[1]*s, cc=c+d[0]*s;
+            if(rr<0||rr>=n||cc<0||cc>=n||used[rr+","+cc]||own[rr+","+cc]){ good=false; break; }
+            cells.push([rr,cc]);
+          }
+          if(!good) continue;
+          var er=r+d[1]*L, ec=c+d[0]*L;
+          if(step===mirrors){
+            cells.forEach(function(p){ own[p[0]+","+p[1]]=true; });
+            path.target = {r:er,c:ec}; done = true; break;
+          }
+          var turns = shuffle([0,1]);
+          for(var ti=0; ti<2; ti++){
+            var nd = turns[ti]===0 ? [-d[1], d[0]] : [d[1], -d[0]];
+            var nr=er+nd[1], nc=ec+nd[0];
+            if(nr<0||nr>=n||nc<0||nc>=n||used[nr+","+nc]||own[nr+","+nc]) continue;
+            var t = (reflect(1,d)[0]===nd[0] && reflect(1,d)[1]===nd[1]) ? 1 : 2;
+            cells.forEach(function(p){ own[p[0]+","+p[1]]=true; });
+            path.mirrors.push({r:er,c:ec,t:t});
+            r=er; c=ec; d=nd; done = true; break;
+          }
+        }
+        if(!done) ok = false;
+      }
+      if(ok && path.target){
+        path.own = own;
+        return path;
+      }
+    }
+    return null;
+  }
+
+  // Rayo: devuelve los puntos [c,r] del trazado y si pegó en un blanco.
+  function trace(L, em){
+    var pts = [[em.c, em.r]], c=em.c, r=em.r, d=em.d, hit=-1;
+    for(var i=0;i<300;i++){
+      c+=d[0]; r+=d[1];
+      if(c<0||c>=L.n||r<0||r>=L.n){ pts.push([c-d[0]*0.5, r-d[1]*0.5]); break; }
+      var cell = L.grid[r][c];
+      if(cell.k==="wall"){ pts.push([c-d[0]*0.5, r-d[1]*0.5]); break; }
+      if(cell.k==="emit"){ pts.push([c-d[0]*0.5, r-d[1]*0.5]); break; }
+      if(cell.k==="target"){ pts.push([c,r]); hit=cell.i; break; }
+      if(cell.k==="mirror"){ pts.push([c,r]); d = reflect(cell.t, d); }
+    }
+    return { pts:pts, hit:hit };
+  }
+
+  function litCount(L){
+    var lit = {};
+    L.emitters.forEach(function(em){ var t=trace(L,em); if(t.hit>=0) lit[t.hit]=true; });
+    return Object.keys(lit).length;
+  }
+
+  function generate(def){
+    for(var tries=0; tries<300; tries++){
+      var used = {}, paths = [], ok = true;
+      for(var e=0; e<def.e; e++){
+        var p = genPath(def.n, used, def.m);
+        if(!p){ ok=false; break; }
+        for(var k in p.own) used[k]=true;
+        paths.push(p);
+      }
+      if(!ok) continue;
+      var free = [];
+      for(var r=0;r<def.n;r++) for(var c=0;c<def.n;c++) if(!used[r+","+c]) free.push([r,c]);
+      if(free.length < def.w+def.d) continue;
+      shuffle(free);
+      var L = { n:def.n, grid:[], emitters:[], targets:[], par:0, mirrors:[] };
+      for(r=0;r<def.n;r++){ L.grid.push([]); for(c=0;c<def.n;c++) L.grid[r].push({k:"empty"}); }
+      paths.forEach(function(p,i){
+        L.grid[p.emitter.r][p.emitter.c] = {k:"emit", i:i};
+        L.emitters.push({r:p.emitter.r,c:p.emitter.c,d:p.emitter.d,i:i});
+        L.grid[p.target.r][p.target.c] = {k:"target", i:i};
+        L.targets.push({r:p.target.r,c:p.target.c,i:i});
+        p.mirrors.forEach(function(m){
+          var wrong = Math.random() < 0.7;
+          var cell = { k:"mirror", t: wrong ? 3-m.t : m.t, sol:m.t, ang:0 };
+          cell.ang = cell.t===1 ? -Math.PI/4 : Math.PI/4;
+          L.grid[m.r][m.c] = cell; L.mirrors.push({r:m.r,c:m.c});
+        });
+      });
+      for(var i=0;i<def.w;i++){ var q=free.pop(); L.grid[q[0]][q[1]] = {k:"wall"}; }
+      for(i=0;i<def.d;i++){ q=free.pop(); var tt = Math.random()<0.5?1:2;
+        L.grid[q[0]][q[1]] = {k:"mirror", t:tt, sol:tt, ang: tt===1?-Math.PI/4:Math.PI/4, decoy:true}; L.mirrors.push({r:q[0],c:q[1]}); }
+      // Garantizar que el tablero NO arranque resuelto
+      if(litCount(L) === L.targets.length) continue;
+      L.par = 0;
+      L.mirrors.forEach(function(m){ var x=L.grid[m.r][m.c]; if(!x.decoy && x.t!==x.sol) L.par++; });
+      L.mirrors.forEach(function(m){ var x=L.grid[m.r][m.c]; x.t0 = x.t; });
+      return L;
+    }
+    return null;
+  }
+  //#LOGIC-END
+
+  var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  var els = {
+    menu: document.getElementById("menu"), game: document.getElementById("game"),
+    levelGrid: document.getElementById("levelGrid"),
+    hudLevel: document.getElementById("hudLevel"), hudMoves: document.getElementById("hudMoves"),
+    hudTargets: document.getElementById("hudTargets"), win: document.getElementById("winOverlay"),
+    winMoves: document.getElementById("winMoves"), winPar: document.getElementById("winPar"),
+    winRecord: document.getElementById("winRecord")
+  };
+
+  var L = null, levelIndex = -1, moves = 0, won = false, focusR = 0, focusC = 0, size = 400, cell = 50, dpr = 1, winT = 0;
+
+  function resize(){
+    var w = Math.min(520, Math.max(240, (cv.parentElement.clientWidth || 320) - 24));
+    size = L ? Math.floor(w / L.n) * L.n : w;
+    cell = L ? size / L.n : 50;
+    dpr = window.devicePixelRatio || 1;
+    cv.width = size*dpr; cv.height = size*dpr;
+    cv.style.width = size+"px"; cv.style.height = size+"px";
+  }
+
+  function loadLevel(idx){
+    levelIndex = idx;
+    L = generate(LEVELS[idx]);
+    moves = 0; won = false; winT = 0; focusR = 0; focusC = 0;
+    els.win.classList.add("hidden");
+    resize(); updateHud();
+  }
+
+  function resetLevel(){
+    if(!L) return;
+    L.mirrors.forEach(function(m){ var x=L.grid[m.r][m.c]; x.t = x.t0; });
+    moves = 0; won = false; winT = 0;
+    els.win.classList.add("hidden");
+    updateHud();
+  }
+
+  function updateHud(){
+    els.hudLevel.textContent = (levelIndex+1) + "/" + LEVELS.length;
+    els.hudMoves.textContent = moves;
+    els.hudTargets.textContent = litCount(L) + "/" + L.targets.length;
+  }
+
+  function rotate(r, c){
+    if(won || !L) return;
+    var x = L.grid[r][c];
+    if(x.k !== "mirror") return;
+    x.t = 3 - x.t; moves++;
+    updateHud();
+    if(litCount(L) === L.targets.length) onWin();
+  }
+
+  function onWin(){
+    won = true; winT = 0;
+    var best = load(LS_BEST), id = "l"+levelIndex, prev = best[id];
+    var isNew = prev === undefined || moves < prev;
+    if(isNew){ best[id] = moves; save(LS_BEST, best); }
+    var d = load(LS_DONE); d[id] = true; save(LS_DONE, d);
+    els.winMoves.textContent = moves; els.winPar.textContent = L.par;
+    els.winRecord.classList.toggle("hidden", !isNew);
+    document.getElementById("btnNext").classList.toggle("hidden", levelIndex >= LEVELS.length-1);
+    setTimeout(function(){ if(won) els.win.classList.remove("hidden"); }, 900);
+  }
+
+  // ---------- Render ----------
+  function line(a, b, color, w, glow){
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.shadowColor = color; ctx.shadowBlur = glow;
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+  }
+  function draw(ts){
+    requestAnimationFrame(draw);
+    if(!L || els.game.classList.contains("hidden")) return;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,size,size);
+    ctx.shadowBlur = 0;
+    var n = L.n, pulse = 0.5 + 0.5*Math.sin(ts/260);
+    // grilla
+    ctx.strokeStyle = "rgba(39,232,255,.12)"; ctx.lineWidth = 1;
+    for(var i=0;i<=n;i++){
+      ctx.beginPath(); ctx.moveTo(i*cell,0); ctx.lineTo(i*cell,size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,i*cell); ctx.lineTo(size,i*cell); ctx.stroke();
+    }
+    var traces = L.emitters.map(function(em){ return trace(L, em); });
+    var P = function(p){ return [(p[0]+0.5)*cell, (p[1]+0.5)*cell]; };
+    // celdas
+    for(var r=0;r<n;r++) for(var c=0;c<n;c++){
+      var x = L.grid[r][c], cx=(c+0.5)*cell, cy=(r+0.5)*cell;
+      ctx.shadowBlur = 0;
+      if(x.k==="wall"){
+        ctx.fillStyle = "rgba(138,75,255,.28)"; ctx.strokeStyle = "#8a4bff"; ctx.lineWidth = 2;
+        ctx.fillRect(c*cell+4, r*cell+4, cell-8, cell-8); ctx.strokeRect(c*cell+4, r*cell+4, cell-8, cell-8);
+        ctx.beginPath(); ctx.moveTo(c*cell+8,r*cell+cell-8); ctx.lineTo(c*cell+cell-8,r*cell+8); ctx.stroke();
+      } else if(x.k==="emit"){
+        var col = BEAM_COLORS[x.i];
+        ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 16;
+        ctx.beginPath(); ctx.arc(cx, cy, cell*0.26, 0, 7); ctx.fill();
+        ctx.fillStyle = "#031018"; ctx.shadowBlur = 0;
+        ctx.beginPath(); ctx.arc(cx, cy, cell*0.1, 0, 7); ctx.fill();
+      } else if(x.k==="target"){
+        var col2 = BEAM_COLORS[x.i], lit = traces[x.i].hit === x.i;
+        ctx.strokeStyle = col2; ctx.lineWidth = 3; ctx.shadowColor = col2; ctx.shadowBlur = lit ? 26 : 6;
+        ctx.beginPath(); ctx.arc(cx, cy, cell*0.3, 0, 7); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, cell*0.16 + (lit ? pulse*cell*0.08 : 0), 0, 7);
+        if(lit){ ctx.fillStyle = col2; ctx.fill(); } else ctx.stroke();
+      }
+    }
+    // rayos
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    traces.forEach(function(t, i){
+      var col = BEAM_COLORS[i];
+      ctx.strokeStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 14; ctx.lineWidth = 4;
+      ctx.beginPath();
+      t.pts.forEach(function(p, k){ var q=P(p); if(k) ctx.lineTo(q[0],q[1]); else ctx.moveTo(q[0],q[1]); });
+      ctx.stroke();
+      ctx.shadowBlur = 0; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.3; ctx.globalAlpha = .8;
+      ctx.beginPath();
+      t.pts.forEach(function(p, k){ var q=P(p); if(k) ctx.lineTo(q[0],q[1]); else ctx.moveTo(q[0],q[1]); });
+      ctx.stroke(); ctx.globalAlpha = 1;
+    });
+    // espejos (encima del rayo)
+    for(r=0;r<n;r++) for(c=0;c<n;c++){
+      x = L.grid[r][c];
+      if(x.k!=="mirror") continue;
+      var tgt = x.t===1 ? -Math.PI/4 : Math.PI/4;
+      x.ang += (tgt - x.ang) * 0.35;
+      cx=(c+0.5)*cell; cy=(r+0.5)*cell;
+      var h = cell*0.36, dx = Math.cos(x.ang)*h, dy = Math.sin(x.ang)*h;
+      ctx.lineCap = "round";
+      line([cx-dx,cy-dy],[cx+dx,cy+dy], "#e8f6ff", Math.max(4, cell*0.1), 12);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "rgba(138,75,255,.55)";
+      ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 7); ctx.fill();
+    }
+    // foco
+    ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(232,246,255,.55)"; ctx.setLineDash([5,4]); ctx.lineWidth = 2;
+    ctx.strokeRect(focusC*cell+2, focusR*cell+2, cell-4, cell-4); ctx.setLineDash([]);
+    if(won){
+      winT += 0.016;
+      ctx.fillStyle = "rgba(255,255,255," + Math.max(0, .25 - winT*.3) + ")";
+      ctx.fillRect(0,0,size,size);
+    }
+  }
+  requestAnimationFrame(draw);
+
+  // ---------- UI ----------
+  function renderMenu(){
+    var best = load(LS_BEST), done = load(LS_DONE);
+    els.levelGrid.innerHTML = "";
+    LEVELS.forEach(function(lvl, i){
+      var card = document.createElement("div"), id = "l"+i;
+      card.className = "lvl-card" + (done[id] ? " done" : "");
+      card.innerHTML = '<div class="glyph">'+EMOJIS[i]+'</div><div class="name">'+(i+1)+". "+lvl.name+'</div>'+
+        '<div class="meta">'+lvl.n+'×'+lvl.n+' · '+lvl.e+(lvl.e>1?' rayos':' rayo')+'</div>'+
+        '<div class="best">'+(best[id]!==undefined ? "Mejor: "+best[id]+" giros" : "")+'</div>';
+      card.addEventListener("click", function(){
+        els.menu.classList.add("hidden"); els.game.classList.remove("hidden"); loadLevel(i);
+      });
+      els.levelGrid.appendChild(card);
+    });
+  }
+  function goMenu(){ els.game.classList.add("hidden"); els.menu.classList.remove("hidden"); renderMenu(); }
+
+  cv.addEventListener("click", function(e){
+    var rect = cv.getBoundingClientRect();
+    var c = Math.floor((e.clientX-rect.left)/rect.width*L.n), r = Math.floor((e.clientY-rect.top)/rect.height*L.n);
+    if(r<0||c<0||r>=L.n||c>=L.n) return;
+    focusR = r; focusC = c; rotate(r, c);
+  });
+  document.addEventListener("keydown", function(e){
+    if(els.game.classList.contains("hidden") || !L) return;
+    var k = e.key, n = L.n;
+    if(k==="ArrowRight"){ focusC=(focusC+1)%n; e.preventDefault(); }
+    else if(k==="ArrowLeft"){ focusC=(focusC+n-1)%n; e.preventDefault(); }
+    else if(k==="ArrowDown"){ focusR=(focusR+1)%n; e.preventDefault(); }
+    else if(k==="ArrowUp"){ focusR=(focusR+n-1)%n; e.preventDefault(); }
+    else if(k==="Enter"||k===" "){ rotate(focusR, focusC); e.preventDefault(); }
+    else if(k==="r"||k==="R"){ resetLevel(); }
+  });
+  window.addEventListener("resize", function(){ if(L) resize(); });
+  document.getElementById("btnLevels").addEventListener("click", goMenu);
+  document.getElementById("btnMenu").addEventListener("click", goMenu);
+  document.getElementById("btnReset").addEventListener("click", resetLevel);
+  document.getElementById("btnNew").addEventListener("click", function(){ loadLevel(levelIndex); });
+  document.getElementById("btnRetry").addEventListener("click", function(){ loadLevel(levelIndex); });
+  document.getElementById("btnNext").addEventListener("click", function(){
+    if(levelIndex < LEVELS.length-1) loadLevel(levelIndex+1); else goMenu();
+  });
+
+  renderMenu();
+})();
+</script>
+</body>
+</html>

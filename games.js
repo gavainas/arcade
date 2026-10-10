@@ -627,6 +627,13 @@
       controles: "Tocá una ficha verde y, si entra de los dos lados, elegí la punta; botones ROBAR / PASAR; teclado: 1-9 juega esa ficha, D roba",
       fecha: "2026-10-09",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "laser-neon", titulo: "Láser Neón", archivo: "laser-neon.html",
+      emoji: "🪞", categoria: "logica", tags: ["laser", "espejos", "rayo", "puzzle", "logica"],
+      desc: "Puzzle de espejos: tocá los espejos para girarlos (/ ↔ \\) y guiá cada rayo láser hasta su blanco esquivando paredes y señuelos. 10 niveles generados al azar y siempre resolubles, de 1 a 3 rayos, con par de giros y récord por nivel.",
+      controles: "Click / toque sobre un espejo; flechas + Enter con teclado", fecha: "2026-10-10",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -123,6 +123,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 69 | 💫 | Enjambre Neón | `enjambre-neon.html` | Arcade / Supervivencia | Survivor-like: disparo automático al enemigo más cercano, te movés arrastrando; los bichos sueltan cristales que dan niveles y mejoras a elección (multidisparo, orbitales, nova, imán), con jefes y récord de puntos. | ✅ 2026-10-07 |
 | 70 | 🔴 | Plinko Neón | `plinko-neon.html` | Azar / Física | Plinko: soltá bolitas que rebotan entre clavijas y caen en casilleros con multiplicador; apuesta de 10 a 100 fichas y 3 niveles de riesgo (bajo, medio, alto). Empezás con 1000 fichas; récord = máximo de fichas alcanzado. | ✅ 2026-10-08 |
 | 71 | 🁣 | Dominó Neón | `domino-neon.html` | Estrategia / Azar | Dominó doble seis vs CPU: 7 fichas cada uno, jugá a las puntas de la mesa, robá del pozo si no tenés; dominó o juego trabado suma puntos, primero a 100. | ✅ 2026-10-09 |
+| 72 | 🪞 | Láser Neón | `laser-neon.html` | Puzzle de lógica | Espejos y láser: girá espejos (/ ↔ \) para guiar uno a tres rayos hasta sus blancos esquivando paredes y señuelos; 10 niveles generados siempre resolubles, con par de giros. | ✅ 2026-10-10 |
 
 ## Reglas para el juego del día
 

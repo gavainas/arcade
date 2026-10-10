@@ -90,6 +90,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 💫 Enjambre Neón | [`enjambre-neon.html`](enjambre-neon.html) | Survivor neón: tu nave dispara sola mientras te movés; juntá cristales, subí de nivel y elegí mejoras (multidisparo, orbitales, nova, imán) para aguantar al enjambre y a los jefes. Récord guardado. |
 | 🔴 Plinko Neón | [`plinko-neon.html`](plinko-neon.html) | Plinko: soltá bolitas que rebotan entre las clavijas y caen en casilleros con multiplicador. Apuesta de 10 a 100 fichas y 3 niveles de riesgo; empezás con 1000 y el récord es el máximo que juntaste. |
 | 🁣 Dominó Neón | [`domino-neon.html`](domino-neon.html) | Dominó doble seis contra la CPU: 7 fichas cada uno, jugá a las puntas de la mesa, robá del pozo si no tenés y hacé dominó para sumar los puntos del rival. Primero en llegar a 100 gana; récord guardado. |
+| 🪞 Láser Neón | [`laser-neon.html`](laser-neon.html) | Puzzle de espejos: girá los espejos para guiar uno a tres rayos láser hasta sus blancos, esquivando paredes y señuelos. 10 niveles generados al azar y siempre resolubles; récord de giros por nivel. |
 
 ## Sopa de Letras
 
