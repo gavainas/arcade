@@ -34,6 +34,7 @@ const SCALE = 1.5;
 */
 const OVERRIDES = {
   "laser-neon": { steps: [".lvl-card"], wait: 1200 },
+  "ajedrez-neon": { steps: [".lvl-card"], wait: 1200 },
   "domino-neon": { steps: ["#goBtn"], wait: 1500 },
   "cadena-neon": { steps: ["#startBtn"], wait: 1800 },
   "orbitas-neon": { steps: ["#startBtn"], wait: 900 },

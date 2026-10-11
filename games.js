@@ -634,6 +634,13 @@
       desc: "Puzzle de espejos: tocá los espejos para girarlos (/ ↔ \\) y guiá cada rayo láser hasta su blanco esquivando paredes y señuelos. 10 niveles generados al azar y siempre resolubles, de 1 a 3 rayos, con par de giros y récord por nivel.",
       controles: "Click / toque sobre un espejo; flechas + Enter con teclado", fecha: "2026-10-10",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "ajedrez-neon", titulo: "Ajedrez Neón", archivo: "ajedrez-neon.html",
+      emoji: "♛", categoria: "logica", tags: ["ajedrez", "estrategia", "cpu", "tablero", "clásico", "jaque mate"],
+      desc: "Ajedrez completo contra la CPU con las reglas de verdad: enroque, captura al paso, coronación, jaque, mate y tablas. Tres dificultades (la CPU piensa de 1 a 3 jugadas adelante), pista, deshacer, notación de jugadas y récord de ganadas, empates y perdidas.",
+      controles: "Tocá una pieza y su destino; teclado: flechas + Enter, U deshace, H pista, N nueva partida", fecha: "2026-10-11",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

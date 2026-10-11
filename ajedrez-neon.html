@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AJEDREZ NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+  .hint{font-size:12px; color:var(--muted); text-align:center; line-height:1.5;}
+
+  .levels{display:grid; grid-template-columns:1fr; gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px 16px; color:var(--ink); font-family:inherit;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3);
+    box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .name{font-size:16px; font-weight:800;}
+  .lvl-card .meta{margin-top:4px; font-size:12px; color:var(--muted);}
+  .lvl-card .best{margin-top:6px; font-size:12px; color:var(--gold); font-weight:700; min-height:15px;}
+
+  .hud{display:flex; gap:8px; margin:4px 0 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7));
+    border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:15px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.st b{color:var(--green);}
+  .hud .box.st.warn b{color:var(--red);}
+  .hud .box.st.think b{color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:10px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  .board{display:grid; grid-template-columns:repeat(8,1fr); aspect-ratio:1/1; width:100%; border-radius:10px; overflow:hidden;
+    border:2px solid rgba(39,232,255,.35); box-shadow:0 0 22px rgba(39,232,255,.18); user-select:none; touch-action:manipulation;}
+  .sq{position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-size:clamp(24px,8.4vw,46px); line-height:1; container-type:size;}
+  .sq.l{background:#1a2550;} .sq.d{background:#0d1230;}
+  .sq .pc{position:relative; z-index:2; transition:transform .12s ease; font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Apple Symbols",serif;}
+  .pc.w{color:#e8fbff; text-shadow:0 0 6px var(--cyan), 0 0 14px var(--cyan);}
+  .pc.b{color:#ffd0f6; text-shadow:0 0 6px var(--pink), 0 0 14px var(--pink);}
+  .sq.sel{background:rgba(39,232,255,.45) !important;}
+  .sq.sel .pc{transform:scale(1.12);}
+  .sq.last{box-shadow:inset 0 0 0 3px rgba(255,210,59,.55);}
+  .sq.chk{background:radial-gradient(circle, rgba(255,84,112,.8), rgba(255,84,112,.15) 75%) !important;}
+  .sq.foc{outline:2px dashed rgba(232,246,255,.7); outline-offset:-3px; z-index:3;}
+  .sq .dot{position:absolute; width:26%; height:26%; border-radius:50%; background:var(--green); box-shadow:0 0 10px var(--green); opacity:.85; z-index:1;}
+  .sq.cap::after{content:""; position:absolute; inset:4%; border-radius:50%; border:3px solid var(--pink); box-shadow:0 0 10px var(--pink); z-index:1;}
+  .coord{position:absolute; z-index:1; font-size:9px; color:rgba(127,166,200,.7); font-family:system-ui,sans-serif; pointer-events:none;}
+  .coord.r{top:2px; left:3px;} .coord.f{bottom:1px; right:3px;}
+
+  .overlay{position:absolute; inset:10px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.92); backdrop-filter:blur(3px); gap:12px; z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .overlay .picture{font-size:46px;}
+  .overlay .final{color:var(--muted); font-size:14px;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+  .btn{cursor:pointer; border:none; border-radius:12px; padding:11px 20px; font-weight:800; font-size:14px; letter-spacing:1px; font-family:inherit;
+    color:#05070f; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 0 18px rgba(39,232,255,.4);}
+  .btn.ghost{background:transparent; color:var(--cyan); border:1px solid rgba(39,232,255,.5); box-shadow:none;}
+  .controls{margin-top:12px; display:flex; justify-content:center;}
+  .mini{cursor:pointer; background:rgba(20,28,58,.7); color:var(--muted); border:1px solid rgba(138,75,255,.3);
+    border-radius:10px; padding:8px 12px; font-size:12px; font-family:inherit;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+  .moves{margin-top:12px; min-height:34px; max-height:74px; overflow-y:auto; font-size:12px; color:var(--muted); line-height:1.6;
+    background:rgba(10,14,30,.6); border:1px solid rgba(138,75,255,.2); border-radius:10px; padding:6px 10px;}
+  .moves b{color:var(--ink);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">AJEDREZ NEÓN</div>
+      <div class="sub">R E Y  Y  D A M A</div>
+    </header>
+
+    <section id="menu">
+      <p class="hint">Ajedrez completo contra la CPU: jugás con las blancas (cian). Enroque, captura al paso, coronación y jaque mate. Elegí la dificultad.</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box">NIVEL<b id="hudLevel">-</b></div>
+        <div class="box st" id="hudStBox">ESTADO<b id="hudState">Tu turno</b></div>
+        <div class="box">JUGADAS<b id="hudMoves">0</b></div>
+      </div>
+      <div class="panel">
+        <div class="board" id="board"></div>
+        <div class="overlay hidden" id="endOverlay">
+          <div class="picture" id="endPic">🏆</div>
+          <h2 id="endTitle">¡JAQUE MATE!</h2>
+          <div class="final" id="endSub"></div>
+          <div class="btnrow">
+            <button class="btn ghost" id="btnMenu">MENÚ</button>
+            <button class="btn" id="btnAgain">REVANCHA</button>
+          </div>
+        </div>
+      </div>
+      <div class="moves" id="moveList"></div>
+      <div class="controls">
+        <div class="btnrow">
+          <button class="mini" id="btnLevels">☰ Menú</button>
+          <button class="mini" id="btnUndo">↶ Deshacer</button>
+          <button class="mini" id="btnHint">💡 Pista</button>
+          <button class="mini" id="btnNew">↺ Nueva partida</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Tocá una pieza y luego su destino · Flechas mueven el foco, Enter/espacio selecciona · U deshace · H pista · N nueva.</p>
+    </section>
+
+    <footer>Neon Arcade · Ajedrez Neón hecho en HTML5 puro</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LEVELS = [
+    { id:"facil",   name:"♟ Principiante", meta:"La CPU juega a ojo: mira una jugada adelante y a veces se distrae.", depth:1, rnd:0.35 },
+    { id:"medio",   name:"♞ Aficionado",   meta:"Piensa dos jugadas adelante. Cuidá tus piezas.",                       depth:2, rnd:0.08 },
+    { id:"dificil", name:"♛ Maestro",      meta:"Piensa tres jugadas adelante y no regala nada.",                       depth:3, rnd:0 }
+  ];
+  var GLYPH = { k:"♚", q:"♛", r:"♜", b:"♝", n:"♞", p:"♟" };
+  var VAL = { p:100, n:320, b:330, r:500, q:900, k:0 };
+  var LS_KEY = "ajedrez-neon-stats";
+  function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY))||{}; }catch(e){ return {}; } }
+  function save(o){ try{ localStorage.setItem(LS_KEY, JSON.stringify(o)); }catch(e){} }
+
+  /* ---------- Motor ---------- */
+  // Tablero: array de 64, índice = fila*8+col, fila 0 = rank 8 (arriba). Blancas MAYÚSCULA, negras minúscula.
+  var START = "rnbqkbnr" + "pppppppp" + "        " + "        " + "        " + "        " + "PPPPPPPP" + "RNBQKBNR";
+  function isW(ch){ return ch !== " " && ch === ch.toUpperCase(); }
+  function colorOf(ch){ return ch === " " ? null : (isW(ch) ? "w" : "b"); }
+  function newState(){
+    return { b:START.split(""), turn:"w", cast:{K:true,Q:true,k:true,q:true}, ep:-1, half:0, hist:[] };
+  }
+  var KN = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  var KG = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  var DIAG = [[-1,-1],[-1,1],[1,-1],[1,1]], ORTH = [[-1,0],[1,0],[0,-1],[0,1]];
+
+  function attacked(b, sq, by){
+    var r = (sq>>3), c = sq&7, i, d, rr, cc, ch;
+    var pr = by === "w" ? r+1 : r-1, pch = by === "w" ? "P" : "p";
+    if(pr>=0 && pr<8){
+      if(c>0 && b[pr*8+c-1] === pch) return true;
+      if(c<7 && b[pr*8+c+1] === pch) return true;
+    }
+    var nch = by === "w" ? "N" : "n", kch = by === "w" ? "K" : "k";
+    for(i=0;i<8;i++){
+      rr=r+KN[i][0]; cc=c+KN[i][1];
+      if(rr>=0&&rr<8&&cc>=0&&cc<8 && b[rr*8+cc] === nch) return true;
+      rr=r+KG[i][0]; cc=c+KG[i][1];
+      if(rr>=0&&rr<8&&cc>=0&&cc<8 && b[rr*8+cc] === kch) return true;
+    }
+    var q = by === "w" ? "Q" : "q", rk = by === "w" ? "R" : "r", bs = by === "w" ? "B" : "b";
+    for(d=0;d<4;d++){
+      rr=r+DIAG[d][0]; cc=c+DIAG[d][1];
+      while(rr>=0&&rr<8&&cc>=0&&cc<8){ ch=b[rr*8+cc]; if(ch!==" "){ if(ch===q||ch===bs) return true; break; } rr+=DIAG[d][0]; cc+=DIAG[d][1]; }
+      rr=r+ORTH[d][0]; cc=c+ORTH[d][1];
+      while(rr>=0&&rr<8&&cc>=0&&cc<8){ ch=b[rr*8+cc]; if(ch!==" "){ if(ch===q||ch===rk) return true; break; } rr+=ORTH[d][0]; cc+=ORTH[d][1]; }
+    }
+    return false;
+  }
+  function kingSq(b, color){ var k = color === "w" ? "K" : "k"; return b.indexOf(k); }
+  function inCheck(s, color){ var k = kingSq(s.b, color); return k >= 0 && attacked(s.b, k, color === "w" ? "b" : "w"); }
+
+  function pseudo(s){
+    var b = s.b, me = s.turn, op = me === "w" ? "b" : "w", out = [], sq, ch, t, r, c, i, d, rr, cc;
+    function add(f,to,extra){ var m = { f:f, t:to, cap:b[to] }; if(extra) for(var k in extra) m[k]=extra[k]; out.push(m); }
+    for(sq=0; sq<64; sq++){
+      ch = b[sq]; if(ch === " " || colorOf(ch) !== me) continue;
+      r = sq>>3; c = sq&7; t = ch.toLowerCase();
+      if(t === "p"){
+        var dir = me === "w" ? -1 : 1, start = me === "w" ? 6 : 1, last = me === "w" ? 0 : 7;
+        rr = r+dir;
+        if(rr>=0 && rr<8){
+          if(b[rr*8+c] === " "){
+            if(rr === last) add(sq, rr*8+c, {promo:true}); else add(sq, rr*8+c);
+            if(r === start && b[(r+2*dir)*8+c] === " ") add(sq, (r+2*dir)*8+c, {dbl:true});
+          }
+          for(d=-1; d<=1; d+=2){
+            cc = c+d; if(cc<0||cc>7) continue;
+            var tg = rr*8+cc;
+            if(b[tg] !== " " && colorOf(b[tg]) === op){ if(rr === last) add(sq,tg,{promo:true}); else add(sq,tg); }
+            else if(tg === s.ep) add(sq, tg, {ep:true, cap:me === "w" ? "p" : "P"});
+          }
+        }
+      } else if(t === "n" || t === "k"){
+        var arr = t === "n" ? KN : KG;
+        for(i=0;i<8;i++){
+          rr=r+arr[i][0]; cc=c+arr[i][1];
+          if(rr<0||rr>7||cc<0||cc>7) continue;
+          var q2 = rr*8+cc; if(b[q2] === " " || colorOf(b[q2]) === op) add(sq,q2);
+        }
+        if(t === "k"){
+          var home = me === "w" ? 60 : 4;
+          if(sq === home && !attacked(b, sq, op)){
+            var ks = me === "w" ? s.cast.K : s.cast.k, qs = me === "w" ? s.cast.Q : s.cast.q;
+            var rook = me === "w" ? "R" : "r";
+            if(ks && b[home+1] === " " && b[home+2] === " " && b[home+3] === rook && !attacked(b,home+1,op) && !attacked(b,home+2,op))
+              add(sq, home+2, {castle:"K"});
+            if(qs && b[home-1] === " " && b[home-2] === " " && b[home-3] === " " && b[home-4] === rook && !attacked(b,home-1,op) && !attacked(b,home-2,op))
+              add(sq, home-2, {castle:"Q"});
+          }
+        }
+      } else {
+        var dirs = t === "b" ? DIAG : t === "r" ? ORTH : DIAG.concat(ORTH);
+        for(d=0; d<dirs.length; d++){
+          rr=r+dirs[d][0]; cc=c+dirs[d][1];
+          while(rr>=0&&rr<8&&cc>=0&&cc<8){
+            var q3 = rr*8+cc;
+            if(b[q3] === " ") add(sq,q3);
+            else { if(colorOf(b[q3]) === op) add(sq,q3); break; }
+            rr+=dirs[d][0]; cc+=dirs[d][1];
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  function apply(s, m){
+    var b = s.b.slice(), ch = b[m.f], me = s.turn, cast = { K:s.cast.K, Q:s.cast.Q, k:s.cast.k, q:s.cast.q }, ep = -1;
+    b[m.t] = ch; b[m.f] = " ";
+    if(m.ep) b[m.t + (me === "w" ? 8 : -8)] = " ";
+    if(m.promo) b[m.t] = me === "w" ? "Q" : "q";
+    if(m.castle === "K"){ b[m.t-1] = b[m.t+1]; b[m.t+1] = " "; }
+    if(m.castle === "Q"){ b[m.t+1] = b[m.t-2]; b[m.t-2] = " "; }
+    if(m.dbl) ep = (m.f + m.t) >> 1;
+    if(ch === "K"){ cast.K = cast.Q = false; } if(ch === "k"){ cast.k = cast.q = false; }
+    if(m.f === 63 || m.t === 63) cast.K = false; if(m.f === 56 || m.t === 56) cast.Q = false;
+    if(m.f === 7 || m.t === 7) cast.k = false;   if(m.f === 0 || m.t === 0) cast.q = false;
+    var half = (ch.toLowerCase() === "p" || m.cap !== " ") ? 0 : s.half + 1;
+    return { b:b, turn:me === "w" ? "b" : "w", cast:cast, ep:ep, half:half, hist:s.hist };
+  }
+  function legal(s){
+    var ps = pseudo(s), out = [], me = s.turn;
+    for(var i=0;i<ps.length;i++){ if(!inCheck(apply(s, ps[i]), me)) out.push(ps[i]); }
+    return out;
+  }
+
+  /* ---------- Evaluación y búsqueda ---------- */
+  function center(sq){ var r = sq>>3, c = sq&7; return 3 - Math.max(Math.abs(r-3.5), Math.abs(c-3.5)) + 0.5; }
+  function evaluate(s){ // desde el punto de vista de las blancas
+    var sc = 0, b = s.b, bishopsW = 0, bishopsB = 0;
+    for(var i=0;i<64;i++){
+      var ch = b[i]; if(ch === " ") continue;
+      var t = ch.toLowerCase(), w = isW(ch), v = VAL[t], r = i>>3, bonus = 0;
+      if(t === "p") bonus = center(i)*4 + (w ? (6-r) : (r-1)) * 6;
+      else if(t === "n") bonus = center(i)*10;
+      else if(t === "b"){ bonus = center(i)*5; if(w) bishopsW++; else bishopsB++; }
+      else if(t === "q") bonus = center(i)*2;
+      else if(t === "r") bonus = (w ? r === 1 : r === 6) ? 12 : 0;
+      else if(t === "k") bonus = (w ? r === 7 : r === 0) ? 10 : -center(i)*4;
+      sc += (w ? 1 : -1) * (v + bonus);
+    }
+    if(bishopsW >= 2) sc += 25; if(bishopsB >= 2) sc -= 25;
+    return sc;
+  }
+  function order(ms){
+    ms.sort(function(a,b){
+      var sa = (a.cap !== " " ? 10*VAL[a.cap.toLowerCase()] : 0) + (a.promo ? 800 : 0);
+      var sb = (b.cap !== " " ? 10*VAL[b.cap.toLowerCase()] : 0) + (b.promo ? 800 : 0);
+      return sb - sa;
+    });
+    return ms;
+  }
+  var MATE = 100000;
+  function search(s, depth, alpha, beta, ply){
+    var ms = legal(s);
+    if(!ms.length) return inCheck(s, s.turn) ? -(MATE - ply) : 0;
+    if(s.half >= 100) return 0;
+    if(depth === 0){ var e = evaluate(s); return s.turn === "w" ? e : -e; }
+    order(ms);
+    for(var i=0;i<ms.length;i++){
+      var v = -search(apply(s, ms[i]), depth-1, -beta, -alpha, ply+1);
+      if(v >= beta) return beta;
+      if(v > alpha) alpha = v;
+    }
+    return alpha;
+  }
+  function bestMove(s, depth, rnd){
+    var ms = order(legal(s)), best = null, bv = -Infinity, scored = [];
+    for(var i=0;i<ms.length;i++){
+      var v = -search(apply(s, ms[i]), depth-1, -Infinity, Infinity, 1) + Math.random()*6;
+      scored.push({ m:ms[i], v:v });
+      if(v > bv){ bv = v; best = ms[i]; }
+    }
+    if(rnd && Math.random() < rnd && scored.length > 1){
+      scored.sort(function(a,b){ return b.v - a.v; });
+      return scored[Math.min(scored.length-1, 1 + Math.floor(Math.random()*Math.min(3, scored.length-1)))].m;
+    }
+    return best;
+  }
+
+  /* ---------- Interfaz ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var boardEl = $("board"), cells = [];
+  var level = null, S = null, undoStack = [], selected = -1, targets = [], lastMove = null, focus = 52,
+      over = false, thinking = false, moveLog = [], hintMove = null, token = 0;
+
+  function buildBoard(){
+    boardEl.innerHTML = ""; cells = [];
+    for(var i=0;i<64;i++){
+      var d = document.createElement("div"), r = i>>3, c = i&7;
+      d.className = "sq " + (((r+c)&1) ? "d" : "l"); d.dataset.i = i;
+      if(c === 0){ var cr = document.createElement("span"); cr.className = "coord r"; cr.textContent = 8-r; d.appendChild(cr); }
+      if(r === 7){ var cf = document.createElement("span"); cf.className = "coord f"; cf.textContent = "abcdefgh"[c]; d.appendChild(cf); }
+      boardEl.appendChild(d); cells.push(d);
+    }
+  }
+  boardEl.addEventListener("click", function(e){
+    var el = e.target.closest(".sq"); if(!el) return;
+    focus = +el.dataset.i; clickSq(focus);
+  });
+
+  function sqName(i){ return "abcdefgh"[i&7] + (8-(i>>3)); }
+  function render(){
+    var chkSq = (!over && S && inCheck(S, S.turn)) ? kingSq(S.b, S.turn) : -1;
+    if(over && S && inCheck(S, S.turn)) chkSq = kingSq(S.b, S.turn);
+    for(var i=0;i<64;i++){
+      var el = cells[i], ch = S.b[i];
+      var keep = el.querySelectorAll(".coord"), cls = "sq " + ((((i>>3)+(i&7))&1) ? "d" : "l");
+      if(i === selected) cls += " sel";
+      if(lastMove && (i === lastMove.f || i === lastMove.t)) cls += " last";
+      if(i === chkSq) cls += " chk";
+      if(i === focus) cls += " foc";
+      var isT = targets.indexOf(i) >= 0;
+      if(isT && ch !== " ") cls += " cap";
+      if(hintMove && (i === hintMove.f || i === hintMove.t)) cls += " sel";
+      el.className = cls;
+      while(el.lastChild && !el.lastChild.classList.contains("coord")) el.removeChild(el.lastChild);
+      if(ch !== " "){
+        var p = document.createElement("span"); p.className = "pc " + (isW(ch) ? "w" : "b"); p.textContent = GLYPH[ch.toLowerCase()];
+        el.appendChild(p);
+      }
+      if(isT && ch === " "){ var dot = document.createElement("span"); dot.className = "dot"; el.appendChild(dot); }
+    }
+    $("hudMoves").textContent = Math.ceil(moveLog.length / 2);
+    $("btnUndo").disabled = thinking || over || undoStack.length === 0;
+    $("btnHint").disabled = thinking || over;
+    var list = $("moveList"), html = "";
+    for(var k=0;k<moveLog.length;k++){ html += (k%2===0 ? "<b>"+(k/2+1)+".</b> " : "") + moveLog[k] + " "; }
+    list.innerHTML = html || "La partida empieza: movés vos con las blancas.";
+    list.scrollTop = list.scrollHeight;
+  }
+  function setState(txt, cls){
+    $("hudState").textContent = txt;
+    $("hudStBox").className = "box st" + (cls ? " "+cls : "");
+  }
+  function refreshStatus(){
+    if(over) return;
+    var chk = inCheck(S, S.turn);
+    if(S.turn === "w") setState(chk ? "¡JAQUE!" : "Tu turno", chk ? "warn" : "");
+    else setState(chk ? "Jaque a la CPU" : "Pensando…", "think");
+  }
+
+  function startGame(lv){
+    level = lv; token++;
+    S = newState(); undoStack = []; moveLog = []; lastMove = null; selected = -1; targets = []; hintMove = null;
+    over = false; thinking = false; focus = 52;
+    $("hudLevel").textContent = lv.name.replace(/^\S+\s/, "");
+    $("endOverlay").classList.add("hidden");
+    $("menu").classList.add("hidden"); $("game").classList.remove("hidden");
+    refreshStatus(); render();
+  }
+
+  function clickSq(i){
+    if(over || thinking || S.turn !== "w") return;
+    hintMove = null;
+    var ch = S.b[i];
+    if(selected >= 0 && targets.indexOf(i) >= 0){ playMove(i); return; }
+    if(ch !== " " && isW(ch)){
+      selected = i;
+      targets = legal(S).filter(function(m){ return m.f === i; }).map(function(m){ return m.t; });
+    } else { selected = -1; targets = []; }
+    render();
+  }
+
+  function notation(s, m, after){
+    var ch = s.b[m.f], t = ch.toLowerCase(), txt;
+    if(m.castle) txt = m.castle === "K" ? "O-O" : "O-O-O";
+    else {
+      txt = (t === "p" ? "" : t.toUpperCase()) + (m.cap !== " " ? ((t === "p" ? "abcdefgh"[m.f&7] : "") + "x") : "") + sqName(m.t);
+      if(m.promo) txt += "=D";
+    }
+    if(inCheck(after, after.turn)) txt += legal(after).length ? "+" : "#";
+    return txt;
+  }
+
+  function playMove(to){
+    var m = legal(S).filter(function(x){ return x.f === selected && x.t === to; })[0];
+    if(!m) return;
+    selected = -1; targets = [];
+    commit(m);
+    if(!over){ thinking = true; setState("Pensando…","think"); render(); var my = token; setTimeout(function(){ if(my === token) cpuMove(); }, 420); }
+  }
+  function commit(m){
+    undoStack.push({ s:S, log:moveLog.slice(), last:lastMove });
+    var after = apply(S, m);
+    var key = after.b.join("") + after.turn; after.hist = S.hist.concat([key]);
+    moveLog.push(notation(S, m, after));
+    S = after; lastMove = m;
+    checkEnd(); refreshStatus(); render();
+  }
+  function checkEnd(){
+    var ms = legal(S), reason = null, res = null;
+    var rep = 0; for(var i=0;i<S.hist.length;i++) if(S.hist[i] === S.hist[S.hist.length-1]) rep++;
+    if(!ms.length){
+      if(inCheck(S, S.turn)) res = S.turn === "b" ? "win" : "lose"; else { res = "draw"; reason = "Rey ahogado: tablas."; }
+    } else if(S.half >= 100){ res = "draw"; reason = "Regla de los 50 movimientos: tablas."; }
+    else if(rep >= 3){ res = "draw"; reason = "Triple repetición: tablas."; }
+    else if(insufficient(S.b)){ res = "draw"; reason = "Material insuficiente: tablas."; }
+    if(!res) return;
+    over = true; thinking = false;
+    var st = load(); var o = st[level.id] || { w:0, l:0, d:0 };
+    if(res === "win") o.w++; else if(res === "lose") o.l++; else o.d++;
+    st[level.id] = o; save(st);
+    $("endPic").textContent = res === "win" ? "🏆" : res === "lose" ? "💀" : "🤝";
+    $("endTitle").textContent = res === "win" ? "¡JAQUE MATE!" : res === "lose" ? "TE HICIERON MATE" : "TABLAS";
+    $("endSub").textContent = (res === "win" ? "¡Le ganaste a la CPU! " : res === "lose" ? "La CPU se lleva esta. " : reason + " ") +
+      "Récord en " + level.name.replace(/^\S+\s/, "") + ": " + o.w + "G · " + o.d + "E · " + o.l + "P";
+    setState(res === "win" ? "¡Ganaste!" : res === "lose" ? "Perdiste" : "Tablas", res === "lose" ? "warn" : "");
+    setTimeout(function(){ $("endOverlay").classList.remove("hidden"); }, 700);
+  }
+  function insufficient(b){
+    var minor = 0;
+    for(var i=0;i<64;i++){ var t = b[i].toLowerCase(); if(t === " " || t === "k") continue; if(t === "n" || t === "b") minor++; else return false; }
+    return minor <= 1;
+  }
+  function cpuMove(){
+    if(over) return;
+    var m = bestMove(S, level.depth, level.rnd);
+    thinking = false;
+    if(m) commit(m);
+  }
+
+  $("btnUndo").onclick = function(){
+    if(thinking || over || !undoStack.length) return;
+    // deshace hasta volver a ser el turno de las blancas
+    var u = null;
+    while(undoStack.length){ u = undoStack.pop(); if(u.s.turn === "w") break; }
+    if(u){ S = u.s; moveLog = u.log; lastMove = u.last; }
+    selected = -1; targets = []; hintMove = null; refreshStatus(); render();
+  };
+  $("btnHint").onclick = function(){
+    if(thinking || over || S.turn !== "w") return;
+    selected = -1; targets = [];
+    hintMove = bestMove(S, 2, 0); render();
+  };
+  $("btnNew").onclick = $("btnAgain").onclick = function(){ startGame(level); };
+  function toMenu(){ token++; thinking = false; $("game").classList.add("hidden"); $("menu").classList.remove("hidden"); buildMenu(); }
+  $("btnLevels").onclick = $("btnMenu").onclick = toMenu;
+
+  document.addEventListener("keydown", function(e){
+    if($("game").classList.contains("hidden")) return;
+    var k = e.key, r = focus>>3, c = focus&7;
+    if(k === "ArrowUp") r = Math.max(0, r-1); else if(k === "ArrowDown") r = Math.min(7, r+1);
+    else if(k === "ArrowLeft") c = Math.max(0, c-1); else if(k === "ArrowRight") c = Math.min(7, c+1);
+    else if(k === "Enter" || k === " "){ e.preventDefault(); clickSq(focus); return; }
+    else if(k === "u" || k === "U"){ $("btnUndo").click(); return; }
+    else if(k === "h" || k === "H"){ $("btnHint").click(); return; }
+    else if(k === "n" || k === "N"){ $("btnNew").click(); return; }
+    else if(k === "Escape"){ selected = -1; targets = []; render(); return; }
+    else return;
+    e.preventDefault(); focus = r*8+c; render();
+  });
+
+  function buildMenu(){
+    var g = $("levelGrid"), st = load(); g.innerHTML = "";
+    LEVELS.forEach(function(lv){
+      var o = st[lv.id], b = document.createElement("button");
+      b.className = "lvl-card";
+      b.innerHTML = '<div class="name">'+lv.name+'</div><div class="meta">'+lv.meta+'</div><div class="best">'+
+        (o ? "Tu récord: "+o.w+" ganadas · "+o.d+" empates · "+o.l+" perdidas" : "Sin partidas todavía")+'</div>';
+      b.onclick = function(){ startGame(lv); };
+      g.appendChild(b);
+    });
+  }
+
+  buildBoard(); buildMenu();
+  window.__chess = { newState:newState, legal:legal, apply:apply, inCheck:inCheck, search:search, bestMove:bestMove };
+})();
+</script>
+</body>
+</html>
