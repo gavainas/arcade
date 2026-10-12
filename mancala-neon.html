@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SEMILLAS NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--green:#39ff9e;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+  .stage{width:100%;max-width:560px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:12px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));background-size:300% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:4px;font-size:11px;}
+  .hud{display:flex;gap:8px;margin-bottom:8px;}
+  .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .box b{display:block;font-size:18px;font-weight:900;margin-top:2px;color:var(--cyan);}
+  .box.cpu b{color:var(--pink);} .box.rec b{color:var(--gold);}
+  .msg{text-align:center;font-weight:800;letter-spacing:1px;min-height:22px;margin:4px 0 8px;font-size:14px;}
+  .board{display:grid;grid-template-columns:minmax(46px,.9fr) repeat(6,1fr) minmax(46px,.9fr);grid-template-rows:1fr 1fr;gap:7px;padding:12px;border-radius:22px;background:linear-gradient(180deg,rgba(20,28,58,.8),rgba(10,14,30,.8));border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);margin-bottom:12px;}
+  .pit,.store{position:relative;border-radius:50%;border:2px solid rgba(39,232,255,.35);background:radial-gradient(circle at 50% 40%,#101a3e,#060a1c);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(15px,4.5vw,22px);color:var(--ink);aspect-ratio:1;user-select:none;transition:box-shadow .15s,border-color .15s,transform .15s;}
+  .pit.cpu{border-color:rgba(255,43,214,.4);}
+  .store{grid-row:1/3;border-radius:999px;aspect-ratio:auto;font-size:clamp(20px,6vw,30px);}
+  .store.me{grid-column:8;border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 18px rgba(39,232,255,.3) inset;}
+  .store.cp{grid-column:1;border-color:var(--pink);color:var(--pink);box-shadow:0 0 18px rgba(255,43,214,.3) inset;}
+  .pit.ok{cursor:pointer;border-color:var(--green);box-shadow:0 0 14px rgba(57,255,158,.55);}
+  .pit.ok:hover{transform:scale(1.07);}
+  .pit.sel{border-color:var(--gold);box-shadow:0 0 18px var(--gold);}
+  .pit.hit{border-color:var(--gold);box-shadow:0 0 16px var(--gold);}
+  .pit.hint{outline:3px dashed var(--gold);outline-offset:2px;}
+  .pit .k{position:absolute;bottom:-1px;right:3px;font-size:9px;color:var(--muted);font-weight:600;}
+  .pit .dots{position:absolute;inset:0;pointer-events:none;}
+  .dot{position:absolute;width:7px;height:7px;border-radius:50%;opacity:.8;}
+  .num{position:relative;z-index:1;text-shadow:0 0 6px #000,0 0 6px #000;}
+  .pop{animation:pop .3s;} @keyframes pop{50%{transform:scale(1.2);}}
+  .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;}
+  .btn{font:inherit;font-weight:800;letter-spacing:1px;padding:11px 18px;border-radius:12px;border:1px solid var(--cyan);background:rgba(39,232,255,.12);color:var(--cyan);cursor:pointer;font-size:13px;}
+  .btn:disabled{opacity:.35;cursor:default;}
+  .btn.pink{border-color:var(--pink);color:var(--pink);background:rgba(255,43,214,.12);}
+  .btn.on{background:var(--cyan);color:#05101e;}
+  .help{text-align:center;color:var(--muted);font-size:12px;line-height:1.5;}
+  .overlay{position:fixed;inset:0;background:rgba(3,4,10,.86);display:flex;align-items:center;justify-content:center;z-index:5;padding:20px;}
+  .overlay.hidden{display:none;}
+  .card{max-width:380px;text-align:center;background:#0d1230;border:1px solid var(--purple);border-radius:20px;padding:26px 22px;box-shadow:0 0 40px rgba(138,75,255,.4);}
+  .card h2{font-size:26px;margin-bottom:10px;color:var(--cyan);} .card p{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">◄ Volver al arcade</a>
+  <header><div class="logo">SEMILLAS NEÓN</div><div class="sub">MANCALA · KALAH VS CPU</div></header>
+  <div class="hud">
+    <div class="box">VOS<b id="sMe">0</b></div>
+    <div class="box cpu">CPU<b id="sCpu">0</b></div>
+    <div class="box rec">GANADAS<b id="sW">0</b></div>
+    <div class="box">RACHA<b id="sS">0</b></div>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="board" id="board"></div>
+  <div class="btns">
+    <button class="btn" id="bHint">💡 PISTA</button>
+    <button class="btn pink" id="bNew">NUEVA PARTIDA</button>
+  </div>
+  <div class="btns" id="diffs"></div>
+  <div class="help">Tocá uno de tus hoyos (fila de abajo) o usá las teclas 1–6.<br>Si la última semilla cae en tu depósito, jugás de nuevo. Si cae en un hoyo tuyo vacío, capturás las semillas del hoyo de enfrente.</div>
+</div>
+<div class="overlay" id="ov"><div class="card"><h2 id="ovT">SEMILLAS NEÓN</h2><p id="ovP"></p><button class="btn" id="ovB">JUGAR</button></div></div>
+<script>
+(function(){
+"use strict";
+var ME=0,CP=1, STORE=[6,13];
+var board, turn, busy, over, diff=1, sel=-1, hintPit=-1;
+var DIFFS=[["FÁCIL",1],["MEDIO",4],["DIFÍCIL",8]];
+var st={w:0,s:0};
+try{var j=JSON.parse(localStorage.getItem("semillas-neon")||"{}");st.w=j.w|0;st.s=j.s|0;diff=j.d==null?1:j.d;}catch(e){}
+function save(){try{localStorage.setItem("semillas-neon",JSON.stringify({w:st.w,s:st.s,d:diff}));}catch(e){}}
+var $=function(i){return document.getElementById(i);};
+var COLORS=["#27e8ff","#ff2bd6","#8a4bff","#39ff9e","#ffd23b"];
+
+function owner(i){return i<6?ME:(i>6&&i<13?CP:-1);}
+function pitsOf(p){return p===ME?[0,1,2,3,4,5]:[7,8,9,10,11,12];}
+
+/* ---- lógica pura (sobre arrays) ---- */
+function sow(b,i,p){ // devuelve {extra, steps:[idx...], capture:{from,to,n}}
+  var n=b[i],pos=i,steps=[],skip=STORE[1-p];
+  b[i]=0;
+  while(n>0){pos=(pos+1)%14;if(pos===skip)continue;b[pos]++;n--;steps.push(pos);}
+  var cap=null;
+  if(pos!==STORE[p]&&owner(pos)===p&&b[pos]===1&&b[12-pos]>0){
+    cap={a:pos,b:12-pos,n:b[12-pos]+1};
+    b[STORE[p]]+=cap.n;b[pos]=0;b[12-pos]=0;
+  }
+  return {extra:pos===STORE[p],steps:steps,cap:cap};
+}
+function sideEmpty(b,p){return pitsOf(p).every(function(i){return b[i]===0;});}
+function sweep(b){
+  [ME,CP].forEach(function(p){pitsOf(p).forEach(function(i){b[STORE[p]]+=b[i];b[i]=0;});});
+}
+function moves(b,p){return pitsOf(p).filter(function(i){return b[i]>0;});}
+function evalB(b){return b[13]-b[6];} // positivo = bien para CPU
+function search(b,p,d,al,be){ // minimax, CPU maximiza
+  if(sideEmpty(b,ME)||sideEmpty(b,CP)){var c=b.slice();sweep(c);return {v:(c[13]-c[6])*100};}
+  if(d===0)return {v:evalB(b)};
+  var ms=moves(b,p),best=null;
+  // heurística de orden: jugadas que dan turno extra primero
+  ms.sort(function(x,y){return ((x+b[x])%14===STORE[p]?0:1)-((y+b[y])%14===STORE[p]?0:1);});
+  for(var k=0;k<ms.length;k++){
+    var nb=b.slice(),r=sow(nb,ms[k],p),np=r.extra?p:1-p,v=search(nb,np,d-1,al,be).v;
+    if(p===CP){if(best===null||v>best.v){best={v:v,m:ms[k]};}al=Math.max(al,v);}
+    else{if(best===null||v<best.v){best={v:v,m:ms[k]};}be=Math.min(be,v);}
+    if(be<=al)break;
+  }
+  return best;
+}
+function bestMove(p,depth){
+  var ms=moves(board,p);
+  if(depth<=1&&p===CP&&Math.random()<.45)return ms[Math.floor(Math.random()*ms.length)];
+  var r=search(board.slice(),p,depth,-1e9,1e9);
+  if(p===ME){ // para la pista el jugador minimiza
+    return r.m;
+  }
+  return r.m;
+}
+
+/* ---- UI ---- */
+function build(){
+  var h='<div class="store cp" id="s13"><span class="num" id="n13">0</span></div>';
+  for(var c=0;c<6;c++){var i=12-c;h+='<div class="pit cpu" id="p'+i+'" style="grid-column:'+(c+2)+';grid-row:1"><div class="dots" id="d'+i+'"></div><span class="num" id="n'+i+'">4</span></div>';}
+  for(var c2=0;c2<6;c2++){h+='<div class="pit" id="p'+c2+'" data-i="'+c2+'" style="grid-column:'+(c2+2)+';grid-row:2"><div class="dots" id="d'+c2+'"></div><span class="num" id="n'+c2+'">4</span><span class="k">'+(c2+1)+'</span></div>';}
+  h+='<div class="store me" id="s6"><span class="num" id="n6">0</span></div>';
+  $("board").innerHTML=h;
+  for(var q=0;q<6;q++)(function(i){$("p"+i).addEventListener("click",function(){play(i);});})(q);
+}
+function dotsHTML(n,seed){
+  var s="",m=Math.min(n,14);
+  for(var k=0;k<m;k++){
+    var a=(k*137.5+seed*53)*Math.PI/180,r=14+((k*7+seed)%5)*4;
+    s+='<i class="dot" style="left:'+(50+Math.cos(a)*r*.9-4)+'%;top:'+(50+Math.sin(a)*r*.9-4)+'%;background:'+COLORS[(k+seed)%5]+'"></i>';
+  }
+  return s;
+}
+function render(){
+  for(var i=0;i<14;i++){
+    var n=$("n"+i);if(!n)continue;
+    if(n.textContent!=String(board[i])){n.textContent=board[i];n.classList.remove("pop");void n.offsetWidth;n.classList.add("pop");}
+    var d=$("d"+i);if(d&&i!==6&&i!==13)d.innerHTML=dotsHTML(board[i],i);
+    var p=$("p"+i);
+    if(p){
+      var ok=!busy&&!over&&turn===ME&&i<6&&board[i]>0;
+      p.classList.toggle("ok",ok);
+      p.classList.toggle("hint",i===hintPit);
+    }
+  }
+  $("sMe").textContent=board[6];$("sCpu").textContent=board[13];
+  $("sW").textContent=st.w;$("sS").textContent=st.s;
+}
+function say(t,c){var m=$("msg");m.textContent=t;m.style.color=c||"var(--ink)";}
+function flash(i,ms){var p=$("p"+i)||$("s"+i);if(!p)return;p.classList.add("hit");setTimeout(function(){p.classList.remove("hit");},ms||220);}
+
+function newGame(){
+  board=[4,4,4,4,4,4,0,4,4,4,4,4,4,0];
+  turn=ME;busy=false;over=false;hintPit=-1;
+  $("ov").classList.add("hidden");
+  render();say("Tu turno — elegí un hoyo",  "var(--cyan)");
+}
+function play(i){
+  if(busy||over||turn!==ME||i>5||board[i]===0)return;
+  hintPit=-1;doMove(i,ME);
+}
+function doMove(i,p){
+  busy=true;
+  var tmp=board.slice(),r=sow(tmp,i,p);
+  // animación paso a paso sobre el tablero real
+  var seeds=board[i];board[i]=0;render();
+  var k=0;
+  (function step(){
+    if(k<r.steps.length){
+      board[r.steps[k]]++;flash(r.steps[k],160);render();k++;setTimeout(step,170);
+    }else{
+      if(r.cap){
+        board[r.cap.a]=0;board[r.cap.b]=0;board[STORE[p]]+=r.cap.n;
+        flash(r.cap.a,500);flash(r.cap.b,500);
+        say(p===ME?"¡Captura de "+r.cap.n+"!":"La CPU captura "+r.cap.n,"var(--gold)");
+      }
+      render();
+      setTimeout(function(){after(r,p);},r.cap?650:200);
+    }
+  })();
+}
+function after(r,p){
+  busy=false;
+  if(sideEmpty(board,ME)||sideEmpty(board,CP)){sweep(board);render();return finish();}
+  if(r.extra){
+    say(p===ME?"¡Turno extra! Jugá otra vez":"La CPU juega de nuevo",p===ME?"var(--green)":"var(--pink)");
+    turn=p;
+  }else{
+    turn=1-p;
+    if(!r.cap)say(turn===ME?"Tu turno":"Piensa la CPU…",turn===ME?"var(--cyan)":"var(--pink)");
+  }
+  render();
+  if(turn===CP){busy=true;render();setTimeout(cpuMove,650);}
+}
+function cpuMove(){
+  var m=bestMove(CP,diff);
+  busy=false;doMove(m,CP);
+}
+function finish(){
+  over=true;
+  var a=board[6],b=board[13],t,p;
+  if(a>b){st.w++;st.s++;t="¡GANASTE!";p=a+" a "+b+". ";}
+  else if(b>a){st.s=0;t="PERDISTE";p=a+" a "+b+". La CPU se lleva esta.";}
+  else{t="EMPATE";p="Empate "+a+" a "+b+".";}
+  save();render();
+  say(t,a>b?"var(--green)":b>a?"var(--pink)":"var(--gold)");
+  setTimeout(function(){
+    $("ovT").textContent=t;$("ovP").textContent=p+(a>b?" Racha: "+st.s+".":"");
+    $("ovB").textContent="OTRA PARTIDA";$("ov").classList.remove("hidden");
+  },900);
+}
+
+function drawDiffs(){
+  var h="";
+  DIFFS.forEach(function(d,k){h+='<button class="btn'+(k===diff?' on':'')+'" data-k="'+k+'">'+d[0]+'</button>';});
+  $("diffs").innerHTML=h;
+  [].forEach.call($("diffs").children,function(b){b.addEventListener("click",function(){diff=+b.dataset.k;save();drawDiffs();newGame();});});
+}
+// diff guarda el índice; profundidad = DIFFS[diff][1]
+var _bm=bestMove;bestMove=function(p,depth){return _bm(p,DIFFS[diff][1]);};
+
+$("bNew").addEventListener("click",function(){if(!over&&!busy&&st.s>0){st.s=0;save();}newGame();});
+$("bHint").addEventListener("click",function(){
+  if(busy||over||turn!==ME)return;
+  // pista: simular al jugador como minimizador
+  var r=search(board.slice(),ME,6,-1e9,1e9);
+  hintPit=r&&r.m!=null?r.m:moves(board,ME)[0];render();
+});
+$("ovB").addEventListener("click",newGame);
+document.addEventListener("keydown",function(e){
+  if(e.key>="1"&&e.key<="6")play(+e.key-1);
+  else if(e.key==="n"||e.key==="N")newGame();
+  else if(e.key==="h"||e.key==="H")$("bHint").click();
+  else if(e.key==="Enter"&&!$("ov").classList.contains("hidden"))newGame();
+});
+
+build();drawDiffs();
+board=[4,4,4,4,4,4,0,4,4,4,4,4,4,0];turn=ME;busy=true;over=false;render();
+$("ovP").innerHTML="Sembrá tus semillas en sentido antihorario. Terminá en tu depósito para repetir turno y capturá hoyos rivales cayendo en uno de los tuyos vacíos. Gana quien junte más semillas.";
+})();
+</script>
+</body>
+</html>

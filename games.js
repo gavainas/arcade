@@ -641,6 +641,13 @@
       desc: "Ajedrez completo contra la CPU con las reglas de verdad: enroque, captura al paso, coronación, jaque, mate y tablas. Tres dificultades (la CPU piensa de 1 a 3 jugadas adelante), pista, deshacer, notación de jugadas y récord de ganadas, empates y perdidas.",
       controles: "Tocá una pieza y su destino; teclado: flechas + Enter, U deshace, H pista, N nueva partida", fecha: "2026-10-11",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "mancala-neon", titulo: "Semillas Neón", archivo: "mancala-neon.html",
+      emoji: "🌱", categoria: "logica", tags: ["mancala", "kalah", "estrategia", "cpu", "tablero", "semillas"],
+      desc: "Mancala (Kalah) contra la CPU: sembrá tus semillas en sentido antihorario, terminá en tu depósito para repetir turno y capturá los hoyos rivales. 3 dificultades, pista y racha de victorias.",
+      controles: "Tocá uno de tus hoyos; teclado: 1–6 juegan el hoyo, H pista, N nueva partida", fecha: "2026-10-12",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

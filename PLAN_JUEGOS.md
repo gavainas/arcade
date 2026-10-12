@@ -125,6 +125,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 71 | 🁣 | Dominó Neón | `domino-neon.html` | Estrategia / Azar | Dominó doble seis vs CPU: 7 fichas cada uno, jugá a las puntas de la mesa, robá del pozo si no tenés; dominó o juego trabado suma puntos, primero a 100. | ✅ 2026-10-09 |
 | 72 | 🪞 | Láser Neón | `laser-neon.html` | Puzzle de lógica | Espejos y láser: girá espejos (/ ↔ \) para guiar uno a tres rayos hasta sus blancos esquivando paredes y señuelos; 10 niveles generados siempre resolubles, con par de giros. | ✅ 2026-10-10 |
 | 73 | ♛ | Ajedrez Neón | `ajedrez-neon.html` | Estrategia | Ajedrez completo vs CPU (blancas): enroque, captura al paso, coronación, jaque mate y tablas. 3 dificultades con búsqueda alfa-beta de 1 a 3 jugadas, pista, deshacer y récord de G/E/P. | ✅ 2026-10-11 |
+| 74 | 🌱 | Semillas Neón | `mancala-neon.html` | Estrategia | Mancala (Kalah) vs CPU: sembrá semillas en sentido antihorario, turno extra si terminás en tu depósito y capturá el hoyo de enfrente cayendo en uno tuyo vacío. 3 dificultades, pista y racha. | ✅ 2026-10-12 |
 
 ## Reglas para el juego del día
 
