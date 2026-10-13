@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TINTA NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:480px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+  .intro{margin-top:12px; font-size:13px; color:var(--muted); line-height:1.5; text-align:center;}
+  .levels{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; color:var(--ink); font-family:inherit; border-radius:16px; padding:14px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 8px 24px rgba(0,0,0,.35); transition:transform .15s, border-color .15s;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:26px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .name{margin-top:6px; font-size:14px; font-weight:800;}
+  .lvl-card .meta{margin-top:4px; font-size:11px; color:var(--muted); letter-spacing:.5px;}
+  .lvl-card .best{margin-top:6px; font-size:13px; color:var(--gold); font-weight:700; min-height:16px; letter-spacing:2px;}
+  .lvl-card.done{border-color:var(--green);}
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.ball b{color:var(--green);}
+  .hud .box.ink b{color:var(--pink);}
+  .panel{position:relative; border-radius:20px; padding:12px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.45);}
+  canvas{display:block; width:100%; aspect-ratio:4/5; border-radius:12px; touch-action:none; user-select:none; cursor:crosshair; background:#050814;}
+  .inkbar{height:8px; border-radius:6px; background:rgba(138,75,255,.18); margin-top:10px; overflow:hidden;}
+  .inkbar i{display:block; height:100%; width:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); box-shadow:0 0 10px var(--pink); transition:width .08s;}
+  .overlay{position:absolute; inset:12px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px; padding:20px; background:rgba(5,7,15,.82); backdrop-filter:blur(3px);}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px; background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .stars{font-size:34px; letter-spacing:6px; color:var(--gold); filter:drop-shadow(0 0 12px rgba(255,210,59,.6));}
+  .final{font-size:14px;} .final b{color:var(--gold);}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px; color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(39,232,255,.3); transition:transform .15s;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  .hint{margin-top:10px; font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink); border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; transition:.15s;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini.go{background:linear-gradient(90deg,var(--cyan),var(--purple)); color:#031018; border:none;}
+  .mini:disabled{opacity:.4; cursor:default;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">◄ Volver al arcade</a>
+  <header>
+    <div class="logo">TINTA NEÓN</div>
+    <div class="sub">DIBUJÁ EL CAMINO</div>
+  </header>
+
+  <section id="menu">
+    <p class="intro">Las bolitas caen solas. Con tu dedo o el mouse <b style="color:var(--pink)">dibujá líneas de tinta</b> para guiarlas hasta la copa dorada, esquivando los rojos. La tinta es limitada: ¡cuanta más te sobre, más estrellas!</p>
+    <div class="levels" id="levels"></div>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="hud">
+      <div class="box">NIVEL<b id="hLvl">1</b></div>
+      <div class="box ball">EN LA COPA<b id="hBall">0/3</b></div>
+      <div class="box ink">TINTA<b id="hInk">100%</b></div>
+    </div>
+    <div class="panel">
+      <canvas id="cv"></canvas>
+      <div class="inkbar"><i id="inkBar"></i></div>
+      <div class="overlay hidden" id="ov">
+        <h2 id="ovTitle"></h2>
+        <div class="stars" id="ovStars"></div>
+        <div class="final" id="ovText"></div>
+        <div class="btnrow">
+          <button class="btn" id="ovMain"></button>
+          <button class="btn ghost" id="ovMenu">NIVELES</button>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="mini go" id="goBtn">▶ SOLTAR (Espacio)</button>
+      <button class="mini" id="undoBtn">↶ Deshacer (Z)</button>
+      <button class="mini" id="clearBtn">🧹 Borrar (C)</button>
+      <button class="mini" id="resetBtn">↻ Reiniciar (R)</button>
+      <button class="mini" id="menuBtn">☰ Niveles</button>
+    </div>
+    <div class="hint">Arrastrá sobre el tablero para dibujar. Podés seguir dibujando mientras caen las bolitas. Las rojas matan; si una se queda trabada mucho rato, se pierde.</div>
+  </section>
+  <footer>Neon Arcade · Tinta Neón</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var W = 400, H = 500, R = 7, G = 900;
+var KEY = "tintaNeon.v1";
+
+/* Niveles: e = x de los emisores (y=34), n = bolitas por emisor, need = mínimo en la copa,
+   cup = [x, y] (fondo de la copa), ink = largo de tinta, w = paredes [x1,y1,x2,y2],
+   h = zonas rojas [x,y,w,h], m = zonas rojas móviles {x,y,w,h,ax,ay,s} */
+var LEVELS = [
+  {name:"Primer trazo", glyph:"✏️", e:[90], n:3, need:3, ink:420, cup:[310,488], w:[], h:[]},
+  {name:"Rodeo", glyph:"↩️", e:[200], n:4, need:3, ink:520, cup:[60,488],
+    w:[[110,230,290,230]], h:[]},
+  {name:"Piso de lava", glyph:"🌋", e:[330], n:4, need:3, ink:560, cup:[70,488],
+    w:[], h:[[0,478,26,22],[104,478,296,22]]},
+  {name:"Zigzag", glyph:"⚡", e:[60], n:4, need:4, ink:620, cup:[330,488],
+    w:[[0,170,250,190],[400,290,150,310]], h:[[170,330,60,14]]},
+  {name:"Dos canillas", glyph:"💧", e:[70,330], n:3, need:5, ink:700, cup:[200,488],
+    w:[[140,300,260,300]], h:[[0,478,150,22],[250,478,150,22],[185,200,30,70]]},
+  {name:"Copa en el aire", glyph:"🏆", e:[80], n:4, need:3, ink:640, cup:[320,330],
+    w:[[240,250,240,420],[0,330,160,330]], h:[[170,380,150,120]]},
+  {name:"Péndulo rojo", glyph:"🔴", e:[200], n:4, need:3, ink:620, cup:[200,488],
+    w:[], h:[], m:[{x:200,y:250,w:120,h:14,ax:130,ay:0,s:1.6}]},
+  {name:"Gran final", glyph:"🌠", e:[60,340], n:3, need:5, ink:760, cup:[200,488],
+    w:[[120,160,280,160]], h:[[0,478,140,22],[260,478,140,22],[180,320,40,70]],
+    m:[{x:200,y:250,w:70,h:12,ax:140,ay:0,s:1.9}]}
+];
+
+var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+var dpr = Math.min(2, window.devicePixelRatio || 1);
+cv.width = W*dpr; cv.height = H*dpr;
+
+var save = {};
+try { save = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ save = {}; }
+function persist(){ try { localStorage.setItem(KEY, JSON.stringify(save)); } catch(e){} }
+
+var $ = function(id){ return document.getElementById(id); };
+var lvl = 0, L, strokes, inkUsed, balls, walls, running, spawnT, spawned, total, scored, lost, tm, over, drawing, cur, parts, lastT;
+
+function buildMenu(){
+  var box = $("levels"); box.innerHTML = "";
+  LEVELS.forEach(function(l, i){
+    var b = document.createElement("button");
+    var s = save[i] || 0;
+    b.className = "lvl-card" + (s ? " done" : "");
+    b.innerHTML = '<div class="glyph">'+l.glyph+'</div><div class="name">'+(i+1)+'. '+l.name+'</div>' +
+      '<div class="meta">'+(l.e.length*l.n)+' bolitas · mín. '+l.need+'</div>' +
+      '<div class="best">'+(s ? "★".repeat(s)+"☆".repeat(3-s) : "☆☆☆")+'</div>';
+    b.onclick = function(){ start(i); };
+    box.appendChild(b);
+  });
+}
+
+function rectSegs(x,y,w,h){ return [[x,y,x+w,y],[x+w,y,x+w,y+h],[x+w,y+h,x,y+h],[x,y+h,x,y]]; }
+
+function start(i){
+  lvl = i; L = LEVELS[i];
+  strokes = []; inkUsed = 0; balls = []; parts = [];
+  running = false; spawnT = 0; spawned = 0; scored = 0; lost = 0; tm = 0; over = false; drawing = false; cur = null;
+  total = L.e.length * L.n;
+  walls = [[2,0,2,H],[W-2,0,W-2,H]].concat(L.w);
+  var cx = L.cup[0], cy = L.cup[1];
+  // la copa: fondo y dos paredes inclinadas
+  walls.push([cx-30,cy,cx+30,cy],[cx-34,cy-44,cx-30,cy],[cx+34,cy-44,cx+30,cy]);
+  $("menu").classList.add("hidden"); $("game").classList.remove("hidden"); $("ov").classList.add("hidden");
+  $("goBtn").disabled = false;
+  hud(); lastT = performance.now();
+}
+
+function hud(){
+  $("hLvl").textContent = lvl+1;
+  $("hBall").textContent = scored+"/"+total;
+  var left = Math.max(0, 1 - inkUsed/L.ink);
+  $("hInk").textContent = Math.round(left*100)+"%";
+  $("inkBar").style.width = (left*100)+"%";
+}
+
+function go(){ if(!running && !over){ running = true; $("goBtn").disabled = true; } }
+
+/* ---------- dibujo ---------- */
+function pos(ev){
+  var r = cv.getBoundingClientRect();
+  return {x:(ev.clientX-r.left)*W/r.width, y:(ev.clientY-r.top)*H/r.height};
+}
+cv.addEventListener("pointerdown", function(ev){
+  if(over) return;
+  ev.preventDefault(); try{ cv.setPointerCapture(ev.pointerId); }catch(e){}
+  drawing = true; cur = {pts:[pos(ev)]}; strokes.push(cur);
+});
+cv.addEventListener("pointermove", function(ev){
+  if(!drawing) return;
+  ev.preventDefault();
+  var p = pos(ev), a = cur.pts[cur.pts.length-1];
+  var d = Math.hypot(p.x-a.x, p.y-a.y);
+  if(d < 6) return;
+  if(inkUsed + d > L.ink){
+    var k = (L.ink - inkUsed)/d;
+    if(k > 0.05){ cur.pts.push({x:a.x+(p.x-a.x)*k, y:a.y+(p.y-a.y)*k}); inkUsed = L.ink; }
+    drawing = false; hud(); return;
+  }
+  inkUsed += d; cur.pts.push(p); hud();
+});
+function endDraw(){
+  if(!drawing) return; drawing = false;
+  if(cur && cur.pts.length < 2) strokes.pop();
+}
+cv.addEventListener("pointerup", endDraw);
+cv.addEventListener("pointercancel", endDraw);
+
+function strokeLen(s){ var t=0; for(var i=1;i<s.pts.length;i++) t+=Math.hypot(s.pts[i].x-s.pts[i-1].x, s.pts[i].y-s.pts[i-1].y); return t; }
+function undo(){ if(over||!strokes.length) return; var s = strokes.pop(); inkUsed = Math.max(0, inkUsed - strokeLen(s)); drawing=false; hud(); }
+function clearInk(){ if(over) return; strokes = []; inkUsed = 0; drawing=false; hud(); }
+
+/* ---------- física ---------- */
+function collide(b, x1,y1,x2,y2, rest){
+  var dx=x2-x1, dy=y2-y1, l2=dx*dx+dy*dy, t = l2 ? ((b.x-x1)*dx+(b.y-y1)*dy)/l2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  var px=x1+dx*t, py=y1+dy*t, nx=b.x-px, ny=b.y-py, d=Math.hypot(nx,ny), rr=R+1.5;
+  if(d >= rr) return;
+  if(d < 1e-6){ nx=-dy; ny=dx; d=Math.hypot(nx,ny)||1; }
+  nx/=d; ny/=d;
+  b.x += nx*(rr-d); b.y += ny*(rr-d);
+  var vn = b.vx*nx + b.vy*ny;
+  if(vn < 0){
+    var tx=-ny, ty=nx, vt=b.vx*tx+b.vy*ty;
+    vn = -vn*rest; vt *= 0.995;
+    b.vx = nx*vn + tx*vt; b.vy = ny*vn + ty*vt;
+  }
+}
+function movers(){
+  return (L.m||[]).map(function(m){
+    return {x: m.x + m.ax*Math.sin(tm*m.s) - m.w/2, y: m.y + m.ay*Math.sin(tm*m.s) - m.h/2, w:m.w, h:m.h};
+  });
+}
+function hitRect(b, r){
+  var cx = Math.max(r.x, Math.min(b.x, r.x+r.w)), cy = Math.max(r.y, Math.min(b.y, r.y+r.h));
+  return Math.hypot(b.x-cx, b.y-cy) < R-1;
+}
+function burst(x,y,col,n){
+  for(var i=0;i<n;i++){ var a=Math.random()*6.283, s=40+Math.random()*140;
+    parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.6+Math.random()*.4,c:col}); }
+}
+function step(dt){
+  tm += dt;
+  if(running){
+    spawnT -= dt;
+    if(spawned < total && spawnT <= 0){
+      var ei = spawned % L.e.length;
+      balls.push({x:L.e[ei]+(Math.random()-.5)*4, y:34, vx:(Math.random()-.5)*20, vy:0, still:0, hue:ei});
+      spawned++; spawnT = 0.75;
+    }
+  }
+  var mv = movers(), cx=L.cup[0], cy=L.cup[1];
+  var SUB = 6, h = dt/SUB;
+  for(var k=0;k<SUB;k++){
+    for(var i=0;i<balls.length;i++){
+      var b = balls[i]; if(b.dead) continue;
+      b.vy += G*h; b.x += b.vx*h; b.y += b.vy*h;
+      for(var w=0; w<walls.length; w++) collide(b, walls[w][0],walls[w][1],walls[w][2],walls[w][3], .4);
+      for(var s=0; s<strokes.length; s++){
+        var p = strokes[s].pts;
+        for(var j=1;j<p.length;j++) collide(b, p[j-1].x,p[j-1].y,p[j].x,p[j].y, .3);
+      }
+    }
+  }
+  for(var i=0;i<balls.length;i++){
+    var b = balls[i]; if(b.dead) continue;
+    var sp = Math.hypot(b.vx,b.vy);
+    b.still = sp < 14 ? b.still+dt : 0;
+    var dead = false, why = "";
+    // en la copa
+    if(Math.abs(b.x-cx) < 28 && b.y > cy-34 && b.y < cy-2 && b.still > .35){
+      b.dead = true; scored++; burst(b.x,b.y,"#ffd23b",18); hud(); continue;
+    }
+    for(var q=0;q<L.h.length && !dead;q++){ var r=L.h[q]; if(hitRect(b,{x:r[0],y:r[1],w:r[2],h:r[3]})) dead=true; }
+    for(var q=0;q<mv.length && !dead;q++) if(hitRect(b,mv[q])) dead=true;
+    if(b.y > H+30 || b.still > 3.5) dead = true;
+    if(dead){ b.dead = true; lost++; burst(b.x,b.y,"#ff5470",14); }
+  }
+  balls = balls.filter(function(b){ return !b.dead; });
+  for(var i=parts.length-1;i>=0;i--){ var p=parts[i]; p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=300*dt; if(p.life<=0) parts.splice(i,1); }
+  if(running && !over && spawned >= total && balls.length === 0) finish();
+}
+
+function finish(){
+  over = true;
+  var ok = scored >= L.need, left = 1 - inkUsed/L.ink, stars = 0;
+  if(ok){ stars = scored === total && left > .35 ? 3 : (scored === total ? 2 : 1); }
+  if(ok && stars > (save[lvl]||0)){ save[lvl] = stars; persist(); }
+  $("ovTitle").textContent = ok ? (stars===3 ? "¡PERFECTO!" : "¡NIVEL SUPERADO!") : "NO ALCANZÓ";
+  $("ovStars").textContent = ok ? "★".repeat(stars)+"☆".repeat(3-stars) : "";
+  $("ovText").innerHTML = "En la copa: <b>"+scored+"/"+total+"</b> (mínimo "+L.need+")<br>Tinta sobrante: <b>"+Math.round(Math.max(0,left)*100)+"%</b>" +
+    (ok && stars<3 ? "<br><small>3★: salvá todas las bolitas y gastá menos de 65% de la tinta</small>" : "");
+  var main = $("ovMain");
+  if(ok && lvl < LEVELS.length-1){ main.textContent = "SIGUIENTE ▶"; main.onclick = function(){ start(lvl+1); }; }
+  else if(ok){ main.textContent = "VOLVER A JUGAR"; main.onclick = function(){ start(lvl); }; }
+  else { main.textContent = "REINTENTAR"; main.onclick = function(){ start(lvl); }; }
+  setTimeout(function(){ $("ov").classList.remove("hidden"); }, 500);
+}
+
+/* ---------- render ---------- */
+function glowLine(pts, col, wd, blur){
+  ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.shadowColor = col; ctx.shadowBlur = blur;
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.stroke();
+}
+function render(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H); ctx.lineCap="round"; ctx.lineJoin="round";
+  // emisores
+  ctx.shadowBlur = 0;
+  L.e.forEach(function(x, i){
+    ctx.strokeStyle = "#27e8ff"; ctx.shadowColor="#27e8ff"; ctx.shadowBlur=12; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(x, 20, 14, Math.PI, 0); ctx.lineTo(x+14,26); ctx.lineTo(x-14,26); ctx.closePath(); ctx.stroke();
+  });
+  // paredes
+  ctx.shadowBlur=10;
+  for(var i=2;i<walls.length;i++){
+    var w = walls[i], isCup = i >= walls.length-3;
+    var col = isCup ? "#ffd23b" : "#8a4bff";
+    glowLine([{x:w[0],y:w[1]},{x:w[2],y:w[3]}], col, 4, 12);
+  }
+  glowLine([{x:2,y:0},{x:2,y:H}], "rgba(138,75,255,.5)", 2, 6);
+  glowLine([{x:W-2,y:0},{x:W-2,y:H}], "rgba(138,75,255,.5)", 2, 6);
+  // zonas rojas
+  var pulse = .55 + .25*Math.sin(tm*5);
+  L.h.forEach(function(r){ hazard(r[0],r[1],r[2],r[3],pulse); });
+  movers().forEach(function(r){ hazard(r.x,r.y,r.w,r.h,pulse); });
+  // tinta
+  strokes.forEach(function(s){ if(s.pts.length>1) glowLine(s.pts, "#ff2bd6", 4, 14); });
+  // copa: brillo interior
+  var cx=L.cup[0], cy=L.cup[1];
+  ctx.shadowBlur=0; ctx.fillStyle="rgba(255,210,59,"+(.08+.05*Math.sin(tm*3))+")";
+  ctx.fillRect(cx-30, cy-40, 60, 40);
+  // bolitas
+  balls.forEach(function(b){
+    var g = ctx.createRadialGradient(b.x-2,b.y-2,1,b.x,b.y,R+1);
+    g.addColorStop(0,"#fff"); g.addColorStop(.4,"#39ff9e"); g.addColorStop(1,"#0a8a55");
+    ctx.shadowColor="#39ff9e"; ctx.shadowBlur=14; ctx.fillStyle=g;
+    ctx.beginPath(); ctx.arc(b.x,b.y,R,0,6.283); ctx.fill();
+  });
+  parts.forEach(function(p){ ctx.globalAlpha=Math.max(0,p.life*1.6); ctx.fillStyle=p.c; ctx.shadowColor=p.c; ctx.shadowBlur=8; ctx.fillRect(p.x-2,p.y-2,4,4); });
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+  if(!running && !over && !strokes.length){
+    ctx.fillStyle="rgba(232,246,255,.55)"; ctx.font="600 14px system-ui,sans-serif"; ctx.textAlign="center";
+    ctx.fillText("Dibujá un camino y tocá SOLTAR", W/2, H/2);
+  }
+}
+function hazard(x,y,w,h,pulse){
+  ctx.shadowColor="#ff5470"; ctx.shadowBlur=14;
+  ctx.fillStyle="rgba(255,84,112,"+(pulse*.45)+")"; ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle="#ff5470"; ctx.lineWidth=2; ctx.strokeRect(x,y,w,h);
+}
+
+function loop(t){
+  requestAnimationFrame(loop);
+  if(!L || $("game").classList.contains("hidden")) { lastT = t; return; }
+  var dt = Math.min(.033, (t-lastT)/1000); lastT = t;
+  step(dt); render();
+}
+
+/* ---------- controles ---------- */
+function toMenu(){ $("game").classList.add("hidden"); $("menu").classList.remove("hidden"); buildMenu(); }
+$("goBtn").onclick = go; $("undoBtn").onclick = undo; $("clearBtn").onclick = clearInk;
+$("resetBtn").onclick = function(){ start(lvl); };
+$("menuBtn").onclick = toMenu; $("ovMenu").onclick = toMenu;
+document.addEventListener("keydown", function(e){
+  if($("game").classList.contains("hidden")) return;
+  var k = e.key.toLowerCase();
+  if(k===" "||k==="enter"){ e.preventDefault(); if(!$("ov").classList.contains("hidden")) $("ovMain").click(); else go(); }
+  else if(k==="z") undo(); else if(k==="c") clearInk(); else if(k==="r") start(lvl);
+});
+
+buildMenu();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

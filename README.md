@@ -93,6 +93,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | 🪞 Láser Neón | [`laser-neon.html`](laser-neon.html) | Puzzle de espejos: girá los espejos para guiar uno a tres rayos láser hasta sus blancos, esquivando paredes y señuelos. 10 niveles generados al azar y siempre resolubles; récord de giros por nivel. |
 | ♛ Ajedrez Neón | [`ajedrez-neon.html`](ajedrez-neon.html) | Ajedrez completo contra la CPU: enroque, captura al paso, coronación, jaque mate y tablas. 3 dificultades, pista, deshacer y récord de ganadas/empates/perdidas. |
 | 🌱 Semillas Neón | [`mancala-neon.html`](mancala-neon.html) | Mancala (Kalah) contra la CPU: sembrá en sentido antihorario, turno extra en tu depósito y capturas. 3 dificultades, pista y racha. |
+| ✏️ Tinta Neón | [`tinta-neon.html`](tinta-neon.html) | Puzzle de física: dibujá líneas de tinta para guiar las bolitas hasta la copa esquivando zonas rojas. 8 niveles, tinta limitada y estrellas. |
 
 ## Sopa de Letras
 

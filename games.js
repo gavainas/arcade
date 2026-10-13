@@ -648,6 +648,13 @@
       desc: "Mancala (Kalah) contra la CPU: sembrá tus semillas en sentido antihorario, terminá en tu depósito para repetir turno y capturá los hoyos rivales. 3 dificultades, pista y racha de victorias.",
       controles: "Tocá uno de tus hoyos; teclado: 1–6 juegan el hoyo, H pista, N nueva partida", fecha: "2026-10-12",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "tinta-neon", titulo: "Tinta Neón", archivo: "tinta-neon.html",
+      emoji: "✏️", categoria: "logica", tags: ["dibujar", "tinta", "física", "puzzle", "bolitas", "líneas", "gravedad"],
+      desc: "Puzzle de física: las bolitas caen solas y vos dibujás líneas de tinta con el dedo para guiarlas hasta la copa dorada, esquivando las zonas rojas. Tinta limitada, 8 niveles y hasta 3 estrellas según cuánta tinta te sobre.",
+      controles: "Arrastrá sobre el tablero para dibujar; Espacio suelta las bolitas, Z deshace, C borra, R reinicia", fecha: "2026-10-13",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
