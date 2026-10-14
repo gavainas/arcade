@@ -94,6 +94,7 @@ Colección de minijuegos para navegador, hechos en HTML5 + Canvas (sin dependenc
 | ♛ Ajedrez Neón | [`ajedrez-neon.html`](ajedrez-neon.html) | Ajedrez completo contra la CPU: enroque, captura al paso, coronación, jaque mate y tablas. 3 dificultades, pista, deshacer y récord de ganadas/empates/perdidas. |
 | 🌱 Semillas Neón | [`mancala-neon.html`](mancala-neon.html) | Mancala (Kalah) contra la CPU: sembrá en sentido antihorario, turno extra en tu depósito y capturas. 3 dificultades, pista y racha. |
 | ✏️ Tinta Neón | [`tinta-neon.html`](tinta-neon.html) | Puzzle de física: dibujá líneas de tinta para guiar las bolitas hasta la copa esquivando zonas rojas. 8 niveles, tinta limitada y estrellas. |
+| 👯 Gemelos Neón | [`gemelos-neon.html`](gemelos-neon.html) | Controlás dos orbes en espejo: juntá gemas en ambos campos, esquivá pinchos y juntá escudos. |
 
 ## Sopa de Letras
 

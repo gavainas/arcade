@@ -655,6 +655,13 @@
       desc: "Puzzle de física: las bolitas caen solas y vos dibujás líneas de tinta con el dedo para guiarlas hasta la copa dorada, esquivando las zonas rojas. Tinta limitada, 8 niveles y hasta 3 estrellas según cuánta tinta te sobre.",
       controles: "Arrastrá sobre el tablero para dibujar; Espacio suelta las bolitas, Z deshace, C borra, R reinicia", fecha: "2026-10-13",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "gemelos-neon", titulo: "Gemelos Neón", archivo: "gemelos-neon.html",
+      emoji: "👯", categoria: "reflejos", tags: ["gemelos", "espejo", "esquivar", "gemas", "reflejos", "arcade"],
+      desc: "Controlás dos orbes a la vez: lo que hacés con uno, el otro lo hace en espejo. Juntá gemas en ambos campos para subir el combo, esquivá los pinchos y agarrá escudos. Cada vez más rápido.",
+      controles: "Arrastrá el dedo/mouse sobre el tablero; teclado: ← → o A D, Espacio pausa", fecha: "2026-10-14",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

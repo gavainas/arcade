@@ -39,6 +39,7 @@ const OVERRIDES = {
   "cadena-neon": { steps: ["#startBtn"], wait: 1800 },
   "orbitas-neon": { steps: ["#startBtn"], wait: 900 },
   "tinta-neon": { steps: [".lvl-card"], wait: 900 },
+  "gemelos-neon": { steps: ["#startBtn"], wait: 2200 },
   "hielo-neon": { steps: [".lvl-card"], wait: 1200 },
   // El menú de Knight Quest está dibujado dentro del canvas: no hay nada que
   // seleccionar por DOM, así que le pegamos al botón "MODO ARCADE" por posición.
