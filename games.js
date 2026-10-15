@@ -662,6 +662,13 @@
       desc: "Controlás dos orbes a la vez: lo que hacés con uno, el otro lo hace en espejo. Juntá gemas en ambos campos para subir el combo, esquivá los pinchos y agarrá escudos. Cada vez más rápido.",
       controles: "Arrastrá el dedo/mouse sobre el tablero; teclado: ← → o A D, Espacio pausa", fecha: "2026-10-14",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "cubetas-neon", titulo: "Cubetas Neón", archivo: "cubetas-neon.html",
+      emoji: "🪣", categoria: "reflejos", tags: ["kaboom", "bombas", "atrapar", "cubetas", "reflejos", "arcade"],
+      desc: "Estilo Kaboom: un bombardero errático tira bombas y vos las atrapás con tus 3 cubetas apiladas. Si se escapa una, explotan todas y perdés una cubeta. Cada ronda cae más rápido.",
+      controles: "Arrastrá el dedo/mouse sobre el tablero; teclado: ← → o A D, Espacio pausa", fecha: "2026-10-15",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -130,6 +130,7 @@ Son tres piezas:
 | [`games.js`](games.js) | El catálogo. Única fuente de verdad. |
 | [`index.html`](index.html) | La home: destacado, buscador, filtros y grilla. |
 | [`game.html`](game.html) | El marco donde se juega: `game.html?id=torre`. |
+| 🪣 Cubetas Neón | [`cubetas-neon.html`](cubetas-neon.html) | Estilo Kaboom: atrapá las bombas del bombardero con tus 3 cubetas; si se escapa una, explotan todas. Cada ronda cae más rápido. |
 
 El catálogo vive en **`games.js`**: `index.html` arma el destacado, los filtros por
 categoría, el buscador y la grilla leyendo ese archivo. No hay tarjetas escritas a mano

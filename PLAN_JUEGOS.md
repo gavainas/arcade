@@ -128,6 +128,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 74 | 🌱 | Semillas Neón | `mancala-neon.html` | Estrategia | Mancala (Kalah) vs CPU: sembrá semillas en sentido antihorario, turno extra si terminás en tu depósito y capturá el hoyo de enfrente cayendo en uno tuyo vacío. 3 dificultades, pista y racha. | ✅ 2026-10-12 |
 | 75 | ✏️ | Tinta Neón | `tinta-neon.html` | Puzzle de física | Dibujá líneas de tinta con el dedo para guiar bolitas con gravedad hasta la copa dorada, esquivando zonas rojas (algunas móviles). Tinta limitada, 8 niveles y hasta 3 estrellas. | ✅ 2026-10-13 |
 | 76 | 👯 | Gemelos Neón | `gemelos-neon.html` | Reflejos | Dos campos en espejo controlados con un solo movimiento: juntá gemas de ambos lados, esquivá pinchos y juntá escudos; combo y velocidad creciente. | ✅ 2026-10-14 |
+| 77 | 🪣 | Cubetas Neón | `cubetas-neon.html` | Reflejos | Estilo Kaboom: un bombardero errático tira bombas; atrapalas con 3 cubetas apiladas, si se escapa una explotan todas y perdés una cubeta. Rondas cada vez más rápidas. | ✅ 2026-10-15 |
 
 ## Reglas para el juego del día
 
