@@ -669,6 +669,13 @@
       desc: "Estilo Kaboom: un bombardero errático tira bombas y vos las atrapás con tus 3 cubetas apiladas. Si se escapa una, explotan todas y perdés una cubeta. Cada ronda cae más rápido.",
       controles: "Arrastrá el dedo/mouse sobre el tablero; teclado: ← → o A D, Espacio pausa", fecha: "2026-10-15",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "territorio-neon", titulo: "Territorio Neón", archivo: "territorio-neon.html",
+      emoji: "🔷", categoria: "arcade", tags: ["xonix", "qix", "territorio", "conquista", "estela", "arcade"],
+      desc: "Estilo Xonix/Qix: salí de tu territorio, trazá una estela por el campo y volvé para quedarte con toda la zona sin enemigos. Si una esfera toca tu estela perdés una vida. Conquistá el 75% para pasar de nivel.",
+      controles: "Deslizá el dedo sobre el tablero; teclado: flechas o WASD, Espacio pausa", fecha: "2026-10-16",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -131,6 +131,7 @@ Son tres piezas:
 | [`index.html`](index.html) | La home: destacado, buscador, filtros y grilla. |
 | [`game.html`](game.html) | El marco donde se juega: `game.html?id=torre`. |
 | 🪣 Cubetas Neón | [`cubetas-neon.html`](cubetas-neon.html) | Estilo Kaboom: atrapá las bombas del bombardero con tus 3 cubetas; si se escapa una, explotan todas. Cada ronda cae más rápido. |
+| 🔷 Territorio Neón | [`territorio-neon.html`](territorio-neon.html) | Estilo Xonix/Qix: trazá estelas fuera de tu territorio y volvé para conquistar el área sin enemigos. Llegá al 75% para pasar de nivel. |
 
 El catálogo vive en **`games.js`**: `index.html` arma el destacado, los filtros por
 categoría, el buscador y la grilla leyendo ese archivo. No hay tarjetas escritas a mano

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TERRITORIO NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--green:#39ff9e;--gold:#ffd23b;--red:#ff5470;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:24px 14px 48px;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;z-index:1;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:12px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:14px;}
+  .logo{font-size:clamp(24px,6.6vw,40px);font-weight:900;letter-spacing:2px;line-height:1;background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));background-size:300% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 2px 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:8px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .l b{color:var(--pink);} .hud .c b{color:var(--gold);}
+  .panel{position:relative;border-radius:20px;padding:12px;background:linear-gradient(180deg,rgba(20,28,58,.72),rgba(10,14,30,.72));border:1px solid rgba(138,75,255,.3);box-shadow:0 14px 40px rgba(0,0,0,.45);}
+  canvas{display:block;width:100%;aspect-ratio:4/5;border-radius:12px;touch-action:none;user-select:none;background:#050814;}
+  .overlay{position:absolute;inset:12px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:20px;background:rgba(5,7,15,.86);}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.55;max-width:340px;} .overlay p b{color:var(--ink);}
+  .final{font-size:15px;} .final b{color:var(--gold);}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 34px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 0 24px rgba(39,232,255,.35);transition:.15s;}
+  .btn:hover{transform:translateY(-2px);}
+  .hint{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.5;text-align:center;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">◄ Volver al arcade</a>
+  <header><div class="logo">TERRITORIO NEÓN</div><div class="sub">CONQUISTÁ EL 75%</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="score">0</b></div>
+    <div class="box c">NIVEL<b id="level">1</b></div>
+    <div class="box">ÁREA<b id="pct">0%</b></div>
+    <div class="box l">VIDAS<b id="lives">♥♥♥</b></div>
+    <div class="box">RÉCORD<b id="best">0</b></div>
+  </div>
+  <div class="panel">
+    <canvas id="cv" width="400" height="500"></canvas>
+    <div class="overlay" id="startOv">
+      <h2>TERRITORIO NEÓN</h2>
+      <p>Salí de tu territorio y trazá una <b style="color:#ffd23b">estela</b> por el campo. Cuando vuelvas a tierra firme, <b>te quedás con toda la zona que no tenga enemigos</b>. Si una esfera toca tu estela (o a vos), perdés una vida. <b>Conquistá el 75%</b> para pasar de nivel.</p>
+      <button class="btn" id="startBtn">JUGAR</button>
+    </div>
+    <div class="overlay hidden" id="overOv">
+      <h2 id="ovTitle">GAME OVER</h2>
+      <p class="final" id="finalTxt"></p>
+      <button class="btn" id="againBtn">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Deslizá el dedo en el tablero, o usá flechas / WASD. Espacio pausa.</div>
+</div>
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),W=400,H=500,C=10,GW=40,GH=50;
+var $=function(i){return document.getElementById(i);};
+var best=0;try{best=+localStorage.getItem("territorio-neon-best")||0;}catch(e){}
+$("best").textContent=best;
+var AC=null;
+function beep(f,d,t,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain();o.type=t||"sine";o.frequency.value=f;g.gain.value=v||.05;g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+
+var grid,pl,enemies,trail,score,level,lives,state,lastT,acc,fx,flash,pct,inner,keys={};
+var STEP=0.045; // segundos por celda del jugador
+
+function newLevel(){
+  grid=[];for(var y=0;y<GH;y++){grid[y]=[];for(var x=0;x<GW;x++)grid[y][x]=(x<2||y<2||x>=GW-2||y>=GH-2)?1:0;}
+  inner=(GW-4)*(GH-4);
+  pl={x:GW>>1,y:GH-1,dx:0,dy:0,t:0};
+  trail=[];fx=[];flash=0;enemies=[];
+  var n=Math.min(1+level,7);
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2,sp=(11+level*1.5+Math.random()*3);
+    enemies.push({x:8+Math.random()*(GW-16),y:8+Math.random()*(GH-26),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp});
+    if(Math.abs(enemies[i].vx)<6)enemies[i].vx=6*(enemies[i].vx<0?-1:1);
+    if(Math.abs(enemies[i].vy)<6)enemies[i].vy=6*(enemies[i].vy<0?-1:1);
+  }
+  calcPct();updHud();
+}
+function reset(){score=0;level=1;lives=3;newLevel();}
+function calcPct(){var f=0;for(var y=2;y<GH-2;y++)for(var x=2;x<GW-2;x++)if(grid[y][x]===1)f++;pct=Math.floor(f/inner*100);}
+function updHud(){$("score").textContent=score;$("level").textContent=level;$("pct").textContent=pct+"%";$("lives").textContent=new Array(lives+1).join("♥")||"–";$("best").textContent=best;}
+
+function die(){
+  lives--;beep(120,.5,"sawtooth",.08);flash=.5;
+  for(var i=0;i<24;i++)fx.push({x:pl.x*C+C/2,y:pl.y*C+C/2,vx:(Math.random()-.5)*240,vy:(Math.random()-.5)*240,life:.7,c:"#ff5470"});
+  for(var k=0;k<trail.length;k++)grid[trail[k][1]][trail[k][0]]=0;
+  trail=[];pl.x=GW>>1;pl.y=GH-1;pl.dx=pl.dy=0;pl.t=0;
+  updHud();
+  if(lives<=0)end(false);
+}
+function end(win){
+  state="over";
+  if(score>best){best=score;try{localStorage.setItem("territorio-neon-best",best);}catch(e){}}
+  $("ovTitle").textContent="GAME OVER";
+  $("finalTxt").innerHTML="Llegaste al nivel <b>"+level+"</b> con <b>"+score+"</b> puntos."+(score>=best&&score>0?"<br>¡Nuevo récord!":"");
+  $("overOv").classList.remove("hidden");updHud();
+}
+
+function closeTrail(){
+  // marcar el trazo como tierra y rellenar toda región sin enemigos
+  for(var k=0;k<trail.length;k++)grid[trail[k][1]][trail[k][0]]=1;
+  var before=0,y,x;
+  for(y=2;y<GH-2;y++)for(x=2;x<GW-2;x++)if(grid[y][x]===1)before++;
+  var seen=[];for(y=0;y<GH;y++){seen[y]=[];for(x=0;x<GW;x++)seen[y][x]=0;}
+  var stack=[];
+  enemies.forEach(function(e){
+    var ex=Math.max(0,Math.min(GW-1,Math.floor(e.x))),ey=Math.max(0,Math.min(GH-1,Math.floor(e.y)));
+    if(grid[ey][ex]===0&&!seen[ey][ex]){seen[ey][ex]=1;stack.push([ex,ey]);}
+  });
+  while(stack.length){
+    var p=stack.pop(),dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    for(var d=0;d<4;d++){var nx=p[0]+dirs[d][0],ny=p[1]+dirs[d][1];
+      if(nx<0||ny<0||nx>=GW||ny>=GH||seen[ny][nx]||grid[ny][nx]!==0)continue;
+      seen[ny][nx]=1;stack.push([nx,ny]);}
+  }
+  var after=0;
+  for(y=2;y<GH-2;y++)for(x=2;x<GW-2;x++){
+    if(grid[y][x]===0&&!seen[y][x]){grid[y][x]=1;}
+    if(grid[y][x]===1)after++;
+  }
+  var gained=after-before;
+  for(var k2=0;k2<trail.length;k2++)fx.push({x:trail[k2][0]*C+C/2,y:trail[k2][1]*C+C/2,vx:(Math.random()-.5)*90,vy:(Math.random()-.5)*90,life:.5,c:"#ffd23b"});
+  var bonus=gained>trail.length*6?2:1; // cortes grandes valen doble
+  score+=gained*bonus;
+  trail=[];
+  calcPct();updHud();
+  beep(520+Math.min(gained,300),.18,"triangle",.06);
+  if(pct>=75){
+    score+=level*200+(lives*100);
+    beep(880,.4,"square",.05);
+    state="between";flash=0;
+    setTimeout(function(){if(state!=="between")return;level++;newLevel();state="play";lastT=performance.now();},1400);
+    updHud();
+  }
+}
+
+function movePlayer(){
+  var nx=pl.x+pl.dx,ny=pl.y+pl.dy;
+  if(nx<0||ny<0||nx>=GW||ny>=GH){pl.dx=pl.dy=0;return;}
+  var cur=grid[pl.y][pl.x],tgt=grid[ny][nx];
+  if(tgt===2){die();return;} // chocaste con tu propia estela
+  pl.x=nx;pl.y=ny;
+  if(tgt===0){grid[ny][nx]=2;trail.push([nx,ny]);}
+  else if(tgt===1&&trail.length){closeTrail();pl.dx=pl.dy=0;}
+}
+
+function stepEnemies(dt){
+  for(var i=0;i<enemies.length;i++){
+    var e=enemies[i];
+    var nx=e.x+e.vx*dt,ny=e.y+e.vy*dt;
+    var cx=Math.floor(nx),cy=Math.floor(e.y);
+    if(cx<0||cx>=GW||grid[cy][cx]===1){e.vx=-e.vx;nx=e.x;}
+    else if(grid[cy][cx]===2){die();return;}
+    cx=Math.floor(nx);cy=Math.floor(ny);
+    if(cy<0||cy>=GH||grid[cy][cx]===1){e.vy=-e.vy;ny=e.y;}
+    else if(grid[cy][cx]===2){die();return;}
+    // diagonal pegada contra una esquina
+    if(nx!==e.x&&ny!==e.y&&grid[Math.floor(ny)][Math.floor(nx)]===1){e.vx=-e.vx;e.vy=-e.vy;nx=e.x;ny=e.y;}
+    e.x=nx;e.y=ny;
+    if(Math.floor(e.x)===pl.x&&Math.floor(e.y)===pl.y&&trail.length){die();return;}
+  }
+}
+
+function update(dt){
+  if(state!=="play")return;
+  if(pl.dx||pl.dy){
+    pl.t+=dt;
+    var guard=0;
+    while(pl.t>=STEP&&(pl.dx||pl.dy)&&state==="play"&&guard++<6){pl.t-=STEP;movePlayer();}
+  }
+  if(state==="play")stepEnemies(dt);
+  for(var i=fx.length-1;i>=0;i--){var p=fx[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.life<=0)fx.splice(i,1);}
+  if(flash>0)flash-=dt;
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#050814";ctx.fillRect(0,0,W,H);
+  // campo vacío: grilla tenue
+  ctx.strokeStyle="rgba(39,232,255,.05)";ctx.lineWidth=1;
+  for(var gx=0;gx<=W;gx+=40){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
+  for(var gy=0;gy<=H;gy+=40){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}
+  for(var y=0;y<GH;y++)for(var x=0;x<GW;x++){
+    var v=grid[y][x];
+    if(v===1){
+      var edge=x<2||y<2||x>=GW-2||y>=GH-2;
+      ctx.fillStyle=edge?"#2a2f66":((x+y)%2?"#1b3f7a":"#1a3a73");
+      ctx.fillRect(x*C,y*C,C,C);
+    }else if(v===2){
+      ctx.fillStyle="#ffd23b";ctx.fillRect(x*C+1,y*C+1,C-2,C-2);
+    }
+  }
+  // borde neón de las zonas conquistadas
+  ctx.fillStyle="rgba(39,232,255,.55)";
+  for(var y2=1;y2<GH-1;y2++)for(var x2=1;x2<GW-1;x2++){
+    if(grid[y2][x2]!==1)continue;
+    if(grid[y2][x2+1]===0)ctx.fillRect(x2*C+C-2,y2*C,2,C);
+    if(grid[y2][x2-1]===0)ctx.fillRect(x2*C,y2*C,2,C);
+    if(grid[y2+1][x2]===0)ctx.fillRect(x2*C,y2*C+C-2,C,2);
+    if(grid[y2-1][x2]===0)ctx.fillRect(x2*C,y2*C,C,2);
+  }
+  // enemigos
+  enemies.forEach(function(e,i){
+    var ex=e.x*C,ey=e.y*C,col=i%2?"#ff2bd6":"#ff5470";
+    ctx.save();ctx.shadowColor=col;ctx.shadowBlur=16;ctx.fillStyle=col;
+    ctx.beginPath();ctx.arc(ex,ey,7,0,7);ctx.fill();
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(ex-2,ey-2,2.2,0,7);ctx.fill();ctx.restore();
+  });
+  // jugador
+  var blink=pl.dx||pl.dy||trail.length?1:(Math.sin(performance.now()/160)>0?1:.6);
+  ctx.save();ctx.globalAlpha=blink;ctx.shadowColor="#27e8ff";ctx.shadowBlur=18;ctx.fillStyle="#27e8ff";
+  ctx.fillRect(pl.x*C-1,pl.y*C-1,C+2,C+2);ctx.restore();
+  fx.forEach(function(p){ctx.globalAlpha=Math.max(0,p.life*1.6);ctx.fillStyle=p.c;ctx.fillRect(p.x-2,p.y-2,4,4);});
+  ctx.globalAlpha=1;
+  if(flash>0){ctx.fillStyle="rgba(255,84,112,"+(flash*.5)+")";ctx.fillRect(0,0,W,H);}
+  if(state==="between"){
+    ctx.fillStyle="rgba(5,7,15,.7)";ctx.fillRect(0,0,W,H);
+    ctx.textAlign="center";ctx.fillStyle="#39ff9e";ctx.font="900 30px Segoe UI,sans-serif";
+    ctx.fillText("¡NIVEL "+level+" COMPLETO!",W/2,H/2-6);
+    ctx.fillStyle="#7fa6c8";ctx.font="600 14px Segoe UI,sans-serif";
+    ctx.fillText("+"+(level*200+lives*100)+" de bonus",W/2,H/2+22);
+  }else if(state==="pause"){
+    ctx.fillStyle="rgba(5,7,15,.7)";ctx.fillRect(0,0,W,H);
+    ctx.textAlign="center";ctx.fillStyle="#27e8ff";ctx.font="900 30px Segoe UI,sans-serif";ctx.fillText("PAUSA",W/2,H/2);
+  }
+}
+
+function loop(t){
+  var dt=Math.min(.05,(t-lastT)/1000||0);lastT=t;
+  update(dt);draw();requestAnimationFrame(loop);
+}
+
+function setDir(dx,dy){
+  if(state!=="play")return;
+  // no permitir marcha atrás sobre la propia estela
+  if(trail.length&&dx===-pl.dx&&dy===-pl.dy&&(dx||dy))return;
+  pl.dx=dx;pl.dy=dy;
+}
+var KM={ArrowLeft:[-1,0],a:[-1,0],A:[-1,0],ArrowRight:[1,0],d:[1,0],D:[1,0],ArrowUp:[0,-1],w:[0,-1],W:[0,-1],ArrowDown:[0,1],s:[0,1],S:[0,1]};
+window.addEventListener("keydown",function(e){
+  if(KM[e.key]){e.preventDefault();setDir(KM[e.key][0],KM[e.key][1]);}
+  else if(e.key===" "){e.preventDefault();togglePause();}
+});
+function togglePause(){
+  if(state==="play"){state="pause";}else if(state==="pause"){state="play";lastT=performance.now();}
+}
+// deslizar: cada trazo del dedo cambia la dirección
+var tx=0,ty=0,touching=false;
+function pt(e){var t=e.touches?e.touches[0]:e;return[t.clientX,t.clientY];}
+cv.addEventListener("pointerdown",function(e){var p=pt(e);tx=p[0];ty=p[1];touching=true;try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+cv.addEventListener("pointermove",function(e){
+  if(!touching)return;
+  var dx=e.clientX-tx,dy=e.clientY-ty;
+  if(Math.abs(dx)<14&&Math.abs(dy)<14)return;
+  if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);else setDir(0,dy>0?1:-1);
+  tx=e.clientX;ty=e.clientY;
+});
+cv.addEventListener("pointerup",function(){touching=false;});
+cv.addEventListener("pointercancel",function(){touching=false;});
+
+function start(){
+  $("startOv").classList.add("hidden");$("overOv").classList.add("hidden");
+  reset();state="play";lastT=performance.now();
+}
+$("startBtn").onclick=start;$("againBtn").onclick=start;
+reset();state="idle";
+window.__t={en:function(){return enemies;},grid:function(){return grid;},pl:function(){return pl;},st:function(){return state;}};
+requestAnimationFrame(function(t){lastT=t;loop(t);});
+})();
+</script>
+</body>
+</html>
