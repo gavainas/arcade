@@ -676,6 +676,13 @@
       desc: "Estilo Xonix/Qix: salí de tu territorio, trazá una estela por el campo y volvé para quedarte con toda la zona sin enemigos. Si una esfera toca tu estela perdés una vida. Conquistá el 75% para pasar de nivel.",
       controles: "Deslizá el dedo sobre el tablero; teclado: flechas o WASD, Espacio pausa", fecha: "2026-10-16",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "equilibrio-neon", titulo: "Equilibrio Neón", archivo: "equilibrio-neon.html",
+      emoji: "⚖️", categoria: "reflejos", tags: ["equilibrio", "balance", "fisica", "bola", "estrellas", "viento"],
+      desc: "Inclinás una barra para hacer rodar la bola: atrapá las estrellas que caen, esquivá las bombas y aguantá las ráfagas de viento sin que la bola se caiga.",
+      controles: "Arrastrá el dedo/mouse a izquierda o derecha; teclado: ← → o A D, Espacio pausa", fecha: "2026-10-17",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EQUILIBRIO NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--green:#39ff9e;--gold:#ffd23b;--red:#ff5470;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:24px 14px 48px;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;z-index:1;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:12px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:14px;}
+  .logo{font-size:clamp(24px,6.6vw,40px);font-weight:900;letter-spacing:2px;line-height:1;background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));background-size:300% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 2px 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:8px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .l b{color:var(--pink);} .hud .c b{color:var(--gold);}
+  .panel{position:relative;border-radius:20px;padding:12px;background:linear-gradient(180deg,rgba(20,28,58,.72),rgba(10,14,30,.72));border:1px solid rgba(138,75,255,.3);box-shadow:0 14px 40px rgba(0,0,0,.45);}
+  canvas{display:block;width:100%;aspect-ratio:4/5;border-radius:12px;touch-action:none;user-select:none;background:#050814;}
+  .overlay{position:absolute;inset:12px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:20px;background:rgba(5,7,15,.86);}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.55;max-width:340px;} .overlay p b{color:var(--ink);}
+  .final{font-size:15px;} .final b{color:var(--gold);}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 34px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 0 24px rgba(39,232,255,.35);transition:.15s;}
+  .btn:hover{transform:translateY(-2px);}
+  .hint{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.5;text-align:center;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">◄ Volver al arcade</a>
+  <header><div class="logo">EQUILIBRIO NEÓN</div><div class="sub">NO TE CAIGAS</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="score">0</b></div>
+    <div class="box c">COMBO<b id="combo">x1</b></div>
+    <div class="box l">VIDAS<b id="lives">♥♥♥</b></div>
+    <div class="box">RÉCORD<b id="best">0</b></div>
+  </div>
+  <div class="panel">
+    <canvas id="cv" width="400" height="500"></canvas>
+    <div class="overlay" id="startOv">
+      <h2>EQUILIBRIO NEÓN</h2>
+      <p>Inclinás la barra para <b>hacer rodar la bola</b>. Atrapá las <b style="color:#ffd23b">estrellas</b> que caen, esquivá las <b style="color:#ff5470">bombas</b> y aguantá el <b style="color:#27e8ff">viento</b>. Si la bola se cae de la barra, perdés una vida.</p>
+      <button class="btn" id="startBtn">JUGAR</button>
+    </div>
+    <div class="overlay hidden" id="overOv">
+      <h2>GAME OVER</h2>
+      <p class="final" id="finalTxt"></p>
+      <button class="btn" id="againBtn">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Arrastrá el dedo/mouse a izquierda o derecha para inclinar, o usá ← → / A D. Espacio pausa.</div>
+</div>
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),W=400,H=500;
+var $=function(i){return document.getElementById(i);};
+var best=0;try{best=+localStorage.getItem("equilibrio-neon-best")||0;}catch(e){}
+$("best").textContent=best;
+var AC=null;
+function beep(f,d,t,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain();o.type=t||"sine";o.frequency.value=f;g.gain.value=v||.05;g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+
+var PX=200,PY=380,HALF=150,R=13,MAXA=0.5;
+var state="menu",score,combo,lives,t,a,w,s,v,tilt,keyDir,items,fx,spawnT,wind,windT,windLeft,flash,pause,lastT,inv,starsGot;
+keyDir=0;tilt=0;
+
+function reset(){
+  score=0;combo=1;lives=3;t=0;a=0;w=0;s=0;v=0;tilt=0;items=[];fx=[];spawnT=.8;wind=0;windT=6;windLeft=0;flash=0;pause=false;inv=0;starsGot=0;
+  updHud();
+}
+function updHud(){$("score").textContent=score;$("combo").textContent="x"+combo;$("lives").textContent=new Array(lives+1).join("♥")||"–";$("best").textContent=best;}
+function ballPos(){
+  var ca=Math.cos(a),sa=Math.sin(a);
+  return {x:PX+s*ca+(R+4)*sa,y:PY+s*sa-(R+4)*ca};
+}
+function burst(x,y,c,n){for(var i=0;i<n;i++)fx.push({x:x,y:y,vx:(Math.random()-.5)*260,vy:(Math.random()-.5)*260,life:.6,c:c});}
+function lose(){
+  lives--;combo=1;flash=.5;beep(120,.5,"sawtooth",.08);
+  var p=ballPos();burst(Math.max(10,Math.min(W-10,p.x)),Math.min(H-10,p.y),"#ff5470",26);
+  updHud();
+  if(lives<=0){end();return;}
+  s=0;v=0;a=0;w=0;inv=1.5;items=[];
+}
+function end(){
+  state="over";
+  if(score>best){best=score;try{localStorage.setItem("equilibrio-neon-best",best);}catch(e){}}
+  $("finalTxt").innerHTML="Sumaste <b>"+score+"</b> puntos y atrapaste <b>"+starsGot+"</b> estrellas en "+Math.floor(t)+" s."+(score>=best&&score>0?"<br>¡Nuevo récord!":"");
+  $("overOv").classList.remove("hidden");updHud();
+}
+function spawn(){
+  var lvl=Math.min(1+t/20,8);
+  var bomb=Math.random()<Math.min(.25+lvl*.05,.55);
+  items.push({x:30+Math.random()*(W-60),y:-20,vy:(bomb?130:100)+lvl*14+Math.random()*30,type:bomb?"bomb":"star",ph:Math.random()*6});
+}
+
+function update(dt){
+  t+=dt;
+  var lvl=Math.min(1+t/20,8);
+  // control
+  var target=keyDir!==0?keyDir:tilt;
+  var tg=Math.max(-1,Math.min(1,target))*MAXA;
+  w+=(tg-a)*30*dt;w-=w*7*dt;a+=w*dt;
+  a=Math.max(-MAXA*1.1,Math.min(MAXA*1.1,a));
+  // viento
+  windT-=dt;
+  if(windT<=0&&windLeft<=0){windLeft=2+Math.random()*1.5;wind=(Math.random()<.5?-1:1)*(90+lvl*28);windT=Math.max(3,9-lvl*.7)+Math.random()*3;beep(220,.4,"triangle",.03);}
+  if(windLeft>0){windLeft-=dt;if(windLeft<=0)wind=0;}
+  // bola
+  v+=Math.sin(a)*900*dt+wind*dt;
+  v-=v*.35*dt;
+  s+=v*dt;
+  if(inv>0)inv-=dt;
+  if(Math.abs(s)>HALF+R*.4){lose();return;}
+  // items
+  spawnT-=dt;
+  if(spawnT<=0){spawn();spawnT=Math.max(.45,1.15-lvl*.1)*(.7+Math.random()*.6);}
+  var bp=ballPos();
+  for(var i=items.length-1;i>=0;i--){
+    var it=items[i];it.y+=it.vy*dt;it.ph+=dt*4;
+    var dx=it.x-bp.x,dy=it.y-bp.y,rr=it.type==="star"?R+11:R+9;
+    if(dx*dx+dy*dy<rr*rr){
+      if(it.type==="star"){
+        starsGot++;score+=10*combo;combo=Math.min(combo+1,8);beep(520+combo*60,.12,"square",.04);burst(it.x,it.y,"#ffd23b",12);
+      }else if(inv<=0){
+        items.splice(i,1);burst(it.x,it.y,"#ff5470",18);lose();updHud();return;
+      }else{items.splice(i,1);continue;}
+      items.splice(i,1);updHud();continue;
+    }
+    if(it.y>H+20){
+      if(it.type==="star"&&combo>1){combo=1;updHud();}
+      items.splice(i,1);
+    }
+  }
+  score+=0;
+  if(Math.floor(t)!==Math.floor(t-dt)){score+=1;updHud();}
+  for(var k=fx.length-1;k>=0;k--){var f=fx[k];f.x+=f.vx*dt;f.y+=f.vy*dt;f.life-=dt;if(f.life<=0)fx.splice(k,1);}
+  if(flash>0)flash-=dt;
+}
+
+function star(x,y,r,ph){
+  ctx.beginPath();
+  for(var i=0;i<10;i++){var rad=i%2?r*.45:r,an=-Math.PI/2+i*Math.PI/5+Math.sin(ph)*.15;ctx.lineTo(x+Math.cos(an)*rad,y+Math.sin(an)*rad);}
+  ctx.closePath();
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#0a1030");g.addColorStop(1,"#050814");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // grilla de fondo
+  ctx.strokeStyle="rgba(138,75,255,.12)";ctx.lineWidth=1;
+  for(var x=0;x<=W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(var y=((t||0)*20)%40;y<=H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // viento
+  if(state==="play"&&windLeft>0){
+    ctx.strokeStyle="rgba(39,232,255,.35)";ctx.lineWidth=2;
+    for(var i=0;i<6;i++){
+      var yy=PY-140+i*34,off=((t*400*Math.sign(wind))+i*77)%W;if(off<0)off+=W;
+      ctx.beginPath();ctx.moveTo(off,yy);ctx.lineTo(off+Math.sign(wind)*40,yy);ctx.stroke();
+    }
+    ctx.fillStyle="#27e8ff";ctx.font="bold 13px sans-serif";ctx.textAlign="center";
+    ctx.fillText(wind>0?"VIENTO  ▶▶":"◀◀  VIENTO",W/2,40);
+  }
+  // abismo
+  ctx.fillStyle="rgba(255,84,112,.08)";ctx.fillRect(0,H-30,W,30);
+  // pivote
+  ctx.fillStyle="#8a4bff";ctx.shadowColor="#8a4bff";ctx.shadowBlur=14;
+  ctx.beginPath();ctx.moveTo(PX,PY+6);ctx.lineTo(PX-26,PY+80);ctx.lineTo(PX+26,PY+80);ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;
+  // barra
+  ctx.save();ctx.translate(PX,PY);ctx.rotate(a);
+  ctx.shadowColor="#27e8ff";ctx.shadowBlur=16;
+  var bg=ctx.createLinearGradient(-HALF,0,HALF,0);bg.addColorStop(0,"#ff2bd6");bg.addColorStop(.5,"#27e8ff");bg.addColorStop(1,"#ff2bd6");
+  ctx.fillStyle=bg;ctx.fillRect(-HALF,-4,HALF*2,8);
+  ctx.shadowBlur=0;ctx.fillStyle="#fff";ctx.fillRect(-3,-6,6,12);
+  ctx.restore();
+  // items
+  items.forEach(function(it){
+    if(it.type==="star"){
+      ctx.shadowColor="#ffd23b";ctx.shadowBlur=14;ctx.fillStyle="#ffd23b";star(it.x,it.y,13,it.ph);ctx.fill();
+    }else{
+      ctx.shadowColor="#ff5470";ctx.shadowBlur=14;ctx.fillStyle="#2a0a14";ctx.strokeStyle="#ff5470";ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.arc(it.x,it.y,10,0,7);ctx.fill();ctx.stroke();
+      for(var k=0;k<8;k++){var an=k*Math.PI/4+it.ph*.3;ctx.beginPath();ctx.moveTo(it.x+Math.cos(an)*10,it.y+Math.sin(an)*10);ctx.lineTo(it.x+Math.cos(an)*16,it.y+Math.sin(an)*16);ctx.stroke();}
+    }
+    ctx.shadowBlur=0;
+  });
+  // bola
+  if(state!=="menu"){
+    var p=ballPos();
+    if(inv<=0||Math.floor(t*10)%2===0){
+      ctx.shadowColor="#39ff9e";ctx.shadowBlur=18;
+      var rg=ctx.createRadialGradient(p.x-4,p.y-4,2,p.x,p.y,R);rg.addColorStop(0,"#ffffff");rg.addColorStop(1,"#39ff9e");
+      ctx.fillStyle=rg;ctx.beginPath();ctx.arc(p.x,p.y,R,0,7);ctx.fill();ctx.shadowBlur=0;
+    }
+  }
+  fx.forEach(function(f){ctx.globalAlpha=Math.max(0,f.life*1.6);ctx.fillStyle=f.c;ctx.fillRect(f.x-2,f.y-2,4,4);});
+  ctx.globalAlpha=1;
+  if(flash>0){ctx.fillStyle="rgba(255,84,112,"+flash*.5+")";ctx.fillRect(0,0,W,H);}
+  if(pause){ctx.fillStyle="rgba(5,7,15,.7)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#e8f6ff";ctx.font="bold 28px sans-serif";ctx.textAlign="center";ctx.fillText("PAUSA",W/2,H/2);}
+}
+
+function loop(ts){
+  var dt=Math.min(.033,(ts-lastT)/1000||0);lastT=ts;
+  if(state==="play"&&!pause)update(dt);
+  else if(state==="menu"){t+=dt;}
+  draw();requestAnimationFrame(loop);
+}
+
+function start(){reset();state="play";$("startOv").classList.add("hidden");$("overOv").classList.add("hidden");}
+$("startBtn").onclick=start;$("againBtn").onclick=start;
+
+// controles
+function ptr(e){
+  var r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width;
+  tilt=Math.max(-1,Math.min(1,(x-.5)*2.4));
+}
+var drag=false;
+cv.addEventListener("pointerdown",function(e){drag=true;try{cv.setPointerCapture(e.pointerId);}catch(_){}ptr(e);});
+cv.addEventListener("pointermove",function(e){if(drag||e.pointerType==="mouse")ptr(e);});
+cv.addEventListener("pointerup",function(){drag=false;tilt=0;});
+cv.addEventListener("pointercancel",function(){drag=false;tilt=0;});
+cv.addEventListener("pointerleave",function(e){if(e.pointerType==="mouse")tilt=0;});
+var kl=0,kr=0;
+function setKey(e,d){
+  var k=e.key.toLowerCase();
+  if(k==="arrowleft"||k==="a"){kl=d;}
+  else if(k==="arrowright"||k==="d"){kr=d;}
+  else if(k===" "&&d&&state==="play"){pause=!pause;e.preventDefault();return;}
+  else return;
+  keyDir=kr-kl;e.preventDefault();
+}
+window.addEventListener("keydown",function(e){setKey(e,1);});
+window.addEventListener("keyup",function(e){setKey(e,0);});
+
+reset();t=0;state="menu";
+requestAnimationFrame(function(ts){lastT=ts;requestAnimationFrame(loop);});
+})();
+</script>
+</body>
+</html>

@@ -130,6 +130,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 76 | 👯 | Gemelos Neón | `gemelos-neon.html` | Reflejos | Dos campos en espejo controlados con un solo movimiento: juntá gemas de ambos lados, esquivá pinchos y juntá escudos; combo y velocidad creciente. | ✅ 2026-10-14 |
 | 77 | 🪣 | Cubetas Neón | `cubetas-neon.html` | Reflejos | Estilo Kaboom: un bombardero errático tira bombas; atrapalas con 3 cubetas apiladas, si se escapa una explotan todas y perdés una cubeta. Rondas cada vez más rápidas. | ✅ 2026-10-15 |
 | 78 | 🔷 | Territorio Neón | `territorio-neon.html` | Arcade / Estrategia | Estilo Xonix/Qix: salí de tu territorio trazando una estela y volvé para conquistar toda la zona sin enemigos; las esferas que tocan la estela te cuestan una vida. 75% para pasar de nivel, cada nivel con más enemigos. | ✅ 2026-10-16 |
+| 79 | ⚖️ | Equilibrio Neón | `equilibrio-neon.html` | Reflejos / Física | Balance: inclinás una barra con el dedo/teclado para hacer rodar una bola con inercia; atrapá estrellas (combo), esquivá bombas y resistí ráfagas de viento. Si la bola se cae, perdés una vida. | ✅ 2026-10-17 |
 
 ## Reglas para el juego del día
 
