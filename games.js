@@ -683,6 +683,13 @@
       desc: "Inclinás una barra para hacer rodar la bola: atrapá las estrellas que caen, esquivá las bombas y aguantá las ráfagas de viento sin que la bola se caiga.",
       controles: "Arrastrá el dedo/mouse a izquierda o derecha; teclado: ← → o A D, Espacio pausa", fecha: "2026-10-17",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "sigilo-neon", titulo: "Sigilo Neón", archivo: "sigilo-neon.html",
+      emoji: "🥷", categoria: "arcade", tags: ["sigilo", "stealth", "guardias", "infiltracion", "vision", "gemas"],
+      desc: "Infiltrate hasta el portal sin que te vean: los guardias patrullan con un cono de visión que las paredes y columnas bloquean. Colate por las aberturas, escondete y juntá gemas. Si te ven unos instantes, perdés una vida.",
+      controles: "Arrastrá el dedo/mouse como joystick; teclado: flechas o WASD, Espacio pausa", fecha: "2026-10-18",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
