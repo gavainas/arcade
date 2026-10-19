@@ -132,6 +132,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 78 | 🔷 | Territorio Neón | `territorio-neon.html` | Arcade / Estrategia | Estilo Xonix/Qix: salí de tu territorio trazando una estela y volvé para conquistar toda la zona sin enemigos; las esferas que tocan la estela te cuestan una vida. 75% para pasar de nivel, cada nivel con más enemigos. | ✅ 2026-10-16 |
 | 79 | ⚖️ | Equilibrio Neón | `equilibrio-neon.html` | Reflejos / Física | Balance: inclinás una barra con el dedo/teclado para hacer rodar una bola con inercia; atrapá estrellas (combo), esquivá bombas y resistí ráfagas de viento. Si la bola se cae, perdés una vida. | ✅ 2026-10-17 |
 | 80 | 🥷 | Sigilo Neón | `sigilo-neon.html` | Arcade / Sigilo | Infiltración top-down: guardias patrullan con conos de visión bloqueados por paredes y columnas; colate por las aberturas en zigzag hasta el portal, juntá gemas y no te dejes ver (medidor de alerta). Niveles cada vez más largos, 3 vidas. | ✅ 2026-10-18 |
+| 81 | ⬡ | Hex Neón | `hex-neon.html` | Estrategia / Conexión | Hex: tablero de 11×11 hexágonos en rombo; por turnos colocá una ficha y unite arriba con abajo (celeste) antes de que el rival una izquierda con derecha (rosa). No hay empates. CPU con 3 dificultades (camino más corto de ambos; la difícil mira la respuesta rival) o de a dos, con récord de menos fichas para ganar por dificultad. | ✅ 2026-10-19 |
 
 ## Reglas para el juego del día
 

@@ -180,7 +180,12 @@ const OVERRIDES = {
     wait: 1500
   },
   // Un ratito de juego para que se vea el laberinto con bichos en movimiento.
-  "dinamita-neon": { steps: ["#startBtn"], wait: 1200 }
+  "dinamita-neon": { steps: ["#startBtn"], wait: 1200 },
+  // Jugamos una ficha en el centro y dejamos que la CPU responda para ver el rombo con fichas.
+  "hex-neon": {
+    steps: ['[data-mode="cpu"][data-diff="medio"]', { canvas: [0.5, 0.5] }],
+    wait: 1200
+  }
 };
 
 const DEFAULT_STEPS = ["#startBtn", "#playBtn", ".btn", "button"];

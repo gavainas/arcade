@@ -134,6 +134,7 @@ Son tres piezas:
 | 🔷 Territorio Neón | [`territorio-neon.html`](territorio-neon.html) | Estilo Xonix/Qix: trazá estelas fuera de tu territorio y volvé para conquistar el área sin enemigos. Llegá al 75% para pasar de nivel. |
 | ⚖️ Equilibrio Neón | [`equilibrio-neon.html`](equilibrio-neon.html) | Inclinás una barra para rodar la bola: atrapá estrellas, esquivá bombas y aguantá el viento. |
 | 🥷 Sigilo Neón | [`sigilo-neon.html`](sigilo-neon.html) | Infiltrate hasta el portal esquivando los conos de visión de los guardias; escondete tras columnas y juntá gemas. |
+| ⬡ Hex Neón | [`hex-neon.html`](hex-neon.html) | Juego de conexión sobre un tablero de 11×11 hexágonos: unite arriba con abajo antes de que el rival una izquierda con derecha; no hay empates. Contra una CPU con 3 dificultades o de a dos en el mismo dispositivo, con récord de menos fichas para ganar. |
 
 El catálogo vive en **`games.js`**: `index.html` arma el destacado, los filtros por
 categoría, el buscador y la grilla leyendo ese archivo. No hay tarjetas escritas a mano

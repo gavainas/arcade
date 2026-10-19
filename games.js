@@ -690,6 +690,13 @@
       desc: "Infiltrate hasta el portal sin que te vean: los guardias patrullan con un cono de visión que las paredes y columnas bloquean. Colate por las aberturas, escondete y juntá gemas. Si te ven unos instantes, perdés una vida.",
       controles: "Arrastrá el dedo/mouse como joystick; teclado: flechas o WASD, Espacio pausa", fecha: "2026-10-18",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "hex-neon", titulo: "Hex Neón", archivo: "hex-neon.html",
+      emoji: "⬡", categoria: "logica", tags: ["hex", "hexagonos", "conexion", "tablero", "cpu", "2 jugadores", "estrategia"],
+      desc: "El clásico juego de conexión sobre un tablero de 11×11 hexágonos: por turnos colocá una ficha y unite arriba con abajo (celeste) antes de que la CPU una izquierda con derecha (rosa). No existen los empates: cada ficha es a la vez ataque y bloqueo. Contra una CPU con 3 dificultades (evalúa el camino más corto de ambos y la difícil mira la mejor respuesta rival) o de a dos en el mismo dispositivo, con récord de menos fichas para ganar por dificultad.",
+      controles: "Click / toque en una celda; teclado: flechas para mover el cursor, Enter o Espacio para jugar", fecha: "2026-10-19",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

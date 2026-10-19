@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HEX NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 16px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:460px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--purple),var(--pink));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,43,214,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 6px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; letter-spacing:1px; margin-top:2px;}
+  .hud .box.p1 b{color:var(--cyan);}
+  .hud .box.p2 b{color:var(--pink);}
+  .hud .box.rec b{color:var(--gold);}
+
+  .turn{text-align:center; margin:2px 0 10px; font-size:14px; font-weight:800; letter-spacing:1px; min-height:20px;}
+  .turn.p1{color:var(--cyan);}
+  .turn.p2{color:var(--pink);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:14px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    display:flex; justify-content:center;
+  }
+  canvas{display:block; border-radius:12px; background:#05070f;
+    box-shadow:inset 0 0 40px rgba(39,232,255,.06); touch-action:none; width:100%; height:auto; max-width:420px;}
+
+  .overlay{position:absolute; inset:14px; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px 16px; gap:9px;
+    background:rgba(5,7,15,.94); backdrop-filter:blur(3px); z-index:2; overflow-y:auto;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(19px,5.6vw,27px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--pink),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,43,214,.4));}
+  .overlay p{font-size:12.5px; color:var(--muted); line-height:1.5; max-width:330px;}
+  .legend{display:grid; grid-template-columns:1fr; gap:5px; font-size:11.5px; color:var(--ink); text-align:left; max-width:320px;}
+  .legend span{display:flex; align-items:center; gap:8px;}
+  .dot{width:13px; height:13px; border-radius:50%; flex:none; box-shadow:0 0 10px currentColor;}
+  .modes{display:flex; flex-direction:column; gap:7px; width:100%; max-width:290px; margin-top:2px;}
+  .modes.hidden{display:none;}
+  .modelbl{font-size:11px; letter-spacing:1.5px; color:var(--muted); margin-top:4px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:12px 26px; font-size:14px; font-weight:800; letter-spacing:.5px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.3);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(255,43,214,.45);}
+  .btn:active{transform:translateY(0);}
+  .btn.hidden{display:none;}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none;}
+  .btn.ghost:hover{border-color:var(--cyan); color:var(--cyan);}
+  .diffrow{display:flex; gap:8px;}
+  .diffrow .btn{flex:1; padding:10px 6px; font-size:12px;}
+  .final{font-size:14px; color:var(--ink);}
+
+  .controls{margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5; flex:1; min-width:200px;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">HEX NEÓN</div>
+      <div class="sub">C O N E C T Á &nbsp;L O S &nbsp;B O R D E S &nbsp;·&nbsp; 11 × 11</div>
+    </header>
+
+    <div class="hud">
+      <div class="box p1">VOS<b id="p1wins">0</b></div>
+      <div class="box rec">MEJOR WIN<b id="best">—</b></div>
+      <div class="box p2">RIVAL<b id="p2wins">0</b></div>
+    </div>
+    <div class="turn" id="turnText">&nbsp;</div>
+
+    <div class="panel">
+      <canvas id="game" width="440" height="330"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">HEX NEÓN</h2>
+        <p id="ovText">Por turnos, colocá una ficha en una celda hexagonal libre. <b style="color:var(--cyan)">Celeste</b> gana uniendo el borde de <b>arriba</b> con el de <b>abajo</b>; <b style="color:var(--pink)">rosa</b> gana uniendo <b>izquierda</b> con <b>derecha</b>. No hay empates: bloqueá el camino rival mientras armás el tuyo.</p>
+        <div class="legend" id="legend">
+          <span><i class="dot" style="color:var(--cyan);background:var(--cyan)"></i> Vos (arriba ↕ abajo)</span>
+          <span><i class="dot" style="color:var(--pink);background:var(--pink)"></i> Rival (izquierda ↔ derecha)</span>
+        </div>
+        <div class="modes" id="modeButtons">
+          <div class="modelbl">VS COMPUTADORA</div>
+          <div class="diffrow">
+            <button class="btn ghost" data-mode="cpu" data-diff="facil">FÁCIL</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="medio">MEDIO</button>
+            <button class="btn ghost" data-mode="cpu" data-diff="dificil">DIFÍCIL</button>
+          </div>
+          <div class="modelbl">O DE A DOS</div>
+          <button class="btn ghost" data-mode="2p">2 JUGADORES</button>
+        </div>
+        <button class="btn hidden" id="startBtn">JUGAR ▶</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="hint">Click / toque en una celda · con teclado: flechas para mover el cursor y <b>ENTER</b> / <b>ESPACIO</b> para jugar. Contra la CPU, el primer turno se alterna en cada partida.</div>
+      <button class="mini" id="restartBtn">Menú</button>
+    </div>
+
+    <footer>NEON ARCADE · Hex Neón</footer>
+  </div>
+
+<script>
+(()=>{
+  "use strict";
+  const N=11;
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+
+  const p1winsEl=document.getElementById('p1wins');
+  const p2winsEl=document.getElementById('p2wins');
+  const bestEl=document.getElementById('best');
+  const turnText=document.getElementById('turnText');
+  const overlay=document.getElementById('overlay');
+  const ovTitle=document.getElementById('ovTitle');
+  const ovText=document.getElementById('ovText');
+  const legend=document.getElementById('legend');
+  const modeButtons=document.getElementById('modeButtons');
+  const startBtn=document.getElementById('startBtn');
+  const restartBtn=document.getElementById('restartBtn');
+
+  const COLORS={1:'#27e8ff', 2:'#ff2bd6'};
+  const FILL={1:'rgba(39,232,255,.85)', 2:'rgba(255,43,214,.85)'};
+
+  // ---------- Geometría: rombo de hexágonos "pointy-top" ----------
+  const S=(W-34)/(Math.sqrt(3)*(N+(N-1)/2)); // radio del hexágono
+  const X0=(W-Math.sqrt(3)*S*(N+(N-1)/2))/2+Math.sqrt(3)*S/2;
+  const Y0=(H-S*(1.5*(N-1)+2))/2+S;
+  function center(r,c){ return {x:X0+Math.sqrt(3)*S*(c+r/2), y:Y0+1.5*S*r}; }
+  const CENTERS=[];
+  for(let r=0;r<N;r++){ CENTERS.push([]); for(let c=0;c<N;c++) CENTERS[r].push(center(r,c)); }
+  function hexPath(x,y,rad){
+    ctx.beginPath();
+    for(let k=0;k<6;k++){
+      const a=Math.PI/180*(60*k-30);
+      const px=x+rad*Math.cos(a), py=y+rad*Math.sin(a);
+      if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+  }
+
+  // ---------- Estadísticas ----------
+  const STATS_KEY='neon-hex-stats';
+  function loadStats(){
+    try{ const s=JSON.parse(localStorage.getItem(STATS_KEY)); if(s&&s.best) return s; }catch(e){}
+    return {p1:0,p2:0,best:{}};
+  }
+  let stats=loadStats();
+  function saveStats(){ try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(e){} }
+  function renderStats(){
+    p1winsEl.textContent=stats.p1;
+    p2winsEl.textContent=stats.p2;
+    const b=difficulty && stats.best[difficulty];
+    bestEl.textContent=b?b+' fichas':'—';
+  }
+
+  // ---------- Reglas ----------
+  const NB=[[0,1],[0,-1],[-1,0],[-1,1],[1,0],[1,-1]];
+  function inB(r,c){ return r>=0&&r<N&&c>=0&&c<N; }
+  const other=p=>p===1?2:1;
+  function emptyBoard(){ return Array.from({length:N},()=>Array(N).fill(0)); }
+
+  // Camino ganador de p (null si no conectó). 1: fila 0 -> N-1. 2: col 0 -> N-1.
+  function winPath(bd,p){
+    const par=new Map(), q=[];
+    for(let i=0;i<N;i++){
+      const r=p===1?0:i, c=p===1?i:0;
+      if(bd[r][c]===p){ par.set(r*N+c,-1); q.push([r,c]); }
+    }
+    for(let h=0;h<q.length;h++){
+      const [r,c]=q[h];
+      if((p===1&&r===N-1)||(p===2&&c===N-1)){
+        const path=[]; let k=r*N+c;
+        while(k!==-1){ path.push([Math.floor(k/N),k%N]); k=par.get(k); }
+        return path;
+      }
+      for(const [dr,dc] of NB){
+        const rr=r+dr, cc=c+dc, key=rr*N+cc;
+        if(inB(rr,cc)&&bd[rr][cc]===p&&!par.has(key)){ par.set(key,r*N+c); q.push([rr,cc]); }
+      }
+    }
+    return null;
+  }
+
+  // Distancia mínima (fichas que faltan) para que p conecte; Infinity si está bloqueado.
+  const dist=new Int16Array(N*N), dq=new Int16Array(N*N*8);
+  function pathCost(bd,p){
+    dist.fill(999);
+    let lo=N*N*4, hi=lo;
+    for(let i=0;i<N;i++){
+      const r=p===1?0:i, c=p===1?i:0, v=bd[r][c];
+      if(v===other(p)) continue;
+      const d=v===p?0:1, k=r*N+c;
+      if(d<dist[k]){ dist[k]=d; if(d===0) dq[--lo]=k; else dq[hi++]=k; }
+    }
+    let best=999;
+    while(lo<hi){
+      const k=dq[lo++], r=(k/N)|0, c=k%N, d=dist[k];
+      if((p===1&&r===N-1)||(p===2&&c===N-1)){ if(d<best) best=d; continue; }
+      if(d>=best) continue;
+      for(const [dr,dc] of NB){
+        const rr=r+dr, cc=c+dc;
+        if(!inB(rr,cc)) continue;
+        const v=bd[rr][cc];
+        if(v===other(p)) continue;
+        const nd=d+(v===p?0:1), nk=rr*N+cc;
+        if(nd<dist[nk]){ dist[nk]=nd; if(v===p) dq[--lo]=nk; else dq[hi++]=nk; }
+      }
+    }
+    return best;
+  }
+  // Positiva si le conviene a ai.
+  function evaluate(bd,ai){ return pathCost(bd,other(ai))-pathCost(bd,ai); }
+
+  // ---------- CPU ----------
+  function emptyCells(bd){
+    const out=[];
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(bd[r][c]===0) out.push([r,c]);
+    return out;
+  }
+  function centerBias(r,c){ return -(Math.abs(r-(N-1)/2)+Math.abs(c-(N-1)/2))*0.01; }
+  function scoredMoves(bd,ai){
+    return emptyCells(bd).map(([r,c])=>{
+      bd[r][c]=ai;
+      const s=evaluate(bd,ai)+centerBias(r,c);
+      bd[r][c]=0;
+      return {r,c,s};
+    }).sort((a,b)=>b.s-a.s);
+  }
+  function chooseCpuMove(){
+    const ai=2;
+    const bd=board.map(row=>row.slice());
+    const cells=emptyCells(bd);
+    if(difficulty==='facil' && Math.random()<0.4){
+      const m=cells[Math.floor(Math.random()*cells.length)];
+      return {r:m[0],c:m[1]};
+    }
+    const scored=scoredMoves(bd,ai);
+    if(difficulty==='facil'){
+      const m=scored[Math.floor(Math.random()*Math.min(3,scored.length))];
+      return m;
+    }
+    if(difficulty==='medio'){
+      const m=scored[Math.floor(Math.random()*Math.min(2,scored.length))];
+      return m;
+    }
+    // Difícil: mira la mejor respuesta del rival a cada una de las mejores jugadas.
+    let best=scored[0], bestVal=-Infinity;
+    for(const m of scored.slice(0,14)){
+      bd[m.r][m.c]=ai;
+      if(winPath(bd,ai)){ bd[m.r][m.c]=0; return m; }
+      const replies=scoredMoves(bd,other(ai)).slice(0,10);
+      let worst=Infinity;
+      for(const rp of replies){
+        bd[rp.r][rp.c]=other(ai);
+        const v=evaluate(bd,ai)+centerBias(m.r,m.c);
+        bd[rp.r][rp.c]=0;
+        if(v<worst) worst=v;
+      }
+      bd[m.r][m.c]=0;
+      if(worst>bestVal){ bestVal=worst; best=m; }
+    }
+    return best;
+  }
+
+  // ---------- Estado de partida ----------
+  let mode=null, difficulty=null;
+  let board, current, running=false, gameOver=false;
+  let lastMove=null, path=null, stones=0;
+  let cursor={r:5,c:5};
+  let gamesPlayed=0, thinking=false, t0=0;
+
+  function updateTurnText(){
+    if(!running||gameOver) return;
+    if(mode==='cpu') turnText.textContent=current===1?'TU TURNO':'PENSANDO…';
+    else turnText.textContent=current===1?'TURNO CELESTE (↕)':'TURNO ROSA (↔)';
+    turnText.className='turn '+(current===1?'p1':'p2');
+  }
+
+  function reset(){
+    board=emptyBoard();
+    running=true; gameOver=false; thinking=false;
+    lastMove=null; path=null; stones=0;
+    current=(mode==='cpu' && gamesPlayed%2===1)?2:1;
+    overlay.classList.add('hidden');
+    updateTurnText(); renderStats(); render();
+    if(mode==='cpu' && current===2) scheduleCpu();
+  }
+
+  function scheduleCpu(){
+    thinking=true;
+    setTimeout(()=>{
+      if(!running||gameOver){ thinking=false; return; }
+      const m=chooseCpuMove();
+      thinking=false;
+      place(m.r,m.c);
+    }, 420);
+  }
+
+  function place(r,c){
+    if(!running||gameOver||board[r][c]!==0) return;
+    board[r][c]=current; lastMove={r,c};
+    if(current===1) stones++;
+    const wp=winPath(board,current);
+    if(wp){ path=wp; endGame(current); return; }
+    current=other(current);
+    updateTurnText(); render();
+    if(mode==='cpu' && current===2) scheduleCpu();
+  }
+
+  function endGame(winner){
+    running=false; gameOver=true;
+    let recordMsg='';
+    if(mode==='cpu'){
+      if(winner===1){
+        stats.p1++;
+        const b=stats.best[difficulty];
+        if(!b||stones<b){ stats.best[difficulty]=stones; recordMsg=' ¡Nuevo récord!'; }
+      } else stats.p2++;
+      saveStats();
+    }
+    turnText.innerHTML='&nbsp;';
+    renderStats(); render();
+    ovTitle.textContent = winner===1 ? (mode==='cpu'?'¡GANASTE!':'GANÓ CELESTE') : (mode==='cpu'?'GANÓ LA CPU':'GANÓ ROSA');
+    let detail;
+    if(mode==='cpu') detail = winner===1 ? 'Conectaste arriba con abajo usando '+stones+' fichas.'+recordMsg : 'La CPU unió izquierda con derecha. ¡Revancha!';
+    else detail = winner===1 ? 'Celeste unió arriba con abajo.' : 'Rosa unió izquierda con derecha.';
+    ovText.innerHTML='<span class="final">'+detail+'</span>';
+    legend.style.display='none';
+    modeButtons.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+    startBtn.textContent='REVANCHA ▶';
+    setTimeout(()=>{ overlay.classList.remove('hidden'); }, 1100);
+  }
+
+  function showMenu(){
+    running=false; gameOver=false; thinking=false;
+    ovTitle.textContent='HEX NEÓN';
+    ovText.innerHTML='Por turnos, colocá una ficha en una celda hexagonal libre. <b style="color:var(--cyan)">Celeste</b> gana uniendo el borde de <b>arriba</b> con el de <b>abajo</b>; <b style="color:var(--pink)">rosa</b> gana uniendo <b>izquierda</b> con <b>derecha</b>. No hay empates: bloqueá el camino rival mientras armás el tuyo.';
+    legend.style.display='';
+    modeButtons.classList.remove('hidden');
+    startBtn.classList.add('hidden');
+    overlay.classList.remove('hidden');
+    turnText.innerHTML='&nbsp;';
+  }
+
+  // ---------- Render ----------
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#05070f'; ctx.fillRect(0,0,W,H);
+    const pathSet=new Set(path?path.map(([r,c])=>r*N+c):[]);
+
+    // bordes de color: indican hacia dónde conecta cada jugador
+    ctx.lineWidth=5; ctx.lineCap='round';
+    function edge(color,pts){
+      ctx.strokeStyle=color; ctx.shadowColor=color; ctx.shadowBlur=14;
+      ctx.beginPath(); pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.stroke();
+      ctx.shadowBlur=0;
+    }
+    const vx=(r,c,k)=>{ const p=CENTERS[r][c], a=Math.PI/180*(60*k-30); return [p.x+S*Math.cos(a),p.y+S*Math.sin(a)]; };
+    const topPts=[], botPts=[], leftPts=[], rightPts=[];
+    for(let c=0;c<N;c++){ topPts.push(vx(0,c,4),vx(0,c,5),vx(0,c,0)); botPts.push(vx(N-1,c,3),vx(N-1,c,2),vx(N-1,c,1)); }
+    for(let r=0;r<N;r++){ leftPts.push(vx(r,0,4),vx(r,0,3)); rightPts.push(vx(r,N-1,5),vx(r,N-1,0),vx(r,N-1,1)); }
+    edge(COLORS[1],topPts); edge(COLORS[1],botPts);
+    edge(COLORS[2],leftPts); edge(COLORS[2],rightPts);
+
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+      const {x,y}=CENTERS[r][c], v=board?board[r][c]:0;
+      hexPath(x,y,S-1.2);
+      ctx.fillStyle=v?FILL[v]:'rgba(20,28,58,.85)';
+      if(v){ ctx.shadowColor=COLORS[v]; ctx.shadowBlur=pathSet.has(r*N+c)?24:10; }
+      ctx.fill(); ctx.shadowBlur=0;
+      ctx.lineWidth=1.2;
+      ctx.strokeStyle=v?COLORS[v]:'rgba(138,75,255,.35)';
+      ctx.stroke();
+      if(v && pathSet.has(r*N+c)){
+        ctx.fillStyle='rgba(255,255,255,.55)';
+        ctx.beginPath(); ctx.arc(x,y,S*0.32,0,7); ctx.fill();
+      }
+    }
+    if(lastMove && !gameOver){
+      const {x,y}=CENTERS[lastMove.r][lastMove.c];
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.beginPath(); ctx.arc(x,y,2.6,0,7); ctx.fill();
+    }
+    if(running && !(mode==='cpu'&&current===2)){
+      const {x,y}=CENTERS[cursor.r][cursor.c];
+      hexPath(x,y,S-0.5);
+      ctx.lineWidth=2; ctx.strokeStyle=COLORS[current]; ctx.shadowColor=COLORS[current]; ctx.shadowBlur=12;
+      ctx.stroke(); ctx.shadowBlur=0;
+    }
+  }
+
+  // ---------- Entrada ----------
+  function cellAt(ev){
+    const rect=canvas.getBoundingClientRect();
+    const px=(ev.clientX-rect.left)*W/rect.width, py=(ev.clientY-rect.top)*H/rect.height;
+    let best=null, bd=Infinity;
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+      const p=CENTERS[r][c], d=(p.x-px)**2+(p.y-py)**2;
+      if(d<bd){ bd=d; best={r,c}; }
+    }
+    return bd<=(S*0.95)**2 ? best : null;
+  }
+  function humanCanPlay(){ return running && !gameOver && !thinking && !(mode==='cpu'&&current===2); }
+  canvas.addEventListener('pointerdown',ev=>{
+    if(!humanCanPlay()) return;
+    const cell=cellAt(ev);
+    if(!cell) return;
+    cursor=cell;
+    if(board[cell.r][cell.c]===0) place(cell.r,cell.c); else render();
+  });
+  canvas.addEventListener('pointermove',ev=>{
+    if(!humanCanPlay()||ev.pointerType==='touch') return;
+    const cell=cellAt(ev);
+    if(cell && (cell.r!==cursor.r||cell.c!==cursor.c)){ cursor=cell; render(); }
+  });
+  window.addEventListener('keydown',e=>{
+    if(!running) return;
+    const k=e.key;
+    const mv={ArrowLeft:[0,-1],ArrowRight:[0,1],ArrowUp:[-1,0],ArrowDown:[1,0],a:[0,-1],d:[0,1],w:[-1,0],s:[1,0]}[k];
+    if(mv){
+      e.preventDefault();
+      cursor={r:Math.max(0,Math.min(N-1,cursor.r+mv[0])), c:Math.max(0,Math.min(N-1,cursor.c+mv[1]))};
+      render();
+    } else if((k==='Enter'||k===' ') && humanCanPlay()){
+      e.preventDefault();
+      place(cursor.r,cursor.c);
+    }
+  });
+
+  modeButtons.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      mode=b.dataset.mode; difficulty=mode==='cpu'?b.dataset.diff:null;
+      gamesPlayed=0;
+      reset();
+    });
+  });
+  startBtn.addEventListener('click',()=>{ gamesPlayed++; reset(); });
+  restartBtn.addEventListener('click',()=>{ board=emptyBoard(); path=null; lastMove=null; difficulty=null; renderStats(); showMenu(); render(); });
+
+  board=emptyBoard();
+  renderStats();
+  render();
+})();
+</script>
+</body>
+</html>
