@@ -157,6 +157,9 @@ const OVERRIDES = {
   "quince-neon": { steps: [".lvl-card"], wait: 400 },
   // Elegimos un nivel y movemos el disco de arriba de la torre 1 a la torre 3
   // para que la miniatura muestre las tres torres con discos repartidos.
+  // Elegimos el tablero inglés y tocamos una clavija con salto posible para que
+  // la miniatura muestre el resaltado de destino, no sólo el menú de tableros.
+  "clavijas-neon": { steps: [".lvl-card", { canvas: [0.5, 0.3] }], wait: 500 },
   "hanoi-neon": { steps: [".lvl-card", "#peg0", "#peg2"], wait: 300 },
   // Esperamos un poco más para que ya hayan bajado un par de misiles y se vea
   // el rastro en pantalla, no sólo el tablero vacío recién arrancado.

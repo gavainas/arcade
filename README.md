@@ -135,6 +135,7 @@ Son tres piezas:
 | ⚖️ Equilibrio Neón | [`equilibrio-neon.html`](equilibrio-neon.html) | Inclinás una barra para rodar la bola: atrapá estrellas, esquivá bombas y aguantá el viento. |
 | 🥷 Sigilo Neón | [`sigilo-neon.html`](sigilo-neon.html) | Infiltrate hasta el portal esquivando los conos de visión de los guardias; escondete tras columnas y juntá gemas. |
 | ⬡ Hex Neón | [`hex-neon.html`](hex-neon.html) | Juego de conexión sobre un tablero de 11×11 hexágonos: unite arriba con abajo antes de que el rival una izquierda con derecha; no hay empates. Contra una CPU con 3 dificultades o de a dos en el mismo dispositivo, con récord de menos fichas para ganar. |
+| 📍 Clavijas Neón | [`clavijas-neon.html`](clavijas-neon.html) | Solitario de clavijas: saltá una ficha sobre otra hacia un hueco vacío y dejá una sola en el tablero. Tres tableros (inglés, europeo y triángulo), deshacer ilimitado y récord de menos clavijas por tablero. |
 
 El catálogo vive en **`games.js`**: `index.html` arma el destacado, los filtros por
 categoría, el buscador y la grilla leyendo ese archivo. No hay tarjetas escritas a mano

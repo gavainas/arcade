@@ -697,6 +697,13 @@
       desc: "El clásico juego de conexión sobre un tablero de 11×11 hexágonos: por turnos colocá una ficha y unite arriba con abajo (celeste) antes de que la CPU una izquierda con derecha (rosa). No existen los empates: cada ficha es a la vez ataque y bloqueo. Contra una CPU con 3 dificultades (evalúa el camino más corto de ambos y la difícil mira la mejor respuesta rival) o de a dos en el mismo dispositivo, con récord de menos fichas para ganar por dificultad.",
       controles: "Click / toque en una celda; teclado: flechas para mover el cursor, Enter o Espacio para jugar", fecha: "2026-10-19",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "clavijas-neon", titulo: "Clavijas Neón", archivo: "clavijas-neon.html",
+      emoji: "📍", categoria: "logica", tags: ["solitario", "clavijas", "peg solitaire", "saltos", "tablero", "puzzle", "un jugador"],
+      desc: "El solitario de clavijas: saltá una ficha sobre otra vecina hacia un hueco vacío y retirá la saltada, hasta dejar una sola en el tablero. Tres tableros (inglés en cruz, europeo y triángulo con saltos en 6 direcciones), resaltado de saltos posibles, deshacer ilimitado y récord de menos clavijas por tablero. Si la última queda en el hueco de arranque, es un final perfecto.",
+      controles: "Click / toque en una clavija y luego en el hueco marcado; teclado: flechas, Enter o Espacio para elegir, U deshace, R reinicia", fecha: "2026-10-20",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
