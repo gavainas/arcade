@@ -185,3 +185,4 @@ El portal guarda en `localStorage` cuántas veces abriste cada juego, para orden
 No hace falta tocar `index.html` ni `game.html`: la tarjeta, la página de juego y los
 relacionados salen solos del catálogo. Todo es estático: se puede hostear en GitHub Pages,
 Vercel, Netlify o cualquier servidor de archivos.
+| 🔟 Takuzu Neón | [`takuzu-neon.html`](takuzu-neon.html) | Puzzle binario: llená la grilla con fichas celestes y rosas sin tres iguales seguidas, mitad y mitad por fila y columna y sin líneas repetidas. 6×6, 8×8 y 10×10 con solución única, pistas, deshacer y récord de tiempo. |

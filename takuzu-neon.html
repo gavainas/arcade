@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TAKUZU NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+
+  .levels{display:grid; grid-template-columns:1fr; gap:12px; margin-top:16px;}
+  .lvl-card{cursor:pointer; text-align:left; border-radius:16px; padding:14px 16px; background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72)); border:1px solid rgba(138,75,255,.3); box-shadow:0 10px 26px rgba(0,0,0,.4); transition:transform .15s ease, border-color .15s ease; display:flex; align-items:center; gap:14px;}
+  .lvl-card:hover{transform:translateY(-3px); border-color:var(--cyan);}
+  .lvl-card .glyph{font-size:30px; filter:drop-shadow(0 0 10px rgba(39,232,255,.4));}
+  .lvl-card .txt{flex:1;}
+  .lvl-card .name{font-size:15px; font-weight:800;}
+  .lvl-card .meta{margin-top:3px; font-size:11.5px; color:var(--muted); letter-spacing:.3px;}
+  .lvl-card .best{font-size:12px; color:var(--gold); font-weight:700; text-align:right; min-width:70px;}
+  .lvl-card.done{border-color:var(--green);}
+  .lvl-card.perfect{border-color:var(--gold); box-shadow:0 0 18px rgba(255,210,59,.3);}
+
+  .hud{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.moves b{color:var(--pink);}
+  .hud .box.rec b{color:var(--gold);}
+
+  .panel{
+    position:relative; border-radius:20px; padding:12px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+  }
+  canvas{display:block; width:100%; aspect-ratio:1/1; touch-action:manipulation; user-select:none; border-radius:14px; cursor:pointer;}
+
+  .overlay{position:absolute; inset:12px; border-radius:14px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.92); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(138,75,255,.4));}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(138,75,255,.5);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.4); box-shadow:none;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  .mini{cursor:pointer; background:rgba(138,75,255,.16); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700; letter-spacing:.5px;}
+  .mini:hover{border-color:var(--cyan); color:var(--cyan);}
+  .mini:disabled{opacity:.4; cursor:default;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">TAKUZU NEÓN</div>
+      <div class="sub">L Ó G I C A &nbsp; B I N A R I A</div>
+    </header>
+
+    <section id="menu">
+      <p class="hint" style="margin-bottom:6px;">Llená la grilla con fichas <b style="color:#27e8ff">celestes</b> y <b style="color:#ff2bd6">rosas</b>: <b>nunca tres iguales seguidas</b>, <b>mitad y mitad</b> en cada fila y columna, y <b>no hay dos filas (ni columnas) idénticas</b>. Cada puzzle tiene una única solución.</p>
+      <div class="levels" id="levelGrid"></div>
+    </section>
+
+    <section id="game" class="hidden">
+      <div class="hud">
+        <div class="box">TIEMPO<b id="hudTime">0:00</b></div>
+        <div class="box moves">ERRORES<b id="hudErr">0</b></div>
+        <div class="box rec">RÉCORD<b id="hudBest">-</b></div>
+      </div>
+      <div class="panel">
+        <canvas id="cv" width="460" height="460"></canvas>
+        <div class="overlay hidden" id="endOverlay">
+          <div class="picture">🏆</div>
+          <h2>¡Resuelto!</h2>
+          <p class="final" id="endText"></p>
+          <div class="newrec hidden" id="endRec">★ ¡NUEVO RÉCORD! ★</div>
+          <div class="btnrow">
+            <button class="btn" id="againBtn">OTRO PUZZLE</button>
+            <button class="btn ghost" id="menuBtn">NIVELES</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="mini" id="undoBtn">↶ Deshacer</button>
+        <button class="mini" id="hintBtn">💡 Pista (+30s)</button>
+        <button class="mini" id="resetBtn">↻ Reiniciar</button>
+        <button class="mini" id="backBtn">☰ Niveles</button>
+      </div>
+      <p class="hint" style="margin-top:10px;">Tocá una casilla para alternar vacío → celeste → rosa. Teclado: flechas, 1 celeste, 2 rosa, 0/Backspace borra, Espacio alterna, U deshace, H pista.</p>
+    </section>
+
+    <footer>Neon Arcade · Takuzu Neón</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  var $ = function(id){ return document.getElementById(id); };
+  var COLORS = [null, "#27e8ff", "#ff2bd6"];
+
+  var LEVELS = [
+    {id:"facil",   name:"Fácil",   glyph:"🟢", n:6,  keep:0.50, desc:"6×6 · muchas pistas"},
+    {id:"medio",   name:"Medio",   glyph:"🟡", n:8,  keep:0.38, desc:"8×8 · para pensar un rato"},
+    {id:"dificil", name:"Difícil", glyph:"🔴", n:10, keep:0.30, desc:"10×10 · pocas pistas"}
+  ];
+
+  /* ---------- Reglas / solver ---------- */
+  function okAt(g, n, r, c){
+    var v = g[r*n+c], i, half = n/2;
+    // tres seguidas
+    for(i = Math.max(0,c-2); i <= Math.min(c, n-3); i++)
+      if(g[r*n+i]===v && g[r*n+i+1]===v && g[r*n+i+2]===v) return false;
+    for(i = Math.max(0,r-2); i <= Math.min(r, n-3); i++)
+      if(g[i*n+c]===v && g[(i+1)*n+c]===v && g[(i+2)*n+c]===v) return false;
+    var cr = 0, cc = 0, fullR = true, fullC = true;
+    for(i = 0; i < n; i++){
+      if(g[r*n+i]===v) cr++; if(g[r*n+i]===0) fullR = false;
+      if(g[i*n+c]===v) cc++; if(g[i*n+c]===0) fullC = false;
+    }
+    if(cr > half || cc > half) return false;
+    if(fullR) for(i = 0; i < n; i++) if(i!==r && rowFull(g,n,i) && sameRow(g,n,i,r)) return false;
+    if(fullC) for(i = 0; i < n; i++) if(i!==c && colFull(g,n,i) && sameCol(g,n,i,c)) return false;
+    return true;
+  }
+  function rowFull(g,n,r){ for(var i=0;i<n;i++) if(g[r*n+i]===0) return false; return true; }
+  function colFull(g,n,c){ for(var i=0;i<n;i++) if(g[i*n+c]===0) return false; return true; }
+  function sameRow(g,n,a,b){ for(var i=0;i<n;i++) if(g[a*n+i]!==g[b*n+i]) return false; return true; }
+  function sameCol(g,n,a,b){ for(var i=0;i<n;i++) if(g[i*n+a]!==g[i*n+b]) return false; return true; }
+
+  // cuenta soluciones (hasta max) con límite de nodos
+  function countSolutions(g0, n, max, limit){
+    var g = g0.slice(), count = 0, nodes = 0, aborted = false;
+    function rec(pos){
+      if(aborted || count >= max) return;
+      while(pos < n*n && g[pos] !== 0) pos++;
+      if(pos === n*n){ count++; return; }
+      var r = (pos/n)|0, c = pos%n;
+      for(var v = 1; v <= 2; v++){
+        g[pos] = v;
+        if(++nodes > limit){ aborted = true; g[pos] = 0; return; }
+        if(okAt(g,n,r,c)) rec(pos+1);
+        g[pos] = 0;
+        if(aborted || count >= max) return;
+      }
+    }
+    // los dados deben ser consistentes
+    rec(0);
+    return aborted ? -1 : count;
+  }
+  function randomSolution(n){
+    for(var tries = 0; tries < 200; tries++){
+      var g = new Array(n*n).fill(0), nodes = 0, ok = false;
+      var rec = function(pos){
+        if(pos === n*n) return true;
+        if(++nodes > 20000) return false;
+        var r = (pos/n)|0, c = pos%n;
+        var order = Math.random() < 0.5 ? [1,2] : [2,1];
+        for(var k = 0; k < 2; k++){
+          g[pos] = order[k];
+          if(okAt(g,n,r,c) && rec(pos+1)) return true;
+        }
+        g[pos] = 0; return false;
+      };
+      ok = rec(0);
+      if(ok) return g;
+    }
+    return null;
+  }
+  function makePuzzle(lv){
+    var n = lv.n, sol = randomSolution(n);
+    var puz = sol.slice(), idx = [], i;
+    for(i = 0; i < n*n; i++) idx.push(i);
+    for(i = idx.length-1; i > 0; i--){ var j = (Math.random()*(i+1))|0, t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
+    var target = Math.round(n*n*lv.keep), filled = n*n;
+    for(i = 0; i < idx.length && filled > target; i++){
+      var p = idx[i], old = puz[p];
+      puz[p] = 0;
+      if(countSolutions(puz, n, 2, 60000) === 1) filled--; else puz[p] = old;
+    }
+    return {sol: sol, puz: puz};
+  }
+
+  /* ---------- Estado ---------- */
+  var best = {};
+  try{ best = JSON.parse(localStorage.getItem("takuzu-neon-best") || "{}") || {}; }catch(e){ best = {}; }
+  function saveBest(){ try{ localStorage.setItem("takuzu-neon-best", JSON.stringify(best)); }catch(e){} }
+  function fmt(s){ s = Math.floor(s); return Math.floor(s/60) + ":" + ("0"+(s%60)).slice(-2); }
+
+  var lv, n, grid, fixed, sol, undo, cur, t0, penalty, timerId, done, errs, cell, off;
+
+  function buildMenu(){
+    var h = "";
+    LEVELS.forEach(function(L, i){
+      var b = best[L.id];
+      h += '<div class="lvl-card'+(b?' done':'')+'" data-i="'+i+'"><div class="glyph">'+L.glyph+'</div>'+
+           '<div class="txt"><div class="name">'+L.name+'</div><div class="meta">'+L.desc+'</div></div>'+
+           '<div class="best">'+(b?'★ '+fmt(b):'')+'</div></div>';
+    });
+    $("levelGrid").innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll(".lvl-card"), function(el){
+      el.addEventListener("click", function(){ start(+el.getAttribute("data-i")); });
+    });
+  }
+
+  function start(i){
+    lv = LEVELS[i]; n = lv.n;
+    $("menu").classList.add("hidden"); $("game").classList.remove("hidden");
+    $("endOverlay").classList.add("hidden");
+    var p = makePuzzle(lv);
+    sol = p.sol; grid = p.puz.slice();
+    fixed = p.puz.map(function(v){ return v !== 0; });
+    undo = []; cur = [0,0]; penalty = 0; done = false;
+    t0 = Date.now();
+    clearInterval(timerId); timerId = setInterval(tick, 500);
+    $("hudBest").textContent = best[lv.id] ? fmt(best[lv.id]) : "-";
+    update();
+  }
+  function elapsed(){ return (Date.now()-t0)/1000 + penalty; }
+  function tick(){ if(!done) $("hudTime").textContent = fmt(elapsed()); }
+
+  function computeErrors(){
+    var bad = new Array(n*n).fill(false), r, c, i, v, half = n/2;
+    for(r = 0; r < n; r++) for(c = 0; c < n; c++){
+      v = grid[r*n+c]; if(!v) continue;
+      if(c <= n-3 && grid[r*n+c+1]===v && grid[r*n+c+2]===v) bad[r*n+c]=bad[r*n+c+1]=bad[r*n+c+2]=true;
+      if(r <= n-3 && grid[(r+1)*n+c]===v && grid[(r+2)*n+c]===v) bad[r*n+c]=bad[(r+1)*n+c]=bad[(r+2)*n+c]=true;
+    }
+    for(r = 0; r < n; r++){
+      var cnt = [0,0,0]; for(c = 0; c < n; c++) cnt[grid[r*n+c]]++;
+      for(v = 1; v <= 2; v++) if(cnt[v] > half) for(c = 0; c < n; c++) if(grid[r*n+c]===v) bad[r*n+c] = true;
+      if(rowFull(grid,n,r)) for(i = r+1; i < n; i++) if(rowFull(grid,n,i) && sameRow(grid,n,r,i))
+        for(c = 0; c < n; c++) bad[r*n+c] = bad[i*n+c] = true;
+    }
+    for(c = 0; c < n; c++){
+      var cn = [0,0,0]; for(r = 0; r < n; r++) cn[grid[r*n+c]]++;
+      for(v = 1; v <= 2; v++) if(cn[v] > half) for(r = 0; r < n; r++) if(grid[r*n+c]===v) bad[r*n+c] = true;
+      if(colFull(grid,n,c)) for(i = c+1; i < n; i++) if(colFull(grid,n,i) && sameCol(grid,n,c,i))
+        for(r = 0; r < n; r++) bad[r*n+c] = bad[r*n+i] = true;
+    }
+    return bad;
+  }
+
+  function update(){
+    errs = computeErrors();
+    var cnt = errs.reduce(function(a,b){ return a + (b?1:0); }, 0);
+    $("hudErr").textContent = cnt;
+    $("undoBtn").disabled = !undo.length;
+    draw();
+    if(!done && grid.every(function(v){ return v !== 0; }) && cnt === 0) win();
+  }
+
+  function setCell(p, v, record){
+    if(fixed[p] || done || grid[p] === v) return;
+    if(record !== false) undo.push([p, grid[p]]);
+    grid[p] = v; update();
+  }
+  function cycle(p){ setCell(p, (grid[p]+1)%3); }
+
+  function win(){
+    done = true; clearInterval(timerId);
+    var t = elapsed();
+    $("hudTime").textContent = fmt(t);
+    var rec = !best[lv.id] || t < best[lv.id];
+    if(rec){ best[lv.id] = Math.round(t); saveBest(); $("hudBest").textContent = fmt(t); }
+    $("endText").innerHTML = lv.name + ' · ' + n + '×' + n + ' en <b>' + fmt(t) + '</b>' + (penalty ? ' (con ' + (penalty/30) + ' pista' + (penalty>30?'s':'') + ')' : '');
+    $("endRec").classList.toggle("hidden", !rec);
+    setTimeout(function(){ $("endOverlay").classList.remove("hidden"); }, 600);
+  }
+
+  function hint(){
+    if(done) return;
+    var wrong = [], empty = [], p;
+    for(p = 0; p < n*n; p++){
+      if(fixed[p]) continue;
+      if(grid[p] === 0) empty.push(p); else if(grid[p] !== sol[p]) wrong.push(p);
+    }
+    var pool = wrong.length ? wrong : empty;
+    if(!pool.length) return;
+    p = pool[(Math.random()*pool.length)|0];
+    penalty += 30;
+    setCell(p, sol[p]);
+    hintFlash = {p:p, t:Date.now()};
+    setTimeout(draw, 700);
+  }
+  var hintFlash = null;
+
+  function doUndo(){
+    if(!undo.length || done) return;
+    var u = undo.pop(); grid[u[0]] = u[1]; update();
+  }
+  function reset(){
+    if(done) return;
+    for(var p = 0; p < n*n; p++) if(!fixed[p]) grid[p] = 0;
+    undo = []; update();
+  }
+
+  /* ---------- Dibujo ---------- */
+  function draw(){
+    if(!grid) return;
+    var W = cv.width, pad = 8;
+    cell = (W - pad*2)/n; off = pad;
+    ctx.clearRect(0,0,W,W);
+    var r, c, p, x, y, v;
+    for(r = 0; r < n; r++) for(c = 0; c < n; c++){
+      p = r*n+c; x = off + c*cell; y = off + r*cell; v = grid[p];
+      ctx.fillStyle = fixed[p] ? "rgba(138,75,255,.22)" : "rgba(20,28,58,.8)";
+      ctx.strokeStyle = (cur && cur[0]===r && cur[1]===c) ? "#ffd23b" : "rgba(138,75,255,.35)";
+      ctx.lineWidth = (cur && cur[0]===r && cur[1]===c) ? 3 : 1.5;
+      rr(x+2, y+2, cell-4, cell-4, cell*0.18); ctx.fill(); ctx.stroke();
+      if(errs[p]){ ctx.fillStyle = "rgba(255,84,112,.22)"; rr(x+2,y+2,cell-4,cell-4,cell*0.18); ctx.fill(); }
+      if(v){
+        ctx.save();
+        ctx.shadowColor = COLORS[v]; ctx.shadowBlur = fixed[p] ? 8 : 16;
+        ctx.fillStyle = COLORS[v];
+        ctx.beginPath(); ctx.arc(x+cell/2, y+cell/2, cell*(fixed[p]?0.27:0.3), 0, 6.2832); ctx.fill();
+        ctx.restore();
+        if(fixed[p]){
+          ctx.fillStyle = "#070a16"; ctx.beginPath(); ctx.arc(x+cell/2, y+cell/2, cell*0.11, 0, 6.2832); ctx.fill();
+        }
+        if(errs[p]){
+          ctx.strokeStyle = "#ff5470"; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(x+cell/2, y+cell/2, cell*0.38, 0, 6.2832); ctx.stroke();
+        }
+      }
+      if(hintFlash && hintFlash.p === p && Date.now()-hintFlash.t < 650){
+        ctx.strokeStyle = "#39ff9e"; ctx.lineWidth = 4;
+        rr(x+2,y+2,cell-4,cell-4,cell*0.18); ctx.stroke();
+      }
+    }
+  }
+  function rr(x,y,w,h,r){
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+
+  /* ---------- Entrada ---------- */
+  function cellAt(e){
+    var b = cv.getBoundingClientRect(), s = cv.width / b.width;
+    var x = (e.clientX - b.left)*s - off, y = (e.clientY - b.top)*s - off;
+    var c = Math.floor(x/cell), r = Math.floor(y/cell);
+    return (r>=0 && r<n && c>=0 && c<n) ? [r,c] : null;
+  }
+  cv.addEventListener("pointerdown", function(e){
+    e.preventDefault();
+    var h = cellAt(e); if(!h) return;
+    cur = h; cycle(h[0]*n+h[1]);
+  });
+  cv.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+  document.addEventListener("keydown", function(e){
+    if($("game").classList.contains("hidden") || !cur) return;
+    var k = e.key, handled = true;
+    if(k==="ArrowLeft") cur[1] = (cur[1]+n-1)%n;
+    else if(k==="ArrowRight") cur[1] = (cur[1]+1)%n;
+    else if(k==="ArrowUp") cur[0] = (cur[0]+n-1)%n;
+    else if(k==="ArrowDown") cur[0] = (cur[0]+1)%n;
+    else if(k==="1") setCell(cur[0]*n+cur[1], 1);
+    else if(k==="2") setCell(cur[0]*n+cur[1], 2);
+    else if(k==="0" || k==="Backspace" || k==="Delete") setCell(cur[0]*n+cur[1], 0);
+    else if(k===" " || k==="Enter") cycle(cur[0]*n+cur[1]);
+    else if(k==="u" || k==="U") doUndo();
+    else if(k==="h" || k==="H") hint();
+    else if(k==="r" || k==="R") reset();
+    else handled = false;
+    if(handled){ e.preventDefault(); draw(); }
+  });
+
+  function toMenu(){
+    clearInterval(timerId); done = true;
+    $("game").classList.add("hidden"); $("menu").classList.remove("hidden");
+    buildMenu();
+  }
+  $("undoBtn").addEventListener("click", doUndo);
+  $("hintBtn").addEventListener("click", hint);
+  $("resetBtn").addEventListener("click", reset);
+  $("backBtn").addEventListener("click", toMenu);
+  $("menuBtn").addEventListener("click", toMenu);
+  $("againBtn").addEventListener("click", function(){ start(LEVELS.indexOf(lv)); });
+
+  buildMenu();
+})();
+</script>
+</body>
+</html>

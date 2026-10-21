@@ -704,6 +704,13 @@
       desc: "El solitario de clavijas: saltá una ficha sobre otra vecina hacia un hueco vacío y retirá la saltada, hasta dejar una sola en el tablero. Tres tableros (inglés en cruz, europeo y triángulo con saltos en 6 direcciones), resaltado de saltos posibles, deshacer ilimitado y récord de menos clavijas por tablero. Si la última queda en el hueco de arranque, es un final perfecto.",
       controles: "Click / toque en una clavija y luego en el hueco marcado; teclado: flechas, Enter o Espacio para elegir, U deshace, R reinicia", fecha: "2026-10-20",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "takuzu-neon", titulo: "Takuzu Neón", archivo: "takuzu-neon.html",
+      emoji: "🔟", categoria: "logica", tags: ["takuzu", "binairo", "binario", "grilla", "puzzle", "deduccion", "un jugador"],
+      desc: "Puzzle de lógica binaria: llená la grilla con fichas celestes y rosas sin poner nunca tres iguales seguidas, con la misma cantidad de cada color en cada fila y columna y sin filas ni columnas repetidas. Tres tamaños (6×6, 8×8 y 10×10) con puzzles generados al azar y solución única garantizada, errores marcados en rojo, pistas, deshacer y récord de tiempo por nivel.",
+      controles: "Click / toque en una casilla para alternar vacío → celeste → rosa; teclado: flechas, 1 celeste, 2 rosa, 0 borra, Espacio alterna, U deshace, H pista", fecha: "2026-10-21",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
