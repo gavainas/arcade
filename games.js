@@ -711,6 +711,13 @@
       desc: "Puzzle de lógica binaria: llená la grilla con fichas celestes y rosas sin poner nunca tres iguales seguidas, con la misma cantidad de cada color en cada fila y columna y sin filas ni columnas repetidas. Tres tamaños (6×6, 8×8 y 10×10) con puzzles generados al azar y solución única garantizada, errores marcados en rojo, pistas, deshacer y récord de tiempo por nivel.",
       controles: "Click / toque en una casilla para alternar vacío → celeste → rosa; teclado: flechas, 1 celeste, 2 rosa, 0 borra, Espacio alterna, U deshace, H pista", fecha: "2026-10-21",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "eco-neon", titulo: "Eco Neón", archivo: "eco-neon.html",
+      emoji: "🦇", categoria: "arcade", tags: ["sonar", "ecolocalizacion", "cueva", "laberinto", "sigilo", "un jugador"],
+      desc: "Explorá una cueva totalmente a oscuras lanzando pulsos de sonar que iluminan las paredes por unos segundos. Juntá los 3 cristales y escapá por el portal, pero cuidado: los murciélagos oyen cada pulso y salen a buscarte. Cuevas generadas al azar, más murciélagos en cada nivel, bonus por velocidad y récord guardado.",
+      controles: "Flechas / WASD o arrastrar el dedo para moverte; Espacio o botón PULSO para lanzar el sonar", fecha: "2026-10-22",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -135,6 +135,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 81 | ⬡ | Hex Neón | `hex-neon.html` | Estrategia / Conexión | Hex: tablero de 11×11 hexágonos en rombo; por turnos colocá una ficha y unite arriba con abajo (celeste) antes de que el rival una izquierda con derecha (rosa). No hay empates. CPU con 3 dificultades (camino más corto de ambos; la difícil mira la respuesta rival) o de a dos, con récord de menos fichas para ganar por dificultad. | ✅ 2026-10-19 |
 | 82 | 📍 | Clavijas Neón | `clavijas-neon.html` | Puzzle de lógica | Solitario de clavijas (peg solitaire): saltá una ficha sobre otra vecina hacia un hueco vacío y retirá la saltada hasta dejar una sola. Tableros inglés, europeo y triángulo, deshacer y récord. | ✅ 2026-10-20 |
 | 83 | 🔟 | Takuzu Neón | `takuzu-neon.html` | Puzzle de lógica | Takuzu (Binairo): llená la grilla con fichas celestes y rosas sin tres iguales seguidas, mitad y mitad por fila y columna, sin filas ni columnas repetidas. 6×6, 8×8 y 10×10 con solución única, pistas, deshacer y récord de tiempo. | ✅ 2026-10-21 |
+| 84 | 🦇 | Eco Neón | `eco-neon.html` | Arcade / Sigilo | Cueva a oscuras: lanzá pulsos de sonar que iluminan las paredes unos segundos, juntá 3 cristales y escapá por el portal; los murciélagos oyen cada pulso y te cazan. Cuevas al azar, más enemigos por nivel. | ✅ 2026-10-22 |
 
 ## Reglas para el juego del día
 

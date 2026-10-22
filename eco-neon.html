@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ECO NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .stage{position:relative; z-index:1; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+  .hud{display:flex; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.l b{color:var(--pink);} .hud .box.g b{color:var(--green);} .hud .box.r b{color:var(--gold);}
+  .panel{position:relative; border-radius:20px; padding:12px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);}
+  canvas{display:block; width:100%; aspect-ratio:1/1; touch-action:none; user-select:none; border-radius:14px; background:#03040a;}
+  .overlay{position:absolute; inset:12px; border-radius:14px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35);
+    transition:transform .12s ease;}
+  .btn:hover{transform:translateY(-2px);}
+  .controls{margin-top:14px; display:flex; align-items:center; justify-content:center; gap:12px;}
+  .ping{cursor:pointer; border:2px solid var(--cyan); background:rgba(39,232,255,.12); color:var(--cyan);
+    border-radius:999px; padding:14px 34px; font-size:16px; font-weight:900; letter-spacing:2px; position:relative; overflow:hidden; touch-action:manipulation;}
+  .ping .fill{position:absolute; left:0; top:0; bottom:0; width:100%; background:rgba(39,232,255,.28); transform-origin:left; pointer-events:none;}
+  .ping span{position:relative;}
+  .hint{margin-top:12px; font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">ECO NEÓN</div>
+      <div class="sub">E C O L O C A L I Z A C I Ó N</div>
+    </header>
+    <div class="hud">
+      <div class="box">NIVEL<b id="hLvl">1</b></div>
+      <div class="box l">VIDAS<b id="hLives">♥♥♥</b></div>
+      <div class="box g">CRISTALES<b id="hCry">0/3</b></div>
+      <div class="box r">PUNTOS<b id="hScore">0</b></div>
+      <div class="box">RÉCORD<b id="hBest">0</b></div>
+    </div>
+    <div class="panel">
+      <canvas id="cv" width="480" height="480"></canvas>
+      <div class="overlay" id="startOv">
+        <div class="picture">🦇</div>
+        <h2>Eco Neón</h2>
+        <p>La cueva está a oscuras. Lanzá un <b style="color:#27e8ff">pulso de sonar</b> para ver las paredes, juntá los cristales y escapá por el portal. Cuidado: los <b style="color:#ff5470">murciélagos</b> escuchan el pulso y vienen a buscarte.</p>
+        <button class="btn" id="startBtn">JUGAR</button>
+      </div>
+      <div class="overlay hidden" id="endOv">
+        <div class="picture">💥</div>
+        <h2>Te atraparon</h2>
+        <p class="final" id="endText"></p>
+        <div class="newrec hidden" id="endRec">★ ¡NUEVO RÉCORD! ★</div>
+        <button class="btn" id="againBtn">OTRA VEZ</button>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ping" id="pingBtn"><div class="fill" id="pingFill"></div><span>◉ PULSO</span></button>
+    </div>
+    <p class="hint">Mové con flechas/WASD o arrastrando el dedo sobre la cueva. Pulso: Espacio o el botón. Con el pulso los murciélagos se enteran de dónde estás.</p>
+    <footer>Neon Arcade · Eco Neón</footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  var W = 480, T = 16, G = 30; // 30x30 tiles de 16px
+  var KEY = "eco-neon-best";
+  var best = 0; try { best = +localStorage.getItem(KEY) || 0; } catch(e){}
+
+  var S = null, keys = {}, touch = null, running = false, last = 0, audio = null;
+
+  function $(id){ return document.getElementById(id); }
+  function rnd(a,b){ return a + Math.random()*(b-a); }
+
+  function beep(f, d, type, v){
+    try{
+      if(!audio) audio = new (window.AudioContext||window.webkitAudioContext)();
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.type = type||"sine"; o.frequency.value = f; g.gain.value = v||0.06;
+      g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + d);
+      o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + d);
+    }catch(e){}
+  }
+
+  /* ---------- generación de cueva ---------- */
+  // Laberinto de M x M celdas; cada celda = 2 tiles, muro = 1 tile.
+  // M = 9 -> 9*3+1 = 28 tiles; centramos en 30 con margen de 1 tile.
+  var M = 9, OFF = 1;
+  function buildLevel(level){
+    var g = [], i, j;
+    for(i=0;i<G;i++){ g.push([]); for(j=0;j<G;j++) g[i].push(1); }
+    function carve(ci,cj){ var x = OFF+1+ci*3, y = OFF+1+cj*3;
+      g[y][x]=0; g[y+1][x]=0; g[y][x+1]=0; g[y+1][x+1]=0; }
+    function link(ci,cj,di,dj){ // abre el muro entre (ci,cj) y (ci+di,cj+dj)
+      var x = OFF+1+ci*3, y = OFF+1+cj*3;
+      if(di===1){ g[y][x+2]=0; g[y+1][x+2]=0; }
+      if(di===-1){ g[y][x-1]=0; g[y+1][x-1]=0; }
+      if(dj===1){ g[y+2][x]=0; g[y+2][x+1]=0; }
+      if(dj===-1){ g[y-1][x]=0; g[y-1][x+1]=0; }
+    }
+    var seen = {}, stack = [[0,0]], dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+    seen["0,0"] = 1; carve(0,0);
+    while(stack.length){
+      var c = stack[stack.length-1], opts = [];
+      dirs.forEach(function(d){ var a=c[0]+d[0], b=c[1]+d[1];
+        if(a>=0&&b>=0&&a<M&&b<M&&!seen[a+","+b]) opts.push(d); });
+      if(!opts.length){ stack.pop(); continue; }
+      var d = opts[Math.floor(Math.random()*opts.length)], a=c[0]+d[0], b=c[1]+d[1];
+      seen[a+","+b]=1; carve(a,b); link(c[0],c[1],d[0],d[1]); stack.push([a,b]);
+    }
+    // bucles extra para que no sea un árbol puro
+    var extra = 14 + level*2;
+    for(var k=0;k<extra;k++){
+      var ci = Math.floor(Math.random()*M), cj = Math.floor(Math.random()*M);
+      var dd = dirs[Math.floor(Math.random()*4)];
+      var a2 = ci+dd[0], b2 = cj+dd[1];
+      if(a2>=0&&b2>=0&&a2<M&&b2<M) link(ci,cj,dd[0],dd[1]);
+    }
+    return g;
+  }
+  function cellCenter(ci,cj){ return { x:(OFF+1+ci*3+1)*T, y:(OFF+1+cj*3+1)*T }; }
+
+  function newLevel(keepLives){
+    var lvl = S ? S.level : 1;
+    var grid = buildLevel(lvl);
+    var lit = []; for(var i=0;i<G;i++){ lit.push(new Float32Array(G)); }
+    var start = cellCenter(0,0), exit = cellCenter(M-1,M-1);
+    // cristales en celdas aleatorias lejanas
+    var cry = [], used = {"0,0":1}; used[(M-1)+","+(M-1)] = 1;
+    while(cry.length<3){
+      var ci = Math.floor(Math.random()*M), cj = Math.floor(Math.random()*M);
+      if(used[ci+","+cj] || ci+cj<4) continue; used[ci+","+cj]=1;
+      var p = cellCenter(ci,cj); cry.push({x:p.x,y:p.y,got:false,ph:Math.random()*6});
+    }
+    var nb = Math.min(2 + Math.floor((lvl-1)*0.8), 8), bats = [];
+    while(bats.length<nb){
+      var bi = Math.floor(Math.random()*M), bj = Math.floor(Math.random()*M);
+      if(bi+bj<6 || used[bi+","+bj]) continue; used[bi+","+bj]=1;
+      var q = cellCenter(bi,bj);
+      bats.push({x:q.x,y:q.y,vx:0,vy:0,state:"patrol",tx:q.x,ty:q.y,alert:0,seen:0,dir:Math.random()*6.28,r:7});
+    }
+    var st = {
+      grid:grid, lit:lit, level:lvl, lives: keepLives ? S.lives : 3, score: S ? S.score : 0,
+      p:{x:start.x,y:start.y,r:6}, exit:exit, cry:cry, bats:bats,
+      pings:[], cool:0, invul:1.5, got:0, t:0, flash:0, msg:"", msgT:0,
+      sparks:[]
+    };
+    return st;
+  }
+
+  function isWall(tx,ty){ return tx<0||ty<0||tx>=G||ty>=G||S.grid[ty][tx]===1; }
+  function collides(x,y,r){
+    var x0=Math.floor((x-r)/T), x1=Math.floor((x+r)/T), y0=Math.floor((y-r)/T), y1=Math.floor((y+r)/T);
+    for(var ty=y0;ty<=y1;ty++) for(var tx=x0;tx<=x1;tx++){
+      if(!isWall(tx,ty)) continue;
+      var cx = Math.max(tx*T, Math.min(x, tx*T+T)), cy = Math.max(ty*T, Math.min(y, ty*T+T));
+      var dx = x-cx, dy = y-cy;
+      if(dx*dx+dy*dy < r*r) return true;
+    }
+    return false;
+  }
+  function move(o, dx, dy){
+    if(!collides(o.x+dx,o.y,o.r)) o.x += dx; else if(dx) o.blocked = true;
+    if(!collides(o.x,o.y+dy,o.r)) o.y += dy; else if(dy) o.blocked = true;
+  }
+
+  /* ---------- pulso ---------- */
+  var PING_CD = 1.3, PING_R = 230, PING_V = 300;
+  function doPing(){
+    if(!running || S.cool>0) return;
+    S.cool = PING_CD;
+    S.pings.push({x:S.p.x,y:S.p.y,r:0});
+    beep(520,0.35,"sine",0.07);
+    // los murciélagos cercanos oyen el pulso (más cuanto más fuerte)
+    S.bats.forEach(function(b){
+      var d = Math.hypot(b.x-S.p.x,b.y-S.p.y);
+      if(d < PING_R*1.25){ b.state="hunt"; b.alert=4.5; b.tx=S.p.x; b.ty=S.p.y; }
+    });
+  }
+  function litCircle(x,y,rad,val){
+    var x0=Math.max(0,Math.floor((x-rad)/T)), x1=Math.min(G-1,Math.floor((x+rad)/T));
+    var y0=Math.max(0,Math.floor((y-rad)/T)), y1=Math.min(G-1,Math.floor((y+rad)/T));
+    for(var ty=y0;ty<=y1;ty++) for(var tx=x0;tx<=x1;tx++){
+      var d = Math.hypot(tx*T+T/2-x, ty*T+T/2-y);
+      if(d<=rad) S.lit[ty][tx] = Math.max(S.lit[ty][tx], val);
+    }
+  }
+
+  /* ---------- update ---------- */
+  function update(dt){
+    S.t += dt; S.invul = Math.max(0,S.invul-dt); S.cool = Math.max(0,S.cool-dt);
+    S.flash = Math.max(0,S.flash-dt); S.msgT = Math.max(0,S.msgT-dt);
+    // input
+    var ax = 0, ay = 0;
+    if(keys.ArrowLeft||keys.a) ax-=1; if(keys.ArrowRight||keys.d) ax+=1;
+    if(keys.ArrowUp||keys.w) ay-=1; if(keys.ArrowDown||keys.s) ay+=1;
+    if(touch){ var tx = touch.x-S.p.x, ty = touch.y-S.p.y, m = Math.hypot(tx,ty);
+      if(m>10){ ax = tx/m; ay = ty/m; } }
+    var len = Math.hypot(ax,ay); if(len>1){ ax/=len; ay/=len; }
+    var sp = 112;
+    move(S.p, ax*sp*dt, ay*sp*dt);
+
+    // luz tenue alrededor del jugador
+    litCircle(S.p.x,S.p.y,T*1.6,0.45);
+
+    // pulsos: iluminan muros cuando el anillo los alcanza
+    S.pings.forEach(function(p){
+      var prev = p.r; p.r += PING_V*dt;
+      var x0=Math.max(0,Math.floor((p.x-p.r-T)/T)), x1=Math.min(G-1,Math.floor((p.x+p.r+T)/T));
+      var y0=Math.max(0,Math.floor((p.y-p.r-T)/T)), y1=Math.min(G-1,Math.floor((p.y+p.r+T)/T));
+      for(var ty=y0;ty<=y1;ty++) for(var tx=x0;tx<=x1;tx++){
+        var d = Math.hypot(tx*T+T/2-p.x, ty*T+T/2-p.y);
+        if(d>prev-T/2 && d<=p.r+T/2 && d<PING_R){
+          // no ilumina muros detrás de otros muros: raycast simple
+          if(visibleFrom(p.x,p.y,tx*T+T/2,ty*T+T/2)) S.lit[ty][tx] = 1;
+        }
+      }
+      // los murciélagos "se ven" brevemente cuando el anillo los toca
+      S.bats.forEach(function(b){
+        var d = Math.hypot(b.x-p.x,b.y-p.y);
+        if(d>prev-6 && d<=p.r+6 && d<PING_R && visibleFrom(p.x,p.y,b.x,b.y)) b.seen = 1.2;
+      });
+      S.cry.forEach(function(c){
+        var d = Math.hypot(c.x-p.x,c.y-p.y);
+        if(!c.got && d>prev-6 && d<=p.r+6 && d<PING_R && visibleFrom(p.x,p.y,c.x,c.y)) c.seen = 3;
+      });
+      var d2 = Math.hypot(S.exit.x-p.x,S.exit.y-p.y);
+      if(d2>prev-6 && d2<=p.r+6 && d2<PING_R && visibleFrom(p.x,p.y,S.exit.x,S.exit.y)) S.exitSeen = 3;
+    });
+    S.pings = S.pings.filter(function(p){ return p.r < PING_R+20; });
+
+    // desvanecer iluminación
+    for(var y=0;y<G;y++){ var row=S.lit[y]; for(var x=0;x<G;x++) if(row[x]>0) row[x]=Math.max(0,row[x]-dt*0.42); }
+    S.cry.forEach(function(c){ if(c.seen) c.seen=Math.max(0,c.seen-dt); });
+    if(S.exitSeen) S.exitSeen=Math.max(0,S.exitSeen-dt);
+
+    // cristales
+    S.cry.forEach(function(c){
+      if(!c.got && Math.hypot(c.x-S.p.x,c.y-S.p.y)<12){
+        c.got = true; S.got++; S.score += 50; beep(880,0.18,"triangle",0.08); beep(1320,0.22,"triangle",0.05);
+        burst(c.x,c.y,"#39ff9e");
+        if(S.got===3){ S.msg="¡Portal abierto!"; S.msgT=1.8; beep(660,0.4,"square",0.04); }
+      }
+    });
+    // portal
+    if(S.got===3 && Math.hypot(S.exit.x-S.p.x,S.exit.y-S.p.y)<12){
+      var bonus = Math.max(0, Math.round(150 - S.t*1.5));
+      S.score += 100 + S.level*20 + bonus; S.level++;
+      beep(990,0.3,"triangle",0.08); beep(1480,0.4,"triangle",0.06);
+      var keep = S; S = newLevel(true); S.score = keep.score; S.lives = keep.lives;
+      S.msg = "Nivel "+S.level+"  +"+bonus+" bonus"; S.msgT = 2;
+      bestUpdate(); hud();
+      return;
+    }
+
+    // murciélagos
+    S.bats.forEach(function(b){
+      b.seen = Math.max(0,b.seen-dt);
+      var spd, tx, ty;
+      if(b.state==="hunt"){
+        b.alert -= dt;
+        spd = 74 + S.level*3;
+        // sigue el último sitio donde oyó el pulso; si llega, merodea
+        tx=b.tx; ty=b.ty;
+        if(Math.hypot(tx-b.x,ty-b.y)<10 || b.alert<=0){ b.state="patrol"; b.dir=Math.random()*6.28; }
+      } else {
+        spd = 36;
+        b.dir += (Math.random()-0.5)*dt*3;
+      }
+      var vx, vy;
+      if(b.state==="hunt"){
+        var ang = steer(b,tx,ty);
+        vx = Math.cos(ang)*spd; vy = Math.sin(ang)*spd;
+      } else { vx = Math.cos(b.dir)*spd; vy = Math.sin(b.dir)*spd; }
+      b.blocked = false;
+      move(b, vx*dt, vy*dt);
+      if(b.blocked && b.state==="patrol") b.dir += Math.PI*(0.5+Math.random());
+      // golpe
+      if(S.invul<=0 && Math.hypot(b.x-S.p.x,b.y-S.p.y) < b.r+S.p.r){
+        hit();
+      }
+    });
+    // partículas
+    S.sparks.forEach(function(s){ s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt; });
+    S.sparks = S.sparks.filter(function(s){ return s.life>0; });
+  }
+
+  // dirección de persecución: prueba ángulos alrededor para evitar paredes
+  function steer(b,tx,ty){
+    var base = Math.atan2(ty-b.y,tx-b.x), best=base, bestScore=-1e9, offs=[0,0.5,-0.5,1,-1,1.6,-1.6,2.3,-2.3,Math.PI];
+    for(var i=0;i<offs.length;i++){
+      var a = base+offs[i], px = b.x+Math.cos(a)*14, py = b.y+Math.sin(a)*14;
+      if(collides(px,py,b.r)) continue;
+      var sc = -Math.abs(offs[i]) - (b.lastA!==undefined ? Math.abs(angDiff(a,b.lastA))*0.5 : 0);
+      if(sc>bestScore){ bestScore=sc; best=a; }
+    }
+    b.lastA = best; return best;
+  }
+  function angDiff(a,b){ var d=a-b; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI; return d; }
+
+  function visibleFrom(x0,y0,x1,y1){
+    var dx=x1-x0, dy=y1-y0, d=Math.hypot(dx,dy), steps=Math.ceil(d/6);
+    for(var i=1;i<steps;i++){
+      var x=x0+dx*i/steps, y=y0+dy*i/steps;
+      var tx=Math.floor(x/T), ty=Math.floor(y/T);
+      if(isWall(tx,ty) && !(tx===Math.floor(x1/T) && ty===Math.floor(y1/T))) return false;
+    }
+    return true;
+  }
+
+  function burst(x,y,col){
+    for(var i=0;i<14;i++){ var a=Math.random()*6.28, s=rnd(30,110);
+      S.sparks.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(.3,.7),col:col}); }
+  }
+
+  function hit(){
+    S.lives--; S.flash = .5; S.invul = 2; beep(120,0.4,"sawtooth",0.1);
+    burst(S.p.x,S.p.y,"#ff5470");
+    // vuelve al inicio y los murciélagos se calman
+    var st = cellCenter(0,0); S.p.x=st.x; S.p.y=st.y;
+    S.bats.forEach(function(b){ b.state="patrol"; });
+    hud();
+    if(S.lives<=0) gameOver();
+  }
+
+  function bestUpdate(){ if(S.score>best){ best=S.score; try{ localStorage.setItem(KEY,best); }catch(e){} S.newRec = true; } }
+  function hud(){
+    $("hLvl").textContent = S.level;
+    $("hLives").textContent = new Array(Math.max(S.lives,0)+1).join("♥") || "–";
+    $("hCry").textContent = S.got+"/3";
+    $("hScore").textContent = S.score;
+    $("hBest").textContent = Math.max(best,S.score);
+  }
+
+  function gameOver(){
+    running = false; bestUpdate();
+    $("endText").innerHTML = "Llegaste al nivel <b>"+S.level+"</b> con <b>"+S.score+"</b> puntos.";
+    $("endRec").classList.toggle("hidden", !S.newRec);
+    $("endOv").classList.remove("hidden");
+  }
+
+  /* ---------- dibujo ---------- */
+  function draw(){
+    ctx.fillStyle = "#03040a"; ctx.fillRect(0,0,W,W);
+    var x,y;
+    // muros iluminados
+    for(y=0;y<G;y++) for(x=0;x<G;x++){
+      var l = S.lit[y][x];
+      if(l<=0.02) continue;
+      if(S.grid[y][x]===1){
+        // sólo dibujar muros que bordean un pasillo
+        ctx.globalAlpha = Math.min(1,l);
+        ctx.fillStyle = "#27e8ff"; ctx.shadowColor="#27e8ff"; ctx.shadowBlur = 10*l;
+        ctx.fillRect(x*T+1,y*T+1,T-2,T-2);
+        ctx.shadowBlur=0;
+        ctx.fillStyle = "rgba(138,75,255,.55)"; ctx.fillRect(x*T+3,y*T+3,T-6,T-6);
+      } else {
+        ctx.globalAlpha = Math.min(1,l)*0.12;
+        ctx.fillStyle = "#8a4bff"; ctx.fillRect(x*T,y*T,T,T);
+      }
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+    // anillos de pulso
+    S.pings.forEach(function(p){
+      var a = Math.max(0,1-p.r/PING_R);
+      ctx.strokeStyle = "rgba(39,232,255,"+(0.7*a)+")"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.stroke();
+      ctx.strokeStyle = "rgba(255,43,214,"+(0.35*a)+")"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(0,p.r-8),0,6.283); ctx.stroke();
+    });
+
+    // portal
+    var open = S.got===3;
+    if(open || S.exitSeen>0){
+      var ea = open ? 1 : Math.min(1,S.exitSeen);
+      ctx.globalAlpha = ea; ctx.strokeStyle = open ? "#ffd23b" : "#8a4bff"; ctx.lineWidth = 3;
+      ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 16;
+      for(var k=0;k<3;k++){ ctx.beginPath(); ctx.arc(S.exit.x,S.exit.y,5+k*4+Math.sin(S.t*4+k)*1.5,0,6.283); ctx.stroke(); }
+      ctx.shadowBlur=0; ctx.globalAlpha=1;
+    }
+    // cristales
+    S.cry.forEach(function(c){
+      if(c.got) return;
+      var a = c.seen>0 ? Math.min(1,c.seen) : 0.0;
+      var near = Math.hypot(c.x-S.p.x,c.y-S.p.y) < 52 ? 0.6 : 0;
+      a = Math.max(a,near); if(a<=0) return;
+      ctx.globalAlpha = a; ctx.fillStyle="#39ff9e"; ctx.shadowColor="#39ff9e"; ctx.shadowBlur=14;
+      var s = 6+Math.sin(S.t*5+c.ph)*1.2;
+      ctx.beginPath(); ctx.moveTo(c.x,c.y-s); ctx.lineTo(c.x+s*.7,c.y); ctx.lineTo(c.x,c.y+s); ctx.lineTo(c.x-s*.7,c.y); ctx.closePath(); ctx.fill();
+      ctx.shadowBlur=0; ctx.globalAlpha=1;
+    });
+    // murciélagos (visibles sólo si el eco los toca, o si están muy cerca; ojos rojos de aviso al cazar)
+    S.bats.forEach(function(b){
+      var d = Math.hypot(b.x-S.p.x,b.y-S.p.y);
+      var a = Math.max(Math.min(1,b.seen), d<40 ? 0.7 : 0);
+      if(a>0){
+        ctx.globalAlpha=a; ctx.fillStyle="#ff5470"; ctx.shadowColor="#ff5470"; ctx.shadowBlur=14;
+        var w = 9+Math.sin(S.t*18+b.x)*3;
+        ctx.beginPath(); ctx.ellipse(b.x,b.y,4,5,0,0,6.283); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(b.x-2,b.y); ctx.lineTo(b.x-w,b.y-5); ctx.lineTo(b.x-w+3,b.y+3); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(b.x+2,b.y); ctx.lineTo(b.x+w,b.y-5); ctx.lineTo(b.x+w-3,b.y+3); ctx.closePath(); ctx.fill();
+        ctx.shadowBlur=0; ctx.globalAlpha=1;
+      }
+      if(b.state==="hunt"){ // chispas rojas tenues: se nota que te buscan, sin revelar posición exacta
+        ctx.fillStyle = "rgba(255,84,112,.55)";
+        ctx.fillRect(b.x-1+Math.sin(S.t*30)*2, b.y-1, 2, 2);
+      }
+    });
+    // jugador
+    var blink = S.invul>0 && Math.floor(S.t*14)%2===0;
+    if(!blink){
+      ctx.fillStyle="#ffffff"; ctx.shadowColor="#27e8ff"; ctx.shadowBlur=18;
+      ctx.beginPath(); ctx.arc(S.p.x,S.p.y,S.p.r,0,6.283); ctx.fill();
+      ctx.fillStyle="#27e8ff"; ctx.beginPath(); ctx.arc(S.p.x,S.p.y,S.p.r-2.5,0,6.283); ctx.fill();
+      ctx.shadowBlur=0;
+    }
+    // partículas
+    S.sparks.forEach(function(s){ ctx.globalAlpha=Math.max(0,s.life*2); ctx.fillStyle=s.col; ctx.fillRect(s.x-1.5,s.y-1.5,3,3); });
+    ctx.globalAlpha=1;
+    if(S.flash>0){ ctx.fillStyle="rgba(255,84,112,"+(S.flash*0.6)+")"; ctx.fillRect(0,0,W,W); }
+    if(S.msgT>0){
+      ctx.globalAlpha = Math.min(1,S.msgT); ctx.fillStyle="#ffd23b"; ctx.font="bold 22px Segoe UI, sans-serif"; ctx.textAlign="center";
+      ctx.shadowColor="#ffd23b"; ctx.shadowBlur=12; ctx.fillText(S.msg,W/2,40); ctx.shadowBlur=0; ctx.globalAlpha=1;
+    }
+    // barra de recarga del botón
+    $("pingFill").style.transform = "scaleX("+(1-S.cool/PING_CD)+")";
+  }
+
+  function loop(ts){
+    var dt = Math.min(0.05,(ts-last)/1000); last = ts;
+    if(S){ if(running){ update(dt); hud(); } draw(); }
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- control ---------- */
+  function startGame(){
+    S = Object.assign(newLevel(false), {level:1, score:0, lives:3, newRec:false});
+    $("startOv").classList.add("hidden"); $("endOv").classList.add("hidden");
+    running = true; hud();
+    // pulso inicial para orientarse
+    S.cool = 0; doPing();
+  }
+  $("startBtn").onclick = startGame; $("againBtn").onclick = startGame;
+  $("pingBtn").addEventListener("pointerdown", function(e){ e.preventDefault(); doPing(); });
+  window.addEventListener("keydown", function(e){
+    var k = e.key.length===1 ? e.key.toLowerCase() : e.key;
+    if(k===" "){ e.preventDefault(); doPing(); return; }
+    if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].indexOf(k)>=0) e.preventDefault();
+    keys[k] = true;
+  });
+  window.addEventListener("keyup", function(e){ var k = e.key.length===1 ? e.key.toLowerCase() : e.key; keys[k]=false; });
+  function pos(e){ var r = cv.getBoundingClientRect(); return { x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*W/r.height }; }
+  cv.addEventListener("pointerdown", function(e){ cv.setPointerCapture(e.pointerId); touch = pos(e); });
+  cv.addEventListener("pointermove", function(e){ if(touch) touch = pos(e); });
+  cv.addEventListener("pointerup", function(){ touch = null; });
+  cv.addEventListener("pointercancel", function(){ touch = null; });
+
+  // portada: cueva decorativa
+  S = Object.assign(newLevel(false), {level:1, score:0, lives:3});
+  for(var yy=0;yy<G;yy++) for(var xx=0;xx<G;xx++) S.lit[yy][xx] = Math.random()<0.5 ? Math.random()*0.5 : 0;
+  hud();
+  requestAnimationFrame(function(t){ last=t; loop(t); });
+})();
+</script>
+</body>
+</html>
