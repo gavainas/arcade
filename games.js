@@ -718,6 +718,13 @@
       desc: "Explorá una cueva totalmente a oscuras lanzando pulsos de sonar que iluminan las paredes por unos segundos. Juntá los 3 cristales y escapá por el portal, pero cuidado: los murciélagos oyen cada pulso y salen a buscarte. Cuevas generadas al azar, más murciélagos en cada nivel, bonus por velocidad y récord guardado.",
       controles: "Flechas / WASD o arrastrar el dedo para moverte; Espacio o botón PULSO para lanzar el sonar", fecha: "2026-10-22",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "iman-neon", titulo: "Imán Neón", archivo: "iman-neon.html",
+      emoji: "🧲", categoria: "arcade", tags: ["iman", "polaridad", "magnetismo", "fisica", "reflejos", "un jugador"],
+      desc: "Tu partícula tiene carga positiva o negativa y los polos fijos del tablero la atraen o la repelen: las cargas opuestas se atraen. Invertí tu polaridad en el momento justo para curvar el camino, esquivar las paredes móviles y llegar a la meta antes de que se acabe el tiempo. Niveles al azar con más polos y paredes cada vez, bonus por tiempo y récord guardado.",
+      controles: "Espacio, toque en el tablero o botón INVERTIR para cambiar la polaridad; flechas / WASD para un empujoncito", fecha: "2026-10-23",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
