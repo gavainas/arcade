@@ -725,6 +725,13 @@
       desc: "Tu partícula tiene carga positiva o negativa y los polos fijos del tablero la atraen o la repelen: las cargas opuestas se atraen. Invertí tu polaridad en el momento justo para curvar el camino, esquivar las paredes móviles y llegar a la meta antes de que se acabe el tiempo. Niveles al azar con más polos y paredes cada vez, bonus por tiempo y récord guardado.",
       controles: "Espacio, toque en el tablero o botón INVERTIR para cambiar la polaridad; flechas / WASD para un empujoncito", fecha: "2026-10-23",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "fusion-neon", titulo: "Fusión Neón", archivo: "fusion-neon.html",
+      emoji: "🔮", categoria: "puzzle", tags: ["suika", "fusion", "orbes", "fisica", "merge"],
+      desc: "Soltá orbes en el frasco: cuando dos iguales se tocan se fusionan en uno más grande, con física real. Llegá al orbe supernova y no dejes que la pila pase la línea roja.",
+      controles: "Mouse / dedo para apuntar y soltar; ◄ ► o A D + Espacio con teclado", fecha: "2026-10-24",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

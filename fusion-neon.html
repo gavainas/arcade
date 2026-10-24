@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FUSIÓN NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .stage{position:relative; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+  .hud{display:flex; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.l b{color:var(--pink);} .hud .box.g b{color:var(--green);} .hud .box.r b{color:var(--gold);}
+  .panel{position:relative; border-radius:20px; padding:12px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);}
+  canvas{display:block; width:100%; aspect-ratio:4/5; touch-action:none; user-select:none; border-radius:14px; background:#03040a;}
+  .overlay{position:absolute; inset:12px; border-radius:14px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden,.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35); transition:transform .12s ease;}
+  .btn:hover{transform:translateY(-2px);}
+  .controls{margin-top:14px; display:flex; justify-content:center;}
+  .pol{cursor:pointer; border:2px solid var(--cyan); background:rgba(39,232,255,.12); color:var(--cyan);
+    border-radius:999px; padding:14px 40px; font-size:16px; font-weight:900; letter-spacing:2px; touch-action:manipulation; transition:all .1s;}
+  .pol.neg{border-color:var(--pink); background:rgba(255,43,214,.12); color:var(--pink);}
+  .hint{margin-top:12px; font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+  .hud .box.r b{color:var(--gold);}
+  .nextbox canvas{display:block;margin:2px auto 0;width:34px;height:34px;aspect-ratio:1/1;background:transparent;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">FUSIÓN NEÓN</div>
+      <div class="sub">O R B E S</div>
+    </header>
+    <div class="hud">
+      <div class="box">PUNTOS<b id="hScore">0</b></div>
+      <div class="box nextbox">SIGUE<canvas id="nx" width="68" height="68"></canvas></div>
+      <div class="box">MAYOR<b id="hMax">1</b></div>
+      <div class="box">RÉCORD<b id="hBest">0</b></div>
+    </div>
+    <div class="panel">
+      <canvas id="cv" width="480" height="600"></canvas>
+      <div class="overlay" id="startOv">
+        <div class="picture">🔮</div>
+        <h2>Fusión Neón</h2>
+        <p>Soltá orbes en el frasco. Cuando <b>dos orbes iguales se tocan se fusionan</b> en uno más grande. Llegá al orbe <b style="color:#ffd23b">supernova</b> y no dejes que la pila pase la <b style="color:#ff5470">línea roja</b>.</p>
+        <button class="btn" id="startBtn">JUGAR</button>
+      </div>
+      <div class="overlay hidden" id="endOv">
+        <div class="picture">💥</div>
+        <h2>Fin del juego</h2>
+        <p class="final" id="endText"></p>
+        <div class="newrec hidden" id="endRec">★ ¡NUEVO RÉCORD! ★</div>
+        <button class="btn" id="againBtn">OTRA VEZ</button>
+      </div>
+    </div>
+    <p class="hint">Mové el dedo/mouse (o ◄ ► / A D) para apuntar y soltá / tocá / Espacio para dejar caer el orbe.</p>
+    <footer>Neon Arcade · Fusión Neón</footer>
+  </div>
+<script>
+(function(){
+  "use strict";
+  var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+  var nx=document.getElementById("nx"), nctx=nx.getContext("2d");
+  var W=480,H=600, WALL=14, LINE=110, FLOOR=H-WALL, LW=WALL, RW=W-WALL;
+  var KEY="neon_fusion_best";
+  var COL=["#27e8ff","#39ff9e","#8a4bff","#ff2bd6","#ffd23b","#ff9838","#4b7bff","#ff5470","#e8f6ff","#ffffff"];
+  var RAD=[14,19,25,31,38,46,55,65,76,90];
+  var EMO=["","","","","","","","","","★"];
+  var best=0; try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+  var S=null, running=false, last=0, aimX=W/2, keys={};
+  var $=function(i){return document.getElementById(i);};
+  $("hBest").textContent=best;
+
+  function rnd(){ return Math.random(); }
+  function newLevel(){ return Math.floor(rnd()*4); }
+
+  function reset(){
+    S={balls:[],parts:[],score:0,max:0,cur:newLevel(),next:newLevel(),cool:0,over:0,t:0,shake:0};
+    hud();
+  }
+  function hud(){
+    $("hScore").textContent=S.score; $("hMax").textContent=S.max+1; $("hBest").textContent=Math.max(best,S.score);
+    nctx.clearRect(0,0,68,68);
+    var r=Math.min(30,RAD[S.next]*0.9);
+    orb(nctx,34,34,r,S.next,1);
+  }
+  function orb(c,x,y,r,l,a){
+    var col=COL[l];
+    c.save(); c.globalAlpha=a;
+    var g=c.createRadialGradient(x-r*0.35,y-r*0.35,r*0.1,x,y,r);
+    g.addColorStop(0,"#ffffffcc"); g.addColorStop(0.25,col); g.addColorStop(1,col+"55");
+    c.shadowColor=col; c.shadowBlur=14;
+    c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,6.2832); c.fill();
+    c.shadowBlur=0; c.lineWidth=2; c.strokeStyle=col; c.stroke();
+    c.fillStyle="#03040acc"; c.font="900 "+Math.max(10,r*0.8)+"px Segoe UI,system-ui,sans-serif";
+    c.textAlign="center"; c.textBaseline="middle";
+    c.fillText(l===9?"★":String(l+1),x,y+1);
+    c.restore();
+  }
+  function clampAim(){ var r=RAD[S.cur]; aimX=Math.max(LW+r+1,Math.min(RW-r-1,aimX)); }
+
+  function drop(){
+    if(!running||S.cool>0) return;
+    clampAim();
+    S.balls.push({x:aimX,y:LINE-RAD[S.cur]-4,vx:0,vy:0,l:S.cur,r:RAD[S.cur],age:0,grace:0});
+    S.cur=S.next; S.next=newLevel(); S.cool=0.45; hud();
+  }
+
+  function burst(x,y,col,n){
+    for(var i=0;i<n;i++){var a=rnd()*6.28,s=60+rnd()*160;
+      S.parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.6+rnd()*0.4,t:0,c:col});}
+  }
+
+  function step(dt){
+    S.t+=dt; if(S.cool>0) S.cool-=dt;
+    if(keys.l) aimX-=300*dt; if(keys.r) aimX+=300*dt; clampAim();
+    var sub=3, h=dt/sub;
+    for(var s=0;s<sub;s++){
+      var B=S.balls;
+      for(var i=0;i<B.length;i++){
+        var b=B[i]; b.vy+=1500*h; b.x+=b.vx*h; b.y+=b.vy*h;
+        b.vx*=0.9985; b.vy*=0.9985;
+        if(b.x<LW+b.r){b.x=LW+b.r; if(b.vx<0)b.vx*=-0.2;}
+        if(b.x>RW-b.r){b.x=RW-b.r; if(b.vx>0)b.vx*=-0.2;}
+        if(b.y>FLOOR-b.r){b.y=FLOOR-b.r; if(b.vy>0)b.vy*=-0.15; b.vx*=0.985;}
+      }
+      for(var i=0;i<B.length;i++) for(var j=i+1;j<B.length;j++){
+        var a=B[i],c=B[j]; if(!a||!c||a.dead||c.dead) continue;
+        var dx=c.x-a.x,dy=c.y-a.y,d=Math.sqrt(dx*dx+dy*dy),m=a.r+c.r;
+        if(d<m && d>0.0001){
+          if(a.l===c.l && a.l<9){ merge(a,c); continue; }
+          var nxv=dx/d,nyv=dy/d,ov=(m-d)/2, ma=a.r*a.r, mc=c.r*c.r, tot=ma+mc;
+          a.x-=nxv*ov*(mc/tot)*2; a.y-=nyv*ov*(mc/tot)*2;
+          c.x+=nxv*ov*(ma/tot)*2; c.y+=nyv*ov*(ma/tot)*2;
+          var rv=(c.vx-a.vx)*nxv+(c.vy-a.vy)*nyv;
+          if(rv<0){ var imp=-(1.1)*rv/(1/ma+1/mc);
+            a.vx-=imp*nxv/ma; a.vy-=imp*nyv/ma; c.vx+=imp*nxv/mc; c.vy+=imp*nyv/mc; }
+        }
+      }
+      S.balls=B=B.filter(function(b){return !b.dead;});
+    }
+    // game over: bola asentada por encima de la línea
+    var danger=false;
+    for(var i=0;i<S.balls.length;i++){ var b=S.balls[i]; b.age+=dt;
+      if(b.age>1.2 && b.y-b.r<LINE && Math.abs(b.vy)<120) danger=true; }
+    S.over = danger ? S.over+dt : Math.max(0,S.over-dt*2);
+    if(S.over>2.2) end();
+    for(var i=S.parts.length-1;i>=0;i--){var p=S.parts[i];p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;if(p.t>p.life)S.parts.splice(i,1);}
+    if(S.shake>0) S.shake-=dt;
+  }
+
+  function merge(a,c){
+    var l=a.l+1, x=(a.x+c.x)/2, y=(a.y+c.y)/2;
+    a.dead=c.dead=true;
+    S.balls.push({x:x,y:y,vx:(a.vx+c.vx)/2,vy:(a.vy+c.vy)/2-40,l:l,r:RAD[l],age:0.6,grace:0});
+    S.score+=(l+1)*(l+1)*2; if(l>S.max)S.max=l;
+    burst(x,y,COL[l],10+l*2); if(l>=6) S.shake=0.25;
+    if(l===9){ S.score+=500; burst(x,y,"#ffd23b",60); S.shake=0.5; }
+    hud();
+  }
+
+  function draw(){
+    ctx.save(); ctx.clearRect(0,0,W,H);
+    if(S.shake>0) ctx.translate((rnd()-.5)*8*S.shake*2,(rnd()-.5)*8*S.shake*2);
+    var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,"#070a16"); g.addColorStop(1,"#0b1030");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // frasco
+    ctx.shadowColor="#8a4bff"; ctx.shadowBlur=14; ctx.fillStyle="#8a4bff";
+    ctx.fillRect(0,0,LW,H); ctx.fillRect(RW,0,WALL,H); ctx.fillRect(0,FLOOR,W,WALL); ctx.shadowBlur=0;
+    // línea límite
+    var warn=S.over>0, al=warn?0.5+0.5*Math.sin(S.t*14):0.45;
+    ctx.setLineDash([10,8]); ctx.lineWidth=2; ctx.strokeStyle="rgba(255,84,112,"+al+")";
+    ctx.beginPath(); ctx.moveTo(LW,LINE); ctx.lineTo(RW,LINE); ctx.stroke(); ctx.setLineDash([]);
+    // guía + orbe actual
+    if(running){
+      clampAim();
+      ctx.strokeStyle="rgba(39,232,255,.18)"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(aimX,LINE); ctx.lineTo(aimX,FLOOR); ctx.stroke();
+      orb(ctx,aimX,LINE-RAD[S.cur]-4,RAD[S.cur],S.cur,S.cool>0?0.35:1);
+    }
+    for(var i=0;i<S.balls.length;i++){var b=S.balls[i]; orb(ctx,b.x,b.y,b.r,b.l,1);}
+    for(var i=0;i<S.parts.length;i++){var p=S.parts[i]; ctx.globalAlpha=Math.max(0,1-p.t/p.life); ctx.fillStyle=p.c; ctx.fillRect(p.x-2,p.y-2,4,4);} ctx.globalAlpha=1;
+    // legenda de evolución
+    ctx.restore();
+  }
+
+  function loop(t){
+    if(!running) return;
+    var dt=Math.min(0.033,(t-last)/1000||0.016); last=t;
+    step(dt); if(running){draw();} requestAnimationFrame(loop);
+  }
+  function start(){
+    reset(); running=true; $("startOv").classList.add("hidden"); $("endOv").classList.add("hidden");
+    last=performance.now(); requestAnimationFrame(loop);
+  }
+  function end(){
+    running=false; draw();
+    var rec=S.score>best; if(rec){best=S.score; try{localStorage.setItem(KEY,best);}catch(e){}}
+    $("endText").innerHTML="Puntos: <b>"+S.score+"</b><br>Orbe más grande: <b>"+(S.max+1)+"</b>";
+    $("endRec").classList.toggle("hidden",!rec); $("hBest").textContent=best;
+    $("endOv").classList.remove("hidden");
+  }
+
+  function pos(e){ var r=cv.getBoundingClientRect(); var p=e.touches?e.touches[0]:e; return (p.clientX-r.left)*W/r.width; }
+  cv.addEventListener("pointermove",function(e){ aimX=pos(e); });
+  cv.addEventListener("pointerdown",function(e){ aimX=pos(e); });
+  cv.addEventListener("pointerup",function(e){ aimX=pos(e); drop(); });
+  window.addEventListener("keydown",function(e){
+    var k=e.key;
+    if(k==="ArrowLeft"||k==="a"||k==="A"){keys.l=1;e.preventDefault();}
+    else if(k==="ArrowRight"||k==="d"||k==="D"){keys.r=1;e.preventDefault();}
+    else if(k===" "||k==="ArrowDown"||k==="Enter"){ e.preventDefault(); if(!running&&S&&!$("endOv").classList.contains("hidden")) start(); else drop(); }
+  });
+  window.addEventListener("keyup",function(e){
+    var k=e.key; if(k==="ArrowLeft"||k==="a"||k==="A")keys.l=0; if(k==="ArrowRight"||k==="d"||k==="D")keys.r=0;
+  });
+  $("startBtn").onclick=start; $("againBtn").onclick=start;
+  reset(); draw();
+  window.__fusion={get S(){return S;}, drop:drop};
+})();
+</script>
+</body>
+</html>
