@@ -732,6 +732,13 @@
       desc: "Soltá orbes en el frasco: cuando dos iguales se tocan se fusionan en uno más grande, con física real. Llegá al orbe supernova y no dejes que la pila pase la línea roja.",
       controles: "Mouse / dedo para apuntar y soltar; ◄ ► o A D + Espacio con teclado", fecha: "2026-10-24",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "transito-neon", titulo: "Tránsito Neón", archivo: "transito-neon.html",
+      emoji: "🚦", categoria: "reflejos", tags: ["transito", "semaforo", "interseccion", "autos", "control", "un jugador"],
+      desc: "Vos sos el semáforo: tocá un auto para frenarlo y volvé a tocarlo para que siga. Dejá pasar a todos por la intersección sin que choquen en el cruce y sin que se desborde la fila en los bordes. Cada 10 autos sube el nivel y el tránsito se pone más denso; 3 vidas y récord guardado.",
+      controles: "Tocá / cliqueá un auto para frenarlo o soltarlo; con teclado, las flechas frenan o sueltan el próximo auto que va en esa dirección", fecha: "2026-10-25",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

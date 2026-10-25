@@ -138,6 +138,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 83 | 🔟 | Takuzu Neón | `takuzu-neon.html` | Puzzle de lógica | Takuzu (Binairo): llená la grilla con fichas celestes y rosas sin tres iguales seguidas, mitad y mitad por fila y columna, sin filas ni columnas repetidas. 6×6, 8×8 y 10×10 con solución única, pistas, deshacer y récord de tiempo. | ✅ 2026-10-21 |
 | 84 | 🦇 | Eco Neón | `eco-neon.html` | Arcade / Sigilo | Cueva a oscuras: lanzá pulsos de sonar que iluminan las paredes unos segundos, juntá 3 cristales y escapá por el portal; los murciélagos oyen cada pulso y te cazan. Cuevas al azar, más enemigos por nivel. | ✅ 2026-10-22 |
 | 85 | 🔮 | Fusión Neón | `fusion-neon.html` | Puzzle / Física | Estilo Suika: soltá orbes que caen con física en un frasco; dos del mismo nivel se fusionan en uno más grande hasta la supernova. Si la pila queda sobre la línea roja más de 2 segundos, perdés. | ✅ 2026-10-24 |
+| 86 | 🚦 | Tránsito Neón | `transito-neon.html` | Reflejos / Gestión | Control de tráfico: tocá los autos para frenarlos o soltarlos y dejá pasar a todos por la intersección sin choques ni atascos en los bordes. Cada 10 autos sube el nivel y el tránsito se densifica; 3 vidas y récord. | ✅ 2026-10-25 |
 
 ## Reglas para el juego del día
 
