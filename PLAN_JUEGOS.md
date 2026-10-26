@@ -139,6 +139,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 84 | 🦇 | Eco Neón | `eco-neon.html` | Arcade / Sigilo | Cueva a oscuras: lanzá pulsos de sonar que iluminan las paredes unos segundos, juntá 3 cristales y escapá por el portal; los murciélagos oyen cada pulso y te cazan. Cuevas al azar, más enemigos por nivel. | ✅ 2026-10-22 |
 | 85 | 🔮 | Fusión Neón | `fusion-neon.html` | Puzzle / Física | Estilo Suika: soltá orbes que caen con física en un frasco; dos del mismo nivel se fusionan en uno más grande hasta la supernova. Si la pila queda sobre la línea roja más de 2 segundos, perdés. | ✅ 2026-10-24 |
 | 86 | 🚦 | Tránsito Neón | `transito-neon.html` | Reflejos / Gestión | Control de tráfico: tocá los autos para frenarlos o soltarlos y dejá pasar a todos por la intersección sin choques ni atascos en los bordes. Cada 10 autos sube el nivel y el tránsito se densifica; 3 vidas y récord. | ✅ 2026-10-25 |
+| 87 | 🪞 | Espejo Neón | `espejo-neon.html` | Reflejos | Dos naves en mitades de pantalla que se mueven en espejo con un solo control: esquivá bloques en ambas mitades y juntá gemas con cualquiera. Nivel cada 8 gemas, 3 vidas y récord. | ✅ 2026-10-26 |
 
 ## Reglas para el juego del día
 

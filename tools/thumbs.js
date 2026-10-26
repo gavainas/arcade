@@ -49,6 +49,7 @@ const OVERRIDES = {
   "eco-neon": { steps: ["#startBtn"], wait: 900 },
   "iman-neon": { steps: ["#startBtn"], wait: 900 },
   "transito-neon": { steps: ["#startBtn"], wait: 4500 },
+  "espejo-neon": { steps: ["#startBtn"], wait: 2500 },
   "fusion-neon": { steps: ["#startBtn", { canvas: [0.3, 0.5] }], wait: 1800 },
   // El menú de Knight Quest está dibujado dentro del canvas: no hay nada que
   // seleccionar por DOM, así que le pegamos al botón "MODO ARCADE" por posición.

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ESPEJO NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .stage{position:relative; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+  .hud{display:flex; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.l b{color:var(--pink);} .hud .box.g b{color:var(--green);} .hud .box.r b{color:var(--gold);}
+  .panel{position:relative; border-radius:20px; padding:12px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);}
+  canvas{display:block; width:100%; aspect-ratio:4/5; touch-action:none; user-select:none; border-radius:14px; background:#03040a;}
+  .overlay{position:absolute; inset:12px; border-radius:14px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.9); backdrop-filter:blur(3px); gap:12px;}
+  .overlay.hidden,.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:340px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35); transition:transform .12s ease;}
+  .btn:hover{transform:translateY(-2px);}
+  .controls{margin-top:14px; display:flex; justify-content:center; gap:16px;}
+  .pad{cursor:pointer; border:2px solid var(--cyan); background:rgba(39,232,255,.12); color:var(--cyan);
+    border-radius:999px; padding:14px 40px; font-size:18px; font-weight:900; touch-action:manipulation;}
+  .pad.r{border-color:var(--pink); background:rgba(255,43,214,.12); color:var(--pink);}
+  .pad:active{transform:scale(.95);}
+  .hint{margin-top:12px; font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">ESPEJO NEÓN</div>
+      <div class="sub">D O S &nbsp; N A V E S</div>
+    </header>
+    <div class="hud">
+      <div class="box">PUNTOS<b id="hScore">0</b></div>
+      <div class="box l">VIDAS<b id="hLives">♥♥♥</b></div>
+      <div class="box g">NIVEL<b id="hLvl">1</b></div>
+      <div class="box r">RÉCORD<b id="hBest">0</b></div>
+    </div>
+    <div class="panel">
+      <canvas id="cv" width="480" height="600"></canvas>
+      <div class="overlay" id="startOv">
+        <div class="picture">🪞</div>
+        <h2>Espejo Neón</h2>
+        <p>Manejás <b style="color:#27e8ff">dos naves a la vez</b>: lo que hace una, la otra lo hace <b>al revés</b>. Esquivá los bloques rojos <b>en las dos mitades</b> y juntá las gemas doradas con cualquiera. Tenés 3 vidas.</p>
+        <button class="btn" id="startBtn">JUGAR</button>
+      </div>
+      <div class="overlay hidden" id="endOv">
+        <div class="picture">💥</div>
+        <h2>Fin del juego</h2>
+        <p class="final" id="endText"></p>
+        <div class="newrec hidden" id="endRec">★ ¡NUEVO RÉCORD! ★</div>
+        <button class="btn" id="againBtn">OTRA VEZ</button>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="pad" id="bL">◄</button>
+      <button class="pad r" id="bR">►</button>
+    </div>
+    <p class="hint">◄ ► o A D para moverte de carril · en el celu: tocá la mitad izquierda/derecha de la pantalla o deslizá.</p>
+    <footer>Neon Arcade · Espejo Neón</footer>
+  </div>
+<script>
+(function(){
+  "use strict";
+  var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+  var W=480,H=600,MID=240,LANES=3,LW=MID/LANES,SY=H-70;
+  var KEY="neon_espejo_best";
+  var best=0; try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+  var $=function(i){return document.getElementById(i);};
+  $("hBest").textContent=best;
+  var S=null, running=false, last=0, stars=[];
+  for(var i=0;i<50;i++) stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.5+.3});
+
+  function laneX(side,l){ return side*MID+LW*(l+.5); }
+  function livesStr(){ var s=""; for(var i=0;i<3;i++) s+=i<S.lives?"♥":"♡"; return s; }
+  function hud(){
+    $("hScore").textContent=S.score; $("hLives").textContent=livesStr(); $("hLvl").textContent=S.lvl;
+    $("hBest").textContent=Math.max(best,S.score);
+  }
+  function init(){
+    // lane: carril de la nave izquierda (0..2); la derecha usa el carril espejado
+    S={lane:1,vis:1,items:[],t:0,spawn:.4,score:0,lives:3,lvl:1,inv:0,parts:[],shake:0,gems:0};
+    hud();
+  }
+  function move(d){
+    if(!running) return;
+    S.lane=Math.max(0,Math.min(LANES-1,S.lane+d));
+  }
+  function spawnRow(){
+    // cada mitad recibe su propio patrón; nunca bloquea los 3 carriles de una mitad
+    for(var side=0;side<2;side++){
+      var free=Math.floor(Math.random()*LANES);
+      // carril por el que debe poder pasar: garantizamos un carril libre por mitad
+      for(var l=0;l<LANES;l++){
+        if(l===free) continue;
+        if(Math.random()<0.55) S.items.push({side:side,l:l,y:-30,type:"b"});
+      }
+      if(Math.random()<0.38){
+        var gl=Math.floor(Math.random()*LANES);
+        S.items.push({side:side,l:gl,y:-30,type:"g"});
+      }
+    }
+  }
+  function burst(x,y,col,n){
+    for(var i=0;i<n;i++){
+      var a=Math.random()*6.28, v=40+Math.random()*140;
+      S.parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.5+Math.random()*.4,col:col});
+    }
+  }
+  function shipLane(side){ return side===0?S.lane:LANES-1-S.lane; }
+  function update(dt){
+    S.t+=dt;
+    S.vis+=(S.lane-S.vis)*Math.min(1,dt*18);
+    var speed=170+S.lvl*28;
+    S.spawn-=dt;
+    if(S.spawn<=0){ spawnRow(); S.spawn=Math.max(.38,1.05-S.lvl*.07); }
+    if(S.inv>0) S.inv-=dt;
+    if(S.shake>0) S.shake-=dt;
+    for(var i=S.items.length-1;i>=0;i--){
+      var it=S.items[i]; it.y+=speed*dt;
+      if(it.y>H+30){ S.items.splice(i,1); continue; }
+      if(Math.abs(it.y-SY)<24 && shipLane(it.side)===it.l && Math.abs(laneX(it.side,it.l)-shipX(it.side))<LW*.45){
+        if(it.type==="g"){
+          S.score+=10; S.gems++;
+          burst(laneX(it.side,it.l),SY,"#ffd23b",14);
+          S.items.splice(i,1);
+          S.lvl=1+Math.floor(S.gems/8);
+          hud();
+        } else if(S.inv<=0){
+          S.lives--; S.inv=1.2; S.shake=.3;
+          burst(laneX(it.side,it.l),SY,"#ff5470",24);
+          S.items.splice(i,1);
+          hud();
+          if(S.lives<=0){ end(); return; }
+        }
+      }
+    }
+    S.score+=0; // el puntaje sube sólo con gemas
+    for(var j=S.parts.length-1;j>=0;j--){
+      var p=S.parts[j]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt;
+      if(p.life<=0) S.parts.splice(j,1);
+    }
+  }
+  function shipX(side){
+    var v=side===0?S.vis:(LANES-1-S.vis);
+    return side*MID+LW*(v+.5);
+  }
+  function drawShip(side,col){
+    var x=shipX(side);
+    if(S.inv>0 && Math.floor(S.t*14)%2===0) return;
+    ctx.save(); ctx.translate(x,SY);
+    ctx.shadowColor=col; ctx.shadowBlur=18; ctx.fillStyle=col;
+    ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(15,16); ctx.lineTo(0,8); ctx.lineTo(-15,16); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function draw(){
+    ctx.save();
+    if(S&&S.shake>0) ctx.translate((Math.random()-.5)*8,(Math.random()-.5)*8);
+    ctx.fillStyle="#03040a"; ctx.fillRect(-10,-10,W+20,H+20);
+    var t=(S?S.t:0);
+    ctx.fillStyle="#9fd8ff";
+    for(var i=0;i<stars.length;i++){
+      var s=stars[i]; ctx.globalAlpha=.25+s.s*.2;
+      ctx.fillRect(s.x,(s.y+t*30*s.s)%H,s.s,s.s);
+    }
+    ctx.globalAlpha=1;
+    // mitades y carriles
+    for(var sd=0;sd<2;sd++){
+      var c=sd?"255,43,214":"39,232,255";
+      var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,"rgba("+c+",0)"); g.addColorStop(1,"rgba("+c+",.09)");
+      ctx.fillStyle=g; ctx.fillRect(sd*MID,0,MID,H);
+      ctx.strokeStyle="rgba("+c+",.22)"; ctx.lineWidth=1;
+      for(var l=1;l<LANES;l++){ ctx.beginPath(); ctx.moveTo(sd*MID+l*LW,0); ctx.lineTo(sd*MID+l*LW,H); ctx.stroke(); }
+    }
+    ctx.strokeStyle="#8a4bff"; ctx.shadowColor="#8a4bff"; ctx.shadowBlur=14; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(MID,0); ctx.lineTo(MID,H); ctx.stroke(); ctx.shadowBlur=0;
+    if(S){
+      for(var k=0;k<S.items.length;k++){
+        var it=S.items[k], x=laneX(it.side,it.l);
+        ctx.save(); ctx.translate(x,it.y);
+        if(it.type==="b"){
+          ctx.shadowColor="#ff5470"; ctx.shadowBlur=14; ctx.fillStyle="#ff5470";
+          ctx.fillRect(-LW*.36,-14,LW*.72,28);
+          ctx.fillStyle="#3a0a14"; ctx.fillRect(-LW*.36+5,-9,LW*.72-10,18);
+        } else {
+          ctx.shadowColor="#ffd23b"; ctx.shadowBlur=16; ctx.fillStyle="#ffd23b";
+          ctx.rotate(S.t*3); ctx.beginPath();
+          ctx.moveTo(0,-13); ctx.lineTo(11,0); ctx.lineTo(0,13); ctx.lineTo(-11,0); ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+      }
+      drawShip(0,"#27e8ff"); drawShip(1,"#ff2bd6");
+      for(var q=0;q<S.parts.length;q++){
+        var p=S.parts[q]; ctx.globalAlpha=Math.max(0,p.life*1.6); ctx.fillStyle=p.col; ctx.fillRect(p.x-2,p.y-2,4,4);
+      }
+      ctx.globalAlpha=1;
+    }
+    ctx.restore();
+  }
+  function loop(ts){
+    var dt=Math.min(.05,(ts-last)/1000); last=ts;
+    if(running) update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+  function start(){
+    init(); running=true;
+    $("startOv").classList.add("hidden"); $("endOv").classList.add("hidden");
+  }
+  function end(){
+    running=false;
+    var rec=S.score>best;
+    if(rec){ best=S.score; try{localStorage.setItem(KEY,best);}catch(e){} }
+    $("endText").innerHTML="Puntos: <b>"+S.score+"</b><br>Nivel "+S.lvl+" · Gemas "+S.gems;
+    $("endRec").classList.toggle("hidden",!rec);
+    $("hBest").textContent=best;
+    $("endOv").classList.remove("hidden");
+  }
+  $("startBtn").onclick=start; $("againBtn").onclick=start;
+  $("bL").onclick=function(){move(-1);}; $("bR").onclick=function(){move(1);};
+  document.addEventListener("keydown",function(e){
+    var k=e.key;
+    if(k==="ArrowLeft"||k==="a"||k==="A"){ move(-1); e.preventDefault(); }
+    else if(k==="ArrowRight"||k==="d"||k==="D"){ move(1); e.preventDefault(); }
+    else if((k===" "||k==="Enter")&&!running){
+      if(!$("endOv").classList.contains("hidden")||!$("startOv").classList.contains("hidden")){ start(); e.preventDefault(); }
+    }
+  });
+  var tx=null;
+  cv.addEventListener("pointerdown",function(e){
+    var r=cv.getBoundingClientRect(); tx=e.clientX;
+    move(e.clientX-r.left<r.width/2?-1:1);
+  });
+  cv.addEventListener("pointermove",function(e){
+    if(tx!==null && Math.abs(e.clientX-tx)>40){ move(e.clientX>tx?1:-1); tx=e.clientX; }
+  });
+  window.addEventListener("pointerup",function(){tx=null;});
+  init(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

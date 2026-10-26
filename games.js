@@ -739,6 +739,13 @@
       desc: "Vos sos el semáforo: tocá un auto para frenarlo y volvé a tocarlo para que siga. Dejá pasar a todos por la intersección sin que choquen en el cruce y sin que se desborde la fila en los bordes. Cada 10 autos sube el nivel y el tránsito se pone más denso; 3 vidas y récord guardado.",
       controles: "Tocá / cliqueá un auto para frenarlo o soltarlo; con teclado, las flechas frenan o sueltan el próximo auto que va en esa dirección", fecha: "2026-10-25",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "espejo-neon", titulo: "Espejo Neón", archivo: "espejo-neon.html",
+      emoji: "🪞", categoria: "reflejos", tags: ["espejo", "dos naves", "carriles", "esquivar", "gemas", "un jugador"],
+      desc: "Manejás dos naves a la vez, una en cada mitad de la pantalla, y se mueven en espejo: cuando una va a la izquierda, la otra va a la derecha. Esquivá los bloques rojos en las dos mitades y juntá gemas con cualquiera. Cada 8 gemas sube el nivel; 3 vidas y récord guardado.",
+      controles: "◄ ► o A D; en el celu, tocá la mitad izquierda/derecha o deslizá", fecha: "2026-10-26",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
