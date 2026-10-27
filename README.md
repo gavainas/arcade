@@ -191,3 +191,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🔮 Fusión Neón | [`fusion-neon.html`](fusion-neon.html) | Soltá orbes en el frasco: dos iguales que se tocan se fusionan en uno más grande, con física real. Llegá a la supernova sin pasar la línea roja. |
 | 🚦 Tránsito Neón | [`transito-neon.html`](transito-neon.html) | Controlá el tráfico de una intersección: tocá los autos para frenarlos o soltarlos, evitá choques en el cruce y que se desborden las filas. Cada vez más denso, 3 vidas y récord. |
 | 🪞 Espejo Neón | [`espejo-neon.html`](espejo-neon.html) | Dos naves en espejo con un solo control: esquivá bloques en las dos mitades y juntá gemas. 3 vidas y récord. |
+| 🌀 Rotor Neón | [`rotor-neon.html`](rotor-neon.html) | Tu chispa gira por 3 anillos: saltá entre ellos para esquivar arcos rojos con aviso y juntá gemas con combo. 3 vidas y récord. |

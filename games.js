@@ -746,6 +746,13 @@
       desc: "Manejás dos naves a la vez, una en cada mitad de la pantalla, y se mueven en espejo: cuando una va a la izquierda, la otra va a la derecha. Esquivá los bloques rojos en las dos mitades y juntá gemas con cualquiera. Cada 8 gemas sube el nivel; 3 vidas y récord guardado.",
       controles: "◄ ► o A D; en el celu, tocá la mitad izquierda/derecha o deslizá", fecha: "2026-10-26",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "rotor-neon", titulo: "Rotor Neón", archivo: "rotor-neon.html",
+      emoji: "🌀", categoria: "reflejos", tags: ["anillos", "orbita", "circular", "esquivar", "gemas", "combo", "un jugador"],
+      desc: "Tu chispa gira sola por uno de tres anillos concéntricos. Saltá al anillo de adentro o de afuera para esquivar los arcos rojos (parpadean antes de volverse sólidos) y juntá las gemas doradas: cada una seguida sin chocar sube el combo hasta x5. Cada 8 gemas sube el nivel y la velocidad; 3 vidas y récord guardado.",
+      controles: "▲▼ ◄► o W S A D; en el celu, tocá la mitad izquierda (adentro) o derecha (afuera)", fecha: "2026-10-27",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
