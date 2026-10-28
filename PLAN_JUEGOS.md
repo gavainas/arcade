@@ -141,6 +141,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 86 | 🚦 | Tránsito Neón | `transito-neon.html` | Reflejos / Gestión | Control de tráfico: tocá los autos para frenarlos o soltarlos y dejá pasar a todos por la intersección sin choques ni atascos en los bordes. Cada 10 autos sube el nivel y el tránsito se densifica; 3 vidas y récord. | ✅ 2026-10-25 |
 | 87 | 🪞 | Espejo Neón | `espejo-neon.html` | Reflejos | Dos naves en mitades de pantalla que se mueven en espejo con un solo control: esquivá bloques en ambas mitades y juntá gemas con cualquiera. Nivel cada 8 gemas, 3 vidas y récord. | ✅ 2026-10-26 |
 | 88 | 🌀 | Rotor Neón | `rotor-neon.html` | Reflejos | Tu chispa gira sola por 3 anillos concéntricos: saltá entre anillos para esquivar arcos rojos que avisan parpadeando y juntá gemas con combo hasta x5. | ✅ 2026-10-27 |
+| 89 | 🐸 | Nenúfares Neón | `nenufares-neon.html` | Reflejos | Rana que salta de nenúfar en nenúfar (tocá el pad o usá flechas): cada pad se hunde mientras estás encima, hay rosados frágiles, celestes móviles y luciérnagas; racha hasta x5 y récord de altura. | ✅ 2026-10-28 |
 
 ## Reglas para el juego del día
 

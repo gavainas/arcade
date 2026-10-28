@@ -753,6 +753,13 @@
       desc: "Tu chispa gira sola por uno de tres anillos concéntricos. Saltá al anillo de adentro o de afuera para esquivar los arcos rojos (parpadean antes de volverse sólidos) y juntá las gemas doradas: cada una seguida sin chocar sube el combo hasta x5. Cada 8 gemas sube el nivel y la velocidad; 3 vidas y récord guardado.",
       controles: "▲▼ ◄► o W S A D; en el celu, tocá la mitad izquierda (adentro) o derecha (afuera)", fecha: "2026-10-27",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "nenufares-neon", titulo: "Nenúfares Neón", archivo: "nenufares-neon.html",
+      emoji: "🐸", categoria: "reflejos", tags: ["rana", "nenufares", "saltar", "agua", "luciernagas", "racha", "un jugador"],
+      desc: "Tocá un nenúfar cercano para que tu rana salte hasta ahí: cada pad se hunde mientras estás encima, los rosados rápido y los celestes se mueven. Juntá luciérnagas, encadená saltos rápidos para subir la racha hasta x5 y trepá lo más alto que puedas. Récord guardado.",
+      controles: "Tocá o cliqueá un nenúfar; con teclado ▲▼◄► o W A S D saltan al pad más cercano en esa dirección", fecha: "2026-10-28",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
