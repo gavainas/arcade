@@ -193,3 +193,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🪞 Espejo Neón | [`espejo-neon.html`](espejo-neon.html) | Dos naves en espejo con un solo control: esquivá bloques en las dos mitades y juntá gemas. 3 vidas y récord. |
 | 🌀 Rotor Neón | [`rotor-neon.html`](rotor-neon.html) | Tu chispa gira por 3 anillos: saltá entre ellos para esquivar arcos rojos con aviso y juntá gemas con combo. 3 vidas y récord. |
 | 🐸 Nenúfares Neón | [`nenufares-neon.html`](nenufares-neon.html) | Saltá de nenúfar en nenúfar antes de que se hundan: rosados frágiles, celestes móviles, luciérnagas y racha hasta x5. Récord guardado. |
+| 🔢 Cierre Neón | [`cierre-neon.html`](cierre-neon.html) | Shut the Box: tirá los dados y cerrá las cajas 1-9 que sumen el total. 5 rondas, bonus por cerrar las 9. Récord guardado. |

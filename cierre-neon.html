@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CIERRE NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:24px 14px 48px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .stage{position:relative; width:100%; max-width:520px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:12px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:14px;}
+  .logo{
+    font-size:clamp(24px,6.6vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(138,75,255,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:8px; color:var(--cyan); font-weight:600; letter-spacing:5px; font-size:12px;}
+  .hud{display:flex; gap:8px; margin:4px 2px 10px; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:8px 4px;}
+  .hud .box b{display:block; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:1px; margin-top:2px;}
+  .hud .box.l b{color:var(--pink);} .hud .box.g b{color:var(--green);} .hud .box.r b{color:var(--gold);}
+  .panel{position:relative; border-radius:20px; padding:16px 12px 18px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5); min-height:430px;}
+  .tiles{display:grid; grid-template-columns:repeat(9,1fr); gap:6px; margin-bottom:22px;}
+  .tile{position:relative; aspect-ratio:3/5; border-radius:10px; cursor:pointer; user-select:none;
+    display:flex; align-items:center; justify-content:center; font-size:clamp(18px,5.6vw,28px); font-weight:900;
+    color:var(--cyan); background:linear-gradient(180deg,rgba(39,232,255,.16),rgba(39,232,255,.04));
+    border:2px solid rgba(39,232,255,.55); box-shadow:0 0 14px rgba(39,232,255,.18), inset 0 0 12px rgba(39,232,255,.08);
+    transition:transform .12s, box-shadow .12s, background .2s; touch-action:manipulation;}
+  .tile.ok{border-color:var(--green); box-shadow:0 0 16px rgba(57,255,158,.45), inset 0 0 12px rgba(57,255,158,.12);}
+  .tile.dim{opacity:.45;}
+  .tile.sel{transform:translateY(-6px); color:#031018; background:linear-gradient(180deg,var(--gold),#ff9d2b);
+    border-color:var(--gold); box-shadow:0 0 22px rgba(255,210,59,.7);}
+  .tile.shut{cursor:default; color:rgba(127,166,200,.3); border-color:rgba(127,166,200,.18);
+    background:rgba(5,7,15,.7); box-shadow:none; transform:translateY(8px) scale(.94);}
+  .tile.shut::after{content:""; position:absolute; inset:6px; border-radius:6px;
+    background:repeating-linear-gradient(45deg,rgba(255,43,214,.25) 0 4px,transparent 4px 8px);}
+  .tile.shake{animation:shake .3s;}
+  @keyframes shake{0%,100%{margin-left:0;}25%{margin-left:-5px;}75%{margin-left:5px;}}
+  .tray{display:flex; align-items:center; justify-content:center; gap:14px; min-height:92px; margin-bottom:6px;}
+  .die{width:78px; height:78px; border-radius:16px; position:relative; background:linear-gradient(145deg,#f4fbff,#bfe9ff);
+    box-shadow:0 0 22px rgba(39,232,255,.55), inset 0 -6px 10px rgba(80,130,190,.35);
+    display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); padding:11px;}
+  .die i{width:13px; height:13px; border-radius:50%; background:#16204a; align-self:center; justify-self:center; visibility:hidden;}
+  .die i.on{visibility:visible;}
+  .die.roll{animation:tumble .45s ease-out;}
+  @keyframes tumble{0%{transform:rotate(-200deg) scale(.5); opacity:.4;}70%{transform:rotate(15deg) scale(1.08);}100%{transform:rotate(0) scale(1); opacity:1;}}
+  .die.ghost{opacity:.18; box-shadow:none;}
+  .eq{font-size:15px; letter-spacing:1px; text-align:center; color:var(--muted); min-height:44px; line-height:1.5;}
+  .eq b{color:var(--gold); font-size:22px;}
+  .eq .bad{color:var(--red);}
+  .actions{display:flex; justify-content:center; gap:12px; margin-top:8px;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:13px 30px; font-size:14.5px; font-weight:800; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--cyan),var(--purple)); box-shadow:0 8px 24px rgba(138,75,255,.35); transition:transform .12s ease;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn.alt{background:rgba(255,255,255,.07); color:var(--muted); box-shadow:none; border:1px solid rgba(127,166,200,.3);}
+  .btn[disabled]{opacity:.35; cursor:default; transform:none;}
+  .log{margin-top:14px; text-align:center; font-size:12px; color:var(--muted); min-height:18px; letter-spacing:.5px;}
+  .overlay{position:absolute; inset:0; border-radius:20px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:20px;
+    background:rgba(5,7,15,.92); backdrop-filter:blur(3px); gap:12px; z-index:5;}
+  .overlay.hidden,.hidden{display:none;}
+  .overlay h2{font-size:clamp(20px,5.6vw,28px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .overlay p{font-size:13.5px; color:var(--muted); line-height:1.5; max-width:350px;}
+  .picture{font-size:52px; filter:drop-shadow(0 0 16px rgba(39,232,255,.5)); animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .final{font-size:14px; color:var(--ink);} .final b{color:var(--gold); font-size:22px;}
+  .newrec{color:var(--gold); font-weight:800; letter-spacing:1px; font-size:13px; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  .hint{margin-top:12px; font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center;}
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="index.html">◄ Volver al arcade</a>
+    <header>
+      <div class="logo">CIERRE NEÓN</div>
+      <div class="sub">C E R R Á &nbsp; L A S &nbsp; C A J A S</div>
+    </header>
+    <div class="hud">
+      <div class="box">PUNTOS<b id="hScore">0</b></div>
+      <div class="box l">RONDA<b id="hRound">1/5</b></div>
+      <div class="box g">ABIERTAS<b id="hOpen">45</b></div>
+      <div class="box r">RÉCORD<b id="hBest">0</b></div>
+    </div>
+    <div class="panel">
+      <div class="tiles" id="tiles"></div>
+      <div class="tray" id="tray"></div>
+      <div class="eq" id="eq"></div>
+      <div class="actions">
+        <button class="btn" id="rollBtn">🎲 TIRAR</button>
+        <button class="btn alt" id="clearBtn">LIMPIAR</button>
+      </div>
+      <div class="log" id="log"></div>
+
+      <div class="overlay" id="startOv">
+        <div class="picture">🎲</div>
+        <h2>Cierre Neón</h2>
+        <p>Tirá los dados y <b style="color:#ffd23b">tocá las cajas numeradas que sumen exactamente el total</b> para cerrarlas. Cuando no quede ninguna combinación posible, la ronda termina y sumás <b style="color:#39ff9e">45 menos lo que te quedó abierto</b>. ¡Cerrá las 9 y te llevás <b style="color:#ff2bd6">+50 de bonus</b>! Si cerrás 7, 8 y 9, tirás un solo dado. Son 5 rondas.</p>
+        <button class="btn" id="startBtn">JUGAR</button>
+      </div>
+      <div class="overlay hidden" id="endOv">
+        <div class="picture" id="endPic">🏁</div>
+        <h2 id="endTitle">Fin de la partida</h2>
+        <p class="final" id="endText"></p>
+        <div class="newrec hidden" id="endRec">★ ¡NUEVO RÉCORD! ★</div>
+        <button class="btn" id="againBtn">OTRA VEZ</button>
+      </div>
+    </div>
+    <p class="hint">Tocá cajas (o teclas 1-9) hasta llegar al total · Espacio/Enter tira los dados · Esc limpia la selección. Las cajas con borde verde son las que todavía sirven.</p>
+    <footer>Neon Arcade · Cierre Neón</footer>
+  </div>
+<script>
+(function(){
+  "use strict";
+  var KEY="neon_cierre_best", ROUNDS=5;
+  var best=0; try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+  var $=function(i){return document.getElementById(i);};
+  var PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  var open,sel,roll,round,score,phase,busy; // phase: "roll" | "pick" | "end"
+  var tilesEl=$("tiles"),trayEl=$("tray"),eqEl=$("eq"),logEl=$("log"),rollBtn=$("rollBtn"),clearBtn=$("clearBtn");
+  var tileEls=[];
+  for(var n=1;n<=9;n++){(function(n){
+    var t=document.createElement("div"); t.className="tile"; t.textContent=n;
+    t.addEventListener("pointerdown",function(e){e.preventDefault(); pick(n);});
+    tilesEl.appendChild(t); tileEls[n]=t;
+  })(n);}
+  $("hBest").textContent=best;
+
+  function sum(a){var s=0;for(var i=0;i<a.length;i++)s+=a[i];return s;}
+  function openList(){var r=[];for(var n=1;n<=9;n++)if(open[n])r.push(n);return r;}
+  function openSum(){return sum(openList());}
+  // ¿hay alguna combinación de cajas abiertas (que no estén ya elegidas) que sume `target`?
+  function reachable(target,list,i){
+    if(target===0)return true; if(target<0||i>=list.length)return false;
+    return reachable(target-list[i],list,i+1)||reachable(target,list,i+1);
+  }
+  function canMake(target){
+    var l=[];for(var n=1;n<=9;n++)if(open[n]&&!sel[n])l.push(n);
+    return reachable(target,l,0);
+  }
+  function hud(){
+    $("hScore").textContent=score; $("hRound").textContent=Math.min(round,ROUNDS)+"/"+ROUNDS;
+    $("hOpen").textContent=openSum(); $("hBest").textContent=Math.max(best,score);
+  }
+  function selSum(){var s=0;for(var n=1;n<=9;n++)if(sel[n])s+=n;return s;}
+  function render(){
+    var need=roll?roll.total-selSum():0;
+    for(var n=1;n<=9;n++){
+      var t=tileEls[n]; t.className="tile";
+      if(!open[n])t.className+=" shut";
+      else if(sel[n])t.className+=" sel";
+      else if(phase==="pick"){ if(n<=need&&canMakeWith(n,need))t.className+=" ok"; else t.className+=" dim"; }
+    }
+    rollBtn.disabled=(phase!=="roll"||busy); clearBtn.disabled=!(phase==="pick"&&selSum()>0);
+    if(phase==="pick"){
+      var s=selSum();
+      eqEl.innerHTML="Objetivo <b>"+roll.total+"</b>"+(s?" · llevás <b>"+s+"</b> · faltan <b>"+(roll.total-s)+"</b>":"");
+    }
+    hud();
+  }
+  // ¿se puede cerrar la caja n y completar `need` con las demás abiertas?
+  function canMakeWith(n,need){
+    var l=[];for(var k=1;k<=9;k++)if(open[k]&&!sel[k]&&k!==n)l.push(k);
+    return reachable(need-n,l,0);
+  }
+  function diceHTML(vals,ghost){
+    var h="";
+    for(var d=0;d<vals.length;d++){
+      h+='<div class="die roll">';
+      for(var p=0;p<9;p++)h+='<i class="'+(PIPS[vals[d]].indexOf(p)>=0?"on":"")+'"></i>';
+      h+='</div>';
+    }
+    if(ghost){h+='<div class="die ghost"></div>';}
+    return h;
+  }
+  function startRound(){
+    open=[];for(var n=1;n<=9;n++)open[n]=true;
+    sel=[]; roll=null; phase="roll"; busy=false;
+    trayEl.innerHTML=""; eqEl.innerHTML="Ronda "+round+" de "+ROUNDS+" · ¡tirá los dados!";
+    logEl.textContent=""; render();
+  }
+  function doRoll(){
+    if(phase!=="roll"||busy)return;
+    var one=!open[7]&&!open[8]&&!open[9];
+    var a=1+Math.floor(Math.random()*6), b=one?0:1+Math.floor(Math.random()*6);
+    roll={vals:one?[a]:[a,b],total:a+b};
+    trayEl.innerHTML=diceHTML(roll.vals,one);
+    sel=[]; busy=true; render();
+    setTimeout(function(){
+      busy=false;
+      if(!canMake(roll.total)){ finishRound(false); return; }
+      phase="pick"; render();
+    },520);
+    render();
+  }
+  function pick(n){
+    if(phase!=="pick"||!open[n])return;
+    if(sel[n]){sel[n]=false; render(); return;}
+    var need=roll.total-selSum();
+    if(n>need||!canMakeWith(n,need)){
+      var t=tileEls[n]; t.classList.remove("shake"); void t.offsetWidth; t.classList.add("shake"); return;
+    }
+    sel[n]=true;
+    if(selSum()===roll.total){
+      for(var k=1;k<=9;k++)if(sel[k])open[k]=false;
+      sel=[]; roll=null; phase="roll";
+      if(openList().length===0){ render(); finishRound(true); return; }
+      eqEl.innerHTML="¡Bien! Tirá de nuevo.";
+      logEl.textContent="";
+    }
+    render();
+  }
+  function clearSel(){ if(phase==="pick"){sel=[]; render();} }
+  function finishRound(shut){
+    phase="end"; render();
+    var left=openSum(), pts=45-left+(shut?50:0);
+    score+=pts; hud();
+    if(shut){ eqEl.innerHTML='<b style="color:#39ff9e">¡CAJA CERRADA!</b><br>+'+pts+' puntos'; }
+    else { eqEl.innerHTML='<span class="bad">Sin jugadas posibles con '+roll.total+'.</span><br>Te quedaron <b>'+left+'</b> abiertas: +'+pts+' puntos'; }
+    logEl.textContent=round<ROUNDS?"Siguiente ronda en un momento…":"";
+    setTimeout(function(){
+      if(round>=ROUNDS){ endGame(); } else { round++; startRound(); }
+    },1900);
+  }
+  function endGame(){
+    var rec=score>best;
+    if(rec){best=score; try{localStorage.setItem(KEY,best);}catch(e){}}
+    $("endPic").textContent=score>=180?"🏆":score>=120?"🎉":"🎲";
+    $("endTitle").textContent=score>=180?"¡Maestro del cierre!":score>=120?"¡Muy buena partida!":"Fin de la partida";
+    $("endText").innerHTML="Total en "+ROUNDS+" rondas: <b>"+score+"</b> puntos";
+    $("endRec").classList.toggle("hidden",!rec);
+    $("endOv").classList.remove("hidden"); hud();
+  }
+  function newGame(){
+    score=0; round=1; $("startOv").classList.add("hidden"); $("endOv").classList.add("hidden"); startRound();
+  }
+  rollBtn.addEventListener("click",doRoll);
+  clearBtn.addEventListener("click",clearSel);
+  $("startBtn").addEventListener("click",newGame);
+  $("againBtn").addEventListener("click",newGame);
+  window.addEventListener("keydown",function(e){
+    var k=e.key;
+    if(k>="1"&&k<="9"){pick(+k);}
+    else if(k===" "||k==="Enter"){
+      if(!$("startOv").classList.contains("hidden"))newGame();
+      else if(!$("endOv").classList.contains("hidden"))newGame();
+      else doRoll();
+      e.preventDefault();
+    }
+    else if(k==="Escape")clearSel();
+  });
+  score=0;round=1;open=[];sel=[];phase="end";busy=false;
+  for(var i=1;i<=9;i++)open[i]=true; render();
+})();
+</script>
+</body>
+</html>

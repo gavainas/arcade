@@ -760,6 +760,13 @@
       desc: "Tocá un nenúfar cercano para que tu rana salte hasta ahí: cada pad se hunde mientras estás encima, los rosados rápido y los celestes se mueven. Juntá luciérnagas, encadená saltos rápidos para subir la racha hasta x5 y trepá lo más alto que puedas. Récord guardado.",
       controles: "Tocá o cliqueá un nenúfar; con teclado ▲▼◄► o W A S D saltan al pad más cercano en esa dirección", fecha: "2026-10-28",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "cierre-neon", titulo: "Cierre Neón", archivo: "cierre-neon.html",
+      emoji: "🔢", categoria: "mental", tags: ["dados", "shut the box", "cajas", "suma", "azar", "logica", "un jugador"],
+      desc: "Shut the Box: tirá los dados y cerrá las cajas del 1 al 9 que sumen exactamente el total. Cuando ya no hay combinación posible la ronda termina y sumás 45 menos lo que quedó abierto; cerrá las 9 para un bonus de +50. Cinco rondas y récord guardado.",
+      controles: "Tocá las cajas o usá las teclas 1-9; Espacio/Enter tira los dados, Esc limpia la selección", fecha: "2026-10-29",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
