@@ -767,6 +767,13 @@
       desc: "Shut the Box: tirá los dados y cerrá las cajas del 1 al 9 que sumen exactamente el total. Cuando ya no hay combinación posible la ronda termina y sumás 45 menos lo que quedó abierto; cerrá las 9 para un bonus de +50. Cinco rondas y récord guardado.",
       controles: "Tocá las cajas o usá las teclas 1-9; Espacio/Enter tira los dados, Esc limpia la selección", fecha: "2026-10-29",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "garra-neon", titulo: "Garra Neón", archivo: "garra-neon.html",
+      emoji: "🕹️", categoria: "reflejos", tags: ["garra", "claw", "maquina", "premios", "punteria", "azar", "un jugador"],
+      desc: "Máquina de premios: mové la garra, bajala sobre un osito, regalo o diamante y llevalo a la salida. Cuanto más centrada, más firme el agarre; los premios caros se resbalan y las bombas restan puntos. 8 intentos, bonus por vaciar la máquina y récord guardado.",
+      controles: "◄ ► / A D mueven, Espacio / ↓ baja la garra; en táctil arrastrá sobre la máquina y tocá BAJAR", fecha: "2026-10-30",
+      origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

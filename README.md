@@ -194,3 +194,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🌀 Rotor Neón | [`rotor-neon.html`](rotor-neon.html) | Tu chispa gira por 3 anillos: saltá entre ellos para esquivar arcos rojos con aviso y juntá gemas con combo. 3 vidas y récord. |
 | 🐸 Nenúfares Neón | [`nenufares-neon.html`](nenufares-neon.html) | Saltá de nenúfar en nenúfar antes de que se hundan: rosados frágiles, celestes móviles, luciérnagas y racha hasta x5. Récord guardado. |
 | 🔢 Cierre Neón | [`cierre-neon.html`](cierre-neon.html) | Shut the Box: tirá los dados y cerrá las cajas 1-9 que sumen el total. 5 rondas, bonus por cerrar las 9. Récord guardado. |
+| 🕹️ Garra Neón | [`garra-neon.html`](garra-neon.html) | Máquina de premios: bajá la garra sobre un premio y llevalo a la salida; agarre según qué tan centrado vayas, bombas que restan. 8 intentos. Récord guardado. |
