@@ -774,6 +774,13 @@
       desc: "Máquina de premios: mové la garra, bajala sobre un osito, regalo o diamante y llevalo a la salida. Cuanto más centrada, más firme el agarre; los premios caros se resbalan y las bombas restan puntos. 8 intentos, bonus por vaciar la máquina y récord guardado.",
       controles: "◄ ► / A D mueven, Espacio / ↓ baja la garra; en táctil arrastrá sobre la máquina y tocá BAJAR", fecha: "2026-10-30",
       origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "pesca-neon", titulo: "Pesca Neón", archivo: "pesca-neon.html",
+      emoji: "🎣", categoria: "reflejos", tags: ["pesca", "caña", "tension", "timing", "peces", "un jugador"],
+      desc: "Lanzá la caña, esperá el ¡! y clavá el anzuelo a tiempo. Después mantené apretado para subir la zona verde y soltá para bajarla: seguí al pez para llenar la barra antes de que se escape. Desde pececitos hasta tiburones, con racha de bonus, 10 lanzamientos y récord guardado.",
+      controles: "Tocá / Espacio para lanzar y clavar; mantené apretado (Espacio / ↑ / W) para subir la zona de tensión",
+      fecha: "2026-10-31", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

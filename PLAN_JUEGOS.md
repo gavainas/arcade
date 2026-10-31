@@ -144,6 +144,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 89 | 🐸 | Nenúfares Neón | `nenufares-neon.html` | Reflejos | Rana que salta de nenúfar en nenúfar (tocá el pad o usá flechas): cada pad se hunde mientras estás encima, hay rosados frágiles, celestes móviles y luciérnagas; racha hasta x5 y récord de altura. | ✅ 2026-10-28 |
 | 90 | 🔢 | Cierre Neón | `cierre-neon.html` | Dados / Lógica | Shut the Box: tirá 1-2 dados y cerrá las cajas 1-9 que sumen exactamente el total; la ronda termina cuando no hay combinación posible (45 menos lo abierto, +50 si cerrás las 9), con selección guiada y 5 rondas. Récord guardado. | ✅ 2026-10-29 |
 | 91 | 🕹️ | Garra Neón | `garra-neon.html` | Reflejos / Azar | Máquina de garra: posicioná la garra y bajala sobre un premio; el agarre depende de qué tan centrado vas y del peso del premio (puede resbalarse en el viaje). Bombas restan puntos, 8 intentos, bonus por vaciar la máquina. | ✅ 2026-10-30 |
+| 92 | 🎣 | Pesca Neón | `pesca-neon.html` | Reflejos / Timing | Pesca con barra de tensión: lanzá, clavá el anzuelo al ver el ¡! y mantené/soltá para que la zona verde siga al pez y llene la barra. 5 tipos de pez (hasta tiburón), rachas, 10 lanzamientos y récord. | ✅ 2026-10-31 |
 
 ## Reglas para el juego del día
 

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PESCA NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--green:#39ff9e;--gold:#ffd23b;--red:#ff5470;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(24px,6.6vw,38px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;filter:drop-shadow(0 0 22px rgba(138,75,255,.35));}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:340px;}
+  .overlay .big{font-size:52px;filter:drop-shadow(0 0 16px rgba(39,232,255,.5));}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">PESCA NEÓN</div><div class="sub">CAÑA Y TENSIÓN</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">LANZAMIENTOS<b id="hCasts">10</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap">
+    <canvas id="cv" width="480" height="560"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🎣</div><h2>PESCA NEÓN</h2>
+      <p>Tocá para lanzar la caña. Cuando aparezca el <b style="color:#ffd23b">¡!</b>, tocá rápido para clavar el anzuelo. Después mantené apretado para subir la zona verde y soltá para bajarla: seguí al pez para llenar la barra antes de que se escape. 10 lanzamientos, ¡los peces raros se mueven como locos!</p>
+      <button class="btn" id="btnStart">JUGAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🐟</div><h2 id="endTitle">FIN DE LA PESCA</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Tocá / Espacio: lanzar y clavar · Mantené (Espacio / ↑) para subir la zona</div>
+</div>
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),W=480,H=560;
+var KEY="neon_pesca_best";
+var best=0;try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+var hScore=document.getElementById("hScore"),hCasts=document.getElementById("hCasts"),hBest=document.getElementById("hBest");
+var ovStart=document.getElementById("ovStart"),ovEnd=document.getElementById("ovEnd");
+hBest.textContent=best;
+
+var WATER=150, BAR={x:402,y:170,w:46,h:370}; // barra de tensión
+var TYPES=[
+  {n:"Pececito",c:"#39ff9e",pts:10,diff:.8,w:.30,s:1.0,em:"🐟"},
+  {n:"Pez luna",c:"#27e8ff",pts:20,diff:1.0,w:.26,s:1.3,em:"🐠"},
+  {n:"Pez globo",c:"#ffd23b",pts:35,diff:1.3,w:.20,s:1.6,em:"🐡"},
+  {n:"Pulpo",c:"#ff2bd6",pts:55,diff:1.7,w:.14,s:2.0,em:"🐙"},
+  {n:"Tiburón",c:"#8a4bff",pts:90,diff:2.2,w:.10,s:2.5,em:"🦈"}
+];
+var MAXCASTS=10;
+var state="menu",score=0,casts=MAXCASTS,t=0,holding=false;
+var phase="idle",pt=0,fish=null,bobY=0,castX=240,bobbers=[],floats=[],msg="",msgT=0,streak=0,lost=0;
+var reel={zone:.5,zv:0,pos:.5,pv:0,tgt:.5,prog:.3,ptime:0};
+var swimmers=[];
+for(var i=0;i<9;i++)swimmers.push({x:Math.random()*W,y:WATER+60+Math.random()*320,v:(Math.random()<.5?-1:1)*(.3+Math.random()*.5),c:i%3});
+
+function pick(){var r=Math.random(),a=0;for(var i=0;i<TYPES.length;i++){a+=TYPES[i].w;if(r<a)return TYPES[i];}return TYPES[0];}
+function say(s){msg=s;msgT=1.6;}
+function pop(x,y,s,c){floats.push({x:x,y:y,s:s,c:c,t:1.2});}
+function updHud(){hScore.textContent=score;hCasts.textContent=casts;hBest.textContent=best;}
+
+function start(){
+  score=0;casts=MAXCASTS;streak=0;lost=0;phase="idle";fish=null;holding=false;
+  state="play";ovStart.classList.add("hidden");ovEnd.classList.add("hidden");updHud();
+  say("Tocá para lanzar");
+}
+function endGame(){
+  state="over";var rec=score>best;if(rec){best=score;try{localStorage.setItem(KEY,best);}catch(e){}}
+  updHud();
+  document.getElementById("endTitle").textContent=rec&&score>0?"¡NUEVO RÉCORD!":"FIN DE LA PESCA";
+  document.getElementById("endText").innerHTML="Puntos: <b style='color:#27e8ff'>"+score+"</b><br>Peces perdidos: "+lost+"<br>Récord: "+best;
+  setTimeout(function(){if(state==="over")ovEnd.classList.remove("hidden");},700);
+}
+
+function press(){
+  if(state!=="play")return;
+  if(phase==="idle"){
+    phase="cast";pt=0;castX=100+Math.random()*190;bobY=WATER-10;casts--;updHud();msg="";
+  }else if(phase==="wait"){
+    // tocar antes de tiempo: se asusta el pez
+    say("¡Muy pronto!");streak=0;phase="result";pt=0;fish=null;
+  }else if(phase==="bite"){
+    phase="reel";fish.hooked=true;
+    reel={zone:.5,zv:0,pos:.5,pv:0,tgt:.5,prog:.3,ptime:0};
+    msg="";
+  }
+}
+function release(){holding=false;}
+
+function finishCast(caught){
+  if(caught){
+    var base=fish.pts,bonus=Math.round(base*Math.min(streak,4)*.25);
+    var tot=base+bonus;score+=tot;streak++;
+    pop(castX,WATER+20,"+"+tot+" "+fish.em,fish.c);say(fish.n+(bonus?" · racha x"+streak:"")+"!");
+  }else{
+    if(fish){lost++;streak=0;say("¡Se escapó!");}
+  }
+  fish=null;phase="result";pt=0;updHud();
+}
+
+function update(dt){
+  t+=dt;
+  swimmers.forEach(function(s){s.x+=s.v*60*dt;if(s.x<-30)s.x=W+30;if(s.x>W+30)s.x=-30;});
+  if(msgT>0)msgT-=dt;
+  floats.forEach(function(f){f.t-=dt;f.y-=30*dt;});floats=floats.filter(function(f){return f.t>0;});
+  if(state!=="play")return;
+  pt+=dt;
+  if(phase==="cast"){
+    bobY=WATER-10+Math.min(1,pt/.5)*40;
+    if(pt>.55){phase="wait";pt=0;fish=Object.assign({},pick());fish.wait=1.2+Math.random()*2.6;}
+  }else if(phase==="wait"){
+    if(pt>fish.wait){phase="bite";pt=0;}
+  }else if(phase==="bite"){
+    if(pt>1.0){say("Se fue la presa...");streak=0;fish=null;phase="result";pt=0;}
+  }else if(phase==="reel"){
+    reel.ptime+=dt;
+    // zona del jugador (física con gravedad)
+    reel.zv+=(holding?-1.6:1.2)*dt*2.2;
+    reel.zv*=.985; reel.zone+=reel.zv*dt;
+    var zh=.22;
+    if(reel.zone<zh/2){reel.zone=zh/2;reel.zv=Math.abs(reel.zv)*.35;}
+    if(reel.zone>1-zh/2){reel.zone=1-zh/2;reel.zv=-Math.abs(reel.zv)*.35;}
+    // pez: salta a objetivos
+    reel.ptime>0;
+    if(Math.random()<dt*fish.diff*1.4)reel.tgt=.08+Math.random()*.84;
+    reel.pv+=(reel.tgt-reel.pos)*fish.s*9*dt;
+    reel.pv*=.9; reel.pos+=reel.pv*dt*2;
+    reel.pos=Math.max(.04,Math.min(.96,reel.pos));
+    var inside=Math.abs(reel.pos-reel.zone)<zh/2;
+    reel.inside=inside;
+    reel.prog+=(inside?.19:-.12*(.7+fish.diff*.35))*dt;
+    if(reel.prog>=1){finishCast(true);}
+    else if(reel.prog<=0){finishCast(false);}
+  }else if(phase==="result"){
+    if(pt>1.3){
+      if(casts<=0)endGame();else{phase="idle";say("Tocá para lanzar");}
+    }
+  }
+}
+
+function draw(){
+  var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#0a1030");g.addColorStop(WATER/H,"#16204a");g.addColorStop(WATER/H,"#0b3a5a");g.addColorStop(1,"#030816");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // luna
+  ctx.fillStyle="#e8f6ff";ctx.shadowColor="#27e8ff";ctx.shadowBlur=25;ctx.beginPath();ctx.arc(80,60,22,0,7);ctx.fill();ctx.shadowBlur=0;
+  // olas
+  ctx.strokeStyle="rgba(39,232,255,.7)";ctx.lineWidth=2;ctx.shadowColor="#27e8ff";ctx.shadowBlur=10;
+  ctx.beginPath();for(var x=0;x<=W;x+=8){var y=WATER+Math.sin(x*.05+t*2)*3;x?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();ctx.shadowBlur=0;
+  // peces de fondo
+  var cols=["#27e8ff","#ff2bd6","#8a4bff"];
+  swimmers.forEach(function(s){
+    ctx.globalAlpha=.35;ctx.fillStyle=cols[s.c];ctx.save();ctx.translate(s.x,s.y);ctx.scale(s.v>0?1:-1,1);
+    ctx.beginPath();ctx.ellipse(0,0,13,6,0,0,7);ctx.fill();
+    ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(-20,-6);ctx.lineTo(-20,6);ctx.fill();ctx.restore();ctx.globalAlpha=1;
+  });
+  // muelle y pescador
+  ctx.fillStyle="#1a2250";ctx.fillRect(0,WATER-14,130,14);
+  ctx.strokeStyle="#8a4bff";ctx.lineWidth=2;ctx.strokeRect(0,WATER-14,130,14);
+  ctx.font="34px serif";ctx.textAlign="center";ctx.fillText("🧍",70,WATER-18);
+  var rodX=96,rodY=WATER-50;
+  ctx.strokeStyle="#ffd23b";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(78,WATER-24);ctx.lineTo(rodX+30,rodY-20);ctx.stroke();
+  var tipX=rodX+30,tipY=rodY-20;
+  // línea y boya
+  if(phase!=="idle"){
+    var bx=castX,by=bobY;
+    if(phase==="cast"){var k=Math.min(1,pt/.5);bx=tipX+(castX-tipX)*k;by=tipY+(WATER+0-tipY)*k-Math.sin(k*Math.PI)*80;}
+    if(phase==="wait"||phase==="bite")by=WATER+Math.sin(t*3)*2+(phase==="bite"?Math.sin(t*40)*4:0);
+    if(phase==="reel"){bx=castX;by=WATER+30+(reel.inside?0:Math.sin(t*30)*4);}
+    ctx.strokeStyle="rgba(232,246,255,.7)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tipX,tipY);
+    ctx.quadraticCurveTo((tipX+bx)/2,Math.min(tipY,by)-10+(phase==="reel"?20:0),bx,by);ctx.stroke();
+    ctx.fillStyle="#ff5470";ctx.shadowColor="#ff5470";ctx.shadowBlur=14;ctx.beginPath();ctx.arc(bx,by,6,0,7);ctx.fill();ctx.shadowBlur=0;
+    if(phase==="bite"){
+      ctx.font="900 56px sans-serif";ctx.fillStyle="#ffd23b";ctx.shadowColor="#ffd23b";ctx.shadowBlur=20;
+      ctx.fillText("¡!",bx,by-30-Math.sin(t*20)*3);ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,210,59,.6)";ctx.lineWidth=2;ctx.beginPath();ctx.arc(bx,by,10+((t*40)%24),0,7);ctx.stroke();
+    }
+    if(phase==="reel"&&fish){
+      ctx.font="30px serif";ctx.fillText(fish.em,bx,by+(1-reel.pos)*0+40+Math.sin(t*12)*5);
+    }
+  }
+  // barra de tensión
+  if(phase==="reel"&&fish){
+    ctx.fillStyle="rgba(5,8,19,.8)";ctx.fillRect(BAR.x-10,BAR.y-10,BAR.w+20+0,BAR.h+20);
+    ctx.strokeStyle="rgba(138,75,255,.6)";ctx.lineWidth=2;ctx.strokeRect(BAR.x,BAR.y,BAR.w,BAR.h);
+    var zh=.22*BAR.h,zy=BAR.y+reel.zone*BAR.h-zh/2;
+    ctx.fillStyle=reel.inside?"rgba(57,255,158,.55)":"rgba(57,255,158,.25)";ctx.shadowColor="#39ff9e";ctx.shadowBlur=reel.inside?16:0;
+    ctx.fillRect(BAR.x+2,zy,BAR.w-4,zh);ctx.shadowBlur=0;
+    var fy=BAR.y+reel.pos*BAR.h;
+    ctx.font="26px serif";ctx.fillText(fish.em,BAR.x+BAR.w/2,fy+9);
+    // progreso
+    var px=BAR.x-26;ctx.fillStyle="rgba(5,8,19,.8)";ctx.fillRect(px,BAR.y,14,BAR.h);
+    ctx.fillStyle=reel.prog>.66?"#39ff9e":reel.prog>.33?"#ffd23b":"#ff5470";
+    ctx.fillRect(px+2,BAR.y+BAR.h*(1-reel.prog),10,BAR.h*reel.prog);
+    ctx.strokeStyle="rgba(138,75,255,.6)";ctx.strokeRect(px,BAR.y,14,BAR.h);
+    ctx.fillStyle=fish.c;ctx.font="800 13px sans-serif";ctx.fillText(fish.n.toUpperCase(),BAR.x-60,BAR.y-14);
+  }
+  // mensaje
+  if(msgT>0&&msg){
+    ctx.globalAlpha=Math.min(1,msgT*2);ctx.font="800 22px sans-serif";ctx.fillStyle="#e8f6ff";ctx.shadowColor="#8a4bff";ctx.shadowBlur=14;
+    ctx.fillText(msg,W/2-30,110);ctx.shadowBlur=0;ctx.globalAlpha=1;
+  }
+  floats.forEach(function(f){ctx.globalAlpha=Math.min(1,f.t);ctx.fillStyle=f.c;ctx.font="900 26px sans-serif";ctx.shadowColor=f.c;ctx.shadowBlur=12;ctx.fillText(f.s,f.x,f.y);ctx.shadowBlur=0;ctx.globalAlpha=1;});
+  if(streak>1&&state==="play"){ctx.font="700 13px sans-serif";ctx.fillStyle="#ffd23b";ctx.textAlign="left";ctx.fillText("RACHA x"+streak,12,H-14);ctx.textAlign="center";}
+}
+
+var last=0;
+function loop(ts){
+  var dt=Math.min(.05,(ts-last)/1000||0);last=ts;
+  update(dt);draw();requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function down(e){if(e)e.preventDefault();holding=true;press();}
+cv.addEventListener("pointerdown",down);
+window.addEventListener("pointerup",release);
+window.addEventListener("pointercancel",release);
+window.addEventListener("keydown",function(e){
+  if(e.code==="Space"||e.code==="ArrowUp"||e.code==="KeyW"){e.preventDefault();if(!e.repeat){holding=true;press();}}
+});
+window.addEventListener("keyup",function(e){if(e.code==="Space"||e.code==="ArrowUp"||e.code==="KeyW")release();});
+document.getElementById("btnStart").onclick=start;
+document.getElementById("btnAgain").onclick=start;
+})();
+</script>
+</body>
+</html>
