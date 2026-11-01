@@ -196,3 +196,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🔢 Cierre Neón | [`cierre-neon.html`](cierre-neon.html) | Shut the Box: tirá los dados y cerrá las cajas 1-9 que sumen el total. 5 rondas, bonus por cerrar las 9. Récord guardado. |
 | 🕹️ Garra Neón | [`garra-neon.html`](garra-neon.html) | Máquina de premios: bajá la garra sobre un premio y llevalo a la salida; agarre según qué tan centrado vayas, bombas que restan. 8 intentos. Récord guardado. |
 | 🎣 Pesca Neón | [`pesca-neon.html`](pesca-neon.html) | Lanzá la caña, clavá el anzuelo al ver el ¡! y seguí al pez con la zona de tensión para llenar la barra. 10 lanzamientos, rachas y récord guardado. |
+| 🎯 Platillos Neón | [`platillos-neon.html`](platillos-neon.html) | Tiro al plato: disparale a los platillos con 2 cartuchos, juntá varios en un tiro para bonus, evitá las minas y no dejes caer ninguno. Oleadas, combo y récord guardado. |

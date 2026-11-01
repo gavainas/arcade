@@ -50,6 +50,7 @@ const OVERRIDES = {
   "iman-neon": { steps: ["#startBtn"], wait: 900 },
   "transito-neon": { steps: ["#startBtn"], wait: 4500 },
   "espejo-neon": { steps: ["#startBtn"], wait: 2500 },
+  "platillos-neon": { steps: ["#btnStart"], wait: 2500 },
   "rotor-neon": { steps: ["#startBtn"], wait: 2500 },
   "nenufares-neon": { steps: ["#startBtn"], wait: 1500 },
   "fusion-neon": { steps: ["#startBtn", { canvas: [0.3, 0.5] }], wait: 1800 },

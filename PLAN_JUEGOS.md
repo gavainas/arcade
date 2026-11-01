@@ -145,6 +145,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 90 | 🔢 | Cierre Neón | `cierre-neon.html` | Dados / Lógica | Shut the Box: tirá 1-2 dados y cerrá las cajas 1-9 que sumen exactamente el total; la ronda termina cuando no hay combinación posible (45 menos lo abierto, +50 si cerrás las 9), con selección guiada y 5 rondas. Récord guardado. | ✅ 2026-10-29 |
 | 91 | 🕹️ | Garra Neón | `garra-neon.html` | Reflejos / Azar | Máquina de garra: posicioná la garra y bajala sobre un premio; el agarre depende de qué tan centrado vas y del peso del premio (puede resbalarse en el viaje). Bombas restan puntos, 8 intentos, bonus por vaciar la máquina. | ✅ 2026-10-30 |
 | 92 | 🎣 | Pesca Neón | `pesca-neon.html` | Reflejos / Timing | Pesca con barra de tensión: lanzá, clavá el anzuelo al ver el ¡! y mantené/soltá para que la zona verde siga al pez y llene la barra. 5 tipos de pez (hasta tiburón), rachas, 10 lanzamientos y récord. | ✅ 2026-10-31 |
+| 93 | 🎯 | Platillos Neón | `platillos-neon.html` | Acción / Puntería | Tiro al plato: tocá donde van a pasar los platillos para dispararles con 2 cartuchos (recarga al vaciarlos); el disparo explota en círculo y juntar varios da bonus, los dorados recargan, las minas rojas y los platillos que caen al piso restan vida. Oleadas, combo hasta x5 y récord. | ✅ 2026-11-01 |
 
 ## Reglas para el juego del día
 

@@ -781,6 +781,13 @@
       desc: "Lanzá la caña, esperá el ¡! y clavá el anzuelo a tiempo. Después mantené apretado para subir la zona verde y soltá para bajarla: seguí al pez para llenar la barra antes de que se escape. Desde pececitos hasta tiburones, con racha de bonus, 10 lanzamientos y récord guardado.",
       controles: "Tocá / Espacio para lanzar y clavar; mantené apretado (Espacio / ↑ / W) para subir la zona de tensión",
       fecha: "2026-10-31", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "platillos-neon", titulo: "Platillos Neón", archivo: "platillos-neon.html",
+      emoji: "🎯", categoria: "accion", tags: ["tiro al plato", "punteria", "combos", "platillos", "un jugador"],
+      desc: "Tiro al plato neón: salen platillos volando y vos tenés 2 cartuchos para dispararles tocando donde van a pasar. Cada disparo explota en un círculo, así que juntar varios en un tiro da bonus. Los dorados recargan al instante, las minas rojas restan vida y si un platillo cae al piso también. Oleadas cada vez más rápidas, combo hasta x5 y récord guardado.",
+      controles: "Tocá / clic para disparar donde apuntás; con teclado, flechas o WASD para mover la mira y Espacio para disparar",
+      fecha: "2026-11-01", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
