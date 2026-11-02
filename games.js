@@ -788,6 +788,13 @@
       desc: "Tiro al plato neón: salen platillos volando y vos tenés 2 cartuchos para dispararles tocando donde van a pasar. Cada disparo explota en un círculo, así que juntar varios en un tiro da bonus. Los dorados recargan al instante, las minas rojas restan vida y si un platillo cae al piso también. Oleadas cada vez más rápidas, combo hasta x5 y récord guardado.",
       controles: "Tocá / clic para disparar donde apuntás; con teclado, flechas o WASD para mover la mira y Espacio para disparar",
       fecha: "2026-11-01", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "arquero-neon", titulo: "Arquero Neón", archivo: "arquero-neon.html",
+      emoji: "🏹", categoria: "accion", tags: ["arco", "flechas", "viento", "punteria", "blanco", "un jugador"],
+      desc: "Tiro con arco: arrastrá hacia atrás desde el arco y soltá para disparar. El viento desvía la flecha y los blancos se achican y se mueven; el centro da 150, los globos dorados +25 y las rachas multiplican. 10 flechas y récord guardado.",
+      controles: "Arrastrá hacia atrás y soltá; con teclado ▲▼ ángulo, mantené Espacio para cargar y soltá para disparar",
+      fecha: "2026-11-02", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

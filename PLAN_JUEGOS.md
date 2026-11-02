@@ -146,6 +146,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 91 | 🕹️ | Garra Neón | `garra-neon.html` | Reflejos / Azar | Máquina de garra: posicioná la garra y bajala sobre un premio; el agarre depende de qué tan centrado vas y del peso del premio (puede resbalarse en el viaje). Bombas restan puntos, 8 intentos, bonus por vaciar la máquina. | ✅ 2026-10-30 |
 | 92 | 🎣 | Pesca Neón | `pesca-neon.html` | Reflejos / Timing | Pesca con barra de tensión: lanzá, clavá el anzuelo al ver el ¡! y mantené/soltá para que la zona verde siga al pez y llene la barra. 5 tipos de pez (hasta tiburón), rachas, 10 lanzamientos y récord. | ✅ 2026-10-31 |
 | 93 | 🎯 | Platillos Neón | `platillos-neon.html` | Acción / Puntería | Tiro al plato: tocá donde van a pasar los platillos para dispararles con 2 cartuchos (recarga al vaciarlos); el disparo explota en círculo y juntar varios da bonus, los dorados recargan, las minas rojas y los platillos que caen al piso restan vida. Oleadas, combo hasta x5 y récord. | ✅ 2026-11-01 |
+| 94 | 🏹 | Arquero Neón | `arquero-neon.html` | Acción / Puntería | Tiro con arco: arrastrá hacia atrás y soltá para disparar; el viento desvía la flecha, los blancos se achican y se mueven, el centro da 150, globos dorados +25 y rachas multiplican. 10 flechas y récord. | ✅ 2026-11-02 |
 
 ## Reglas para el juego del día
 
