@@ -198,3 +198,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🎣 Pesca Neón | [`pesca-neon.html`](pesca-neon.html) | Lanzá la caña, clavá el anzuelo al ver el ¡! y seguí al pez con la zona de tensión para llenar la barra. 10 lanzamientos, rachas y récord guardado. |
 | 🎯 Platillos Neón | [`platillos-neon.html`](platillos-neon.html) | Tiro al plato: disparale a los platillos con 2 cartuchos, juntá varios en un tiro para bonus, evitá las minas y no dejes caer ninguno. Oleadas, combo y récord guardado. |
 | 🏹 Arquero Neón | [`arquero-neon.html`](arquero-neon.html) | Tiro con arco: arrastrá hacia atrás y soltá, corregí por el viento, apuntá al centro del blanco y reventá globos dorados. 10 flechas, rachas y récord guardado. |
+| ⚽ Penales Neón | [`penales-neon.html`](penales-neon.html) | Tanda de 5 penales: fijá la mira, frená la barra de potencia en la zona verde, buscá los ángulos y vencé a un arquero que aprende. Rachas y récord guardado. |

@@ -147,6 +147,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 92 | 🎣 | Pesca Neón | `pesca-neon.html` | Reflejos / Timing | Pesca con barra de tensión: lanzá, clavá el anzuelo al ver el ¡! y mantené/soltá para que la zona verde siga al pez y llene la barra. 5 tipos de pez (hasta tiburón), rachas, 10 lanzamientos y récord. | ✅ 2026-10-31 |
 | 93 | 🎯 | Platillos Neón | `platillos-neon.html` | Acción / Puntería | Tiro al plato: tocá donde van a pasar los platillos para dispararles con 2 cartuchos (recarga al vaciarlos); el disparo explota en círculo y juntar varios da bonus, los dorados recargan, las minas rojas y los platillos que caen al piso restan vida. Oleadas, combo hasta x5 y récord. | ✅ 2026-11-01 |
 | 94 | 🏹 | Arquero Neón | `arquero-neon.html` | Acción / Puntería | Tiro con arco: arrastrá hacia atrás y soltá para disparar; el viento desvía la flecha, los blancos se achican y se mueven, el centro da 150, globos dorados +25 y rachas multiplican. 10 flechas y récord. | ✅ 2026-11-02 |
+| 95 | ⚽ | Penales Neón | `penales-neon.html` | Acción / Puntería | Tanda de 5 penales: fijá la mira sobre el arco y frená la barra de potencia en la zona verde (floja = atajada fácil, fuerte = por arriba). Ángulos valen doble, rachas multiplican, el arquero aprende. | ✅ 2026-11-03 |
 
 ## Reglas para el juego del día
 

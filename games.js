@@ -795,6 +795,13 @@
       desc: "Tiro con arco: arrastrá hacia atrás desde el arco y soltá para disparar. El viento desvía la flecha y los blancos se achican y se mueven; el centro da 150, los globos dorados +25 y las rachas multiplican. 10 flechas y récord guardado.",
       controles: "Arrastrá hacia atrás y soltá; con teclado ▲▼ ángulo, mantené Espacio para cargar y soltá para disparar",
       fecha: "2026-11-02", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "penales-neon", titulo: "Penales Neón", archivo: "penales-neon.html",
+      emoji: "⚽", categoria: "accion", tags: ["futbol", "penales", "arquero", "punteria", "timing", "un jugador"],
+      desc: "Tanda de 5 penales: fijá la mira sobre el arco y frená la barra de potencia en la zona verde. Muy floja la ataja cualquiera, muy fuerte se va por arriba; los ángulos valen doble, las rachas multiplican y el arquero aprende a leerte.",
+      controles: "Mové la mira y tocá; tocá de nuevo en la zona verde. Teclado: flechas mueven la mira, Espacio confirma",
+      fecha: "2026-11-03", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
