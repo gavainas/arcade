@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OLA NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--green:#39ff9e;--gold:#ffd23b;--red:#ff5470;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(24px,6.6vw,38px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;filter:drop-shadow(0 0 22px rgba(138,75,255,.35));}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:crosshair;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:340px;}
+  .overlay .big{font-size:52px;filter:drop-shadow(0 0 16px rgba(39,232,255,.5));}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">OLA NEÓN</div><div class="sub">SURFEÁ LAS COLINAS</div></header>
+  <div class="hud">
+    <div class="box">METROS<b id="hDist">0</b></div>
+    <div class="box p">ESTRELLAS<b id="hStars">0</b></div>
+    <div class="box">ATARDECER<b id="hTime">45</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap">
+    <canvas id="cv" width="480" height="560"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🏄</div><h2>OLA NEÓN</h2>
+      <p><b style="color:#27e8ff">Mantené apretado</b> para clavarte en las bajadas: ganás velocidad y salís disparado en la cresta. En el aire, apretar te hace caer más rápido. Aterrizá <b style="color:#39ff9e">apretando</b> en una bajada para un deslizamiento perfecto (+velocidad y +tiempo). Juntá <b style="color:#ffd23b">estrellas</b> para alargar el atardecer. Si te quedás sin velocidad, se acabó.</p>
+      <button class="btn" id="btnStart">SURFEAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🌅</div><h2 id="endTitle">SE PUSO EL SOL</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Mantené apretado (toque / clic / Espacio / ↓) para clavarte · soltá para volar</div>
+</div>
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),W=480,H=560;
+var $=function(i){return document.getElementById(i);};
+var KEY="neon_ola_best",best=0;try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+$("hBest").textContent=best;
+var G=900, PX=40; // gravedad px/s2, px por metro
+var pts,state="menu",holding=false,P,cam,time,stars,items,parts,pops,score,stall,shake,lastCtl;
+var seed=1;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646;}
+function genTo(x){
+  while(pts[pts.length-1].x<x+1200){
+    var l=pts[pts.length-1],i=pts.length,prog=Math.min(1,i/60);
+    var len=300+rnd()*(180+80*prog);
+    var dh=(rnd()<.58?-1:1)*(50+rnd()*(60+60*prog));
+    var y=l.y+dh; if(y<290)y=290+rnd()*40; if(y>470)y=470-rnd()*40;
+    pts.push({x:l.x+len,y:y});
+    // estrellas sobre la colina anterior
+    if(i>2){var n=rnd()<.75?3+Math.floor(rnd()*3):0,gold=rnd()<.18;
+      for(var k=0;k<n;k++){var px=l.x+len*(k+1)/(n+1);items.push({x:px,y:0,off:50+Math.sin(k/(n-1||1)*Math.PI)*(30+rnd()*10)+rnd()*6,gold:gold&&k==1,got:false});}}
+  }
+}
+function seg(x){var lo=0,hi=pts.length-2;while(lo<hi){var m=(lo+hi+1)>>1;if(pts[m].x<=x)lo=m;else hi=m-1;}return lo;}
+function hgt(x){var i=seg(x),a=pts[i],b=pts[i+1],t=(x-a.x)/(b.x-a.x);var c=(1-Math.cos(t*Math.PI))/2;return a.y+(b.y-a.y)*c;}
+function slope(x){var i=seg(x),a=pts[i],b=pts[i+1],t=(x-a.x)/(b.x-a.x);return (b.y-a.y)*Math.PI/2*Math.sin(t*Math.PI)/(b.x-a.x);}
+function reset(){
+  seed=(Date.now()%100000)+7;
+  pts=[{x:-400,y:300},{x:200,y:420}];items=[];parts=[];pops=[];genTo(0);
+  P={x:0,y:hgt(0),vx:0,vy:0,v:300,air:false,rot:0,trail:[]};
+  cam={x:0,y:0};time=45;stars=0;score=0;stall=0;shake=0;
+}
+function start(){reset();state="play";$("ovStart").classList.add("hidden");$("ovEnd").classList.add("hidden");}
+function pop(txt,col){pops.push({t:txt,c:col,x:P.x,y:P.y-50,a:1.2});}
+function burst(x,y,col,n){for(var i=0;i<n;i++){var a=Math.random()*6.28,s=40+Math.random()*140;parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-40,l:.6,c:col});}}
+function step(dt){
+  time-=dt;
+  var s0;
+  if(!P.air){
+    var x=P.x,sl=slope(x),n=Math.sqrt(1+sl*sl),sn=sl/n;
+    var acc=G*sn+(holding&&sl>0?1100*sn:0);
+    P.v+=acc*dt; P.v-=P.v*.02*dt; if(P.v<0)P.v=0;
+    var tvx=P.v/n,tvy=P.v*sn;
+    // ¿la colina se curva más rápido que la trayectoria libre?
+    var nx=x+tvx*dt,by=P.y+tvy*dt+.5*G*dt*dt;
+    var gy=hgt(nx);
+    if(by<gy-.6 && P.v>90){P.air=true;P.vx=tvx;P.vy=tvy;P.x=nx;P.y=by;P.vy+=G*dt;if(P.v>260){burst(P.x,P.y,"#27e8ff",6);}}
+    else{P.x=nx;P.y=gy;}
+    if(P.v<45)stall+=dt;else stall=Math.max(0,stall-dt*2);
+    if(P.v>300&&Math.random()<.5)parts.push({x:P.x,y:P.y,vx:-P.v*.2,vy:-20-Math.random()*40,l:.4,c:"#ff2bd6"});
+  }else{
+    P.vy+=G*(holding?2.8:1)*dt;P.x+=P.vx*dt;P.y+=P.vy*dt;
+    var g=hgt(P.x);
+    if(P.y>=g){
+      var sl2=slope(P.x),n2=Math.sqrt(1+sl2*sl2),tx=1/n2,ty=sl2/n2;
+      var sp=Math.hypot(P.vx,P.vy),dot=(P.vx*tx+P.vy*ty);
+      var cosA=sp>0?Math.abs(dot)/sp:1;
+      P.y=g;P.air=false;
+      var v=Math.max(0,dot);
+      if(holding&&sl2>.12&&cosA>.9){v=Math.max(v,sp*.97)*1.08;time+=1;shake=.12;pop("¡DESLIZE!","#39ff9e");burst(P.x,P.y,"#39ff9e",14);}
+      else if(cosA<.7){v*=.8;pop("duro...","#ff5470");burst(P.x,P.y,"#ff5470",8);}
+      else{v*=.96;}
+      P.v=v;
+    }
+  }
+  genTo(P.x);
+  // estrellas
+  for(var i=0;i<items.length;i++){var it=items[i];if(it.got)continue;
+    if(it.x<P.x-400){it.got=true;continue;}
+    var iy=hgt(it.x)-it.off;
+    if(Math.abs(it.x-P.x)<26&&Math.abs(iy-(P.y-12))<30){it.got=true;stars+=it.gold?3:1;time+=it.gold?5:2;score+=it.gold?60:20;burst(it.x,iy,it.gold?"#ffd23b":"#27e8ff",10);pop(it.gold?"+3 ★":"+1",it.gold?"#ffd23b":"#27e8ff");}
+  }
+  P.trail.push({x:P.x,y:P.y});if(P.trail.length>14)P.trail.shift();
+  var m=Math.floor(P.x/PX);if(m<0)m=0;
+  $("hDist").textContent=m;$("hStars").textContent=stars;$("hTime").textContent=Math.max(0,Math.ceil(time));
+  if(time<=0||stall>1.3)over(time<=0?"Se puso el sol.":"Te quedaste sin velocidad.");
+}
+function over(why){
+  state="over";var m=Math.floor(P.x/PX);var sc=m+score;
+  var nb=sc>best;if(nb){best=sc;try{localStorage.setItem(KEY,best);}catch(e){}}
+  $("hBest").textContent=best;
+  $("endTitle").textContent=nb?"¡NUEVO RÉCORD!":"FIN DEL VIAJE";
+  $("endText").innerHTML=why+"<br>Recorriste <b style='color:#27e8ff'>"+m+" m</b> y juntaste <b style='color:#ffd23b'>"+stars+" ★</b><br>Puntaje: <b style='color:#ff2bd6'>"+sc+"</b> · Récord: "+best;
+  $("ovEnd").classList.remove("hidden");
+}
+function draw(){
+  var tx=P.x-150,ty=Math.min(0,P.y-280);
+  cam.x+=(tx-cam.x)*.2;cam.y+=(ty-cam.y)*.08;
+  var sx=0,sy=0;if(shake>0){sx=(Math.random()-.5)*6;sy=(Math.random()-.5)*6;}
+  var f=Math.max(0,Math.min(1,time/45));
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,f>.3?"#0b1030":"#2a0a38");g.addColorStop(.6,f>.3?"#2a1060":"#7a1a4e");g.addColorStop(1,"#12081e");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // sol
+  var sunY=200+(1-Math.min(1,f*1.5))*260;
+  ctx.fillStyle="rgba(255,43,214,.9)";ctx.shadowColor="#ff2bd6";ctx.shadowBlur=40;ctx.beginPath();ctx.arc(330,sunY,60,0,6.28);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle="rgba(10,6,28,.7)";for(var k=0;k<5;k++)ctx.fillRect(260,sunY+k*12-10,140,2+k*1.5);
+  ctx.save();ctx.translate(sx,sy);
+  // colinas lejanas
+  ctx.fillStyle="#1a1040";ctx.beginPath();ctx.moveTo(0,H);
+  for(var x=0;x<=W;x+=12){ctx.lineTo(x,380+Math.sin((x+cam.x*.3)/70)*30+Math.sin((x+cam.x*.3)/31)*10);}
+  ctx.lineTo(W,H);ctx.fill();
+  ctx.translate(-cam.x,-cam.y);
+  // terreno
+  ctx.beginPath();ctx.moveTo(cam.x-4,cam.y+H+200);
+  for(var x2=cam.x-4;x2<=cam.x+W+8;x2+=6)ctx.lineTo(x2,hgt(x2));
+  ctx.lineTo(cam.x+W+8,cam.y+H+200);ctx.closePath();
+  var tg=ctx.createLinearGradient(0,250,0,560);tg.addColorStop(0,"#241060");tg.addColorStop(1,"#08051a");
+  ctx.fillStyle=tg;ctx.fill();
+  ctx.strokeStyle="#27e8ff";ctx.lineWidth=3;ctx.shadowColor="#27e8ff";ctx.shadowBlur=14;ctx.stroke();ctx.shadowBlur=0;
+  // estrellas
+  for(var i=0;i<items.length;i++){var it=items[i];if(it.got||it.x<cam.x-20||it.x>cam.x+W+20)continue;
+    var iy=hgt(it.x)-it.off+Math.sin(performance.now()/300+it.x)*3;
+    ctx.fillStyle=it.gold?"#ffd23b":"#27e8ff";ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=12;
+    star(it.x,iy,it.gold?13:9);
+  }
+  ctx.shadowBlur=0;
+  // estela
+  for(var t=0;t<P.trail.length;t++){ctx.fillStyle="rgba(255,43,214,"+(t/P.trail.length*.4)+")";ctx.beginPath();ctx.arc(P.trail[t].x,P.trail[t].y-10,t/P.trail.length*8,0,6.28);ctx.fill();}
+  // jugador
+  var ang=P.air?Math.atan2(P.vy,P.vx)*.6:Math.atan(slope(P.x));
+  ctx.save();ctx.translate(P.x,P.y);ctx.rotate(ang);
+  ctx.fillStyle="#ff2bd6";ctx.shadowColor="#ff2bd6";ctx.shadowBlur=16;
+  ctx.beginPath();ctx.ellipse(0,-4,20,5,0,0,6.28);ctx.fill();
+  ctx.fillStyle="#fff";ctx.shadowColor="#27e8ff";ctx.beginPath();ctx.arc(0,-18,8,0,6.28);ctx.fill();
+  ctx.restore();ctx.shadowBlur=0;
+  parts.forEach(function(p){ctx.globalAlpha=Math.max(0,p.l*2);ctx.fillStyle=p.c;ctx.fillRect(p.x-2,p.y-2,4,4);});ctx.globalAlpha=1;
+  ctx.font="bold 16px Segoe UI";ctx.textAlign="center";
+  pops.forEach(function(p){ctx.globalAlpha=Math.min(1,p.a);ctx.fillStyle=p.c;ctx.fillText(p.t,p.x,p.y);});ctx.globalAlpha=1;
+  ctx.restore();
+  // indicador si volás muy alto
+  if(P.y-cam.y<0){ctx.fillStyle="#27e8ff";ctx.beginPath();ctx.moveTo(P.x-cam.x,8);ctx.lineTo(P.x-cam.x-8,22);ctx.lineTo(P.x-cam.x+8,22);ctx.fill();}
+  // barra de velocidad
+  ctx.fillStyle="rgba(255,255,255,.1)";ctx.fillRect(14,H-18,W-28,6);
+  var sp=Math.min(1,(P.air?Math.hypot(P.vx,P.vy):P.v)/700);
+  ctx.fillStyle=stall>0?"#ff5470":"#27e8ff";ctx.fillRect(14,H-18,(W-28)*sp,6);
+  if(holding&&state=="play"){ctx.fillStyle="rgba(39,232,255,.9)";ctx.font="bold 11px Segoe UI";ctx.textAlign="left";ctx.fillText("CLAVADO",14,H-24);}
+}
+function star(x,y,r){ctx.beginPath();for(var i=0;i<10;i++){var a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}ctx.closePath();ctx.fill();}
+var last=0;
+function loop(ts){
+  var dt=Math.min(.05,(ts-last)/1000||0);last=ts;
+  if(state=="play"){var n=3;for(var i=0;i<n&&state=="play";i++)step(dt/n);}
+  if(shake>0)shake-=dt;
+  parts.forEach(function(p){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.l-=dt;});parts=parts.filter(function(p){return p.l>0;});
+  pops.forEach(function(p){p.y-=30*dt;p.a-=dt;});pops=pops.filter(function(p){return p.a>0;});
+  if(pts)draw();
+  requestAnimationFrame(loop);
+}
+cv.addEventListener("pointerdown",function(e){holding=true;e.preventDefault();});
+window.addEventListener("pointerup",function(){holding=false;});
+window.addEventListener("pointercancel",function(){holding=false;});
+window.addEventListener("blur",function(){holding=false;});
+window.addEventListener("keydown",function(e){
+  if(e.code=="Space"||e.code=="ArrowDown"||e.code=="ArrowUp"||e.code=="KeyS"||e.code=="KeyW"){
+    e.preventDefault();
+    if(state=="menu"&&!$("ovStart").classList.contains("hidden")){start();return;}
+    if(state=="over"){return;}
+    holding=true;}
+});
+window.addEventListener("keyup",function(e){if(e.code=="Space"||e.code=="ArrowDown"||e.code=="ArrowUp"||e.code=="KeyS"||e.code=="KeyW")holding=false;});
+$("btnStart").onclick=start;$("btnAgain").onclick=start;
+reset();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

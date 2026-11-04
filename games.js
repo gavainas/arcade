@@ -802,6 +802,13 @@
       desc: "Tanda de 5 penales: fijá la mira sobre el arco y frená la barra de potencia en la zona verde. Muy floja la ataja cualquiera, muy fuerte se va por arriba; los ángulos valen doble, las rachas multiplican y el arquero aprende a leerte.",
       controles: "Mové la mira y tocá; tocá de nuevo en la zona verde. Teclado: flechas mueven la mira, Espacio confirma",
       fecha: "2026-11-03", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "ola-neon", titulo: "Ola Neón", archivo: "ola-neon.html",
+      emoji: "🏄", categoria: "reflejos", tags: ["colinas", "velocidad", "surf", "estrellas", "un jugador"],
+      desc: "Surfeá colinas neón al atardecer: mantené apretado para clavarte en las bajadas, ganá velocidad y salí volando en la cresta. Aterrizá apretando en una bajada para un deslizamiento perfecto. Juntá estrellas para alargar el día; si te quedás sin velocidad o se pone el sol, se acabó. Récord guardado.",
+      controles: "Mantené apretado (toque / clic / Espacio / ↓) para clavarte; soltá para volar",
+      fecha: "2026-11-04", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
