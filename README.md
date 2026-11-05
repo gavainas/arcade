@@ -200,3 +200,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🏹 Arquero Neón | [`arquero-neon.html`](arquero-neon.html) | Tiro con arco: arrastrá hacia atrás y soltá, corregí por el viento, apuntá al centro del blanco y reventá globos dorados. 10 flechas, rachas y récord guardado. |
 | ⚽ Penales Neón | [`penales-neon.html`](penales-neon.html) | Tanda de 5 penales: fijá la mira, frená la barra de potencia en la zona verde, buscá los ángulos y vencé a un arquero que aprende. Rachas y récord guardado. |
 | 🏄 Ola Neón | [`ola-neon.html`](ola-neon.html) | Surfeá colinas al atardecer: mantené apretado para clavarte en las bajadas, ganá velocidad y volá en las crestas. Estrellas, deslizamientos perfectos y récord guardado. |
+| 📡 Radar Neón | [`radar-neon.html`](radar-neon.html) | El radar sólo muestra lo que su barrido ilumina: tocá los intrusos antes de que lleguen al centro, evitá a los aliados y usá el pulso dorado. Combos y récord guardado. |

@@ -809,6 +809,13 @@
       desc: "Surfeá colinas neón al atardecer: mantené apretado para clavarte en las bajadas, ganá velocidad y salí volando en la cresta. Aterrizá apretando en una bajada para un deslizamiento perfecto. Juntá estrellas para alargar el día; si te quedás sin velocidad o se pone el sol, se acabó. Récord guardado.",
       controles: "Mantené apretado (toque / clic / Espacio / ↓) para clavarte; soltá para volar",
       fecha: "2026-11-04", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "radar-neon", titulo: "Radar Neón", archivo: "radar-neon.html",
+      emoji: "📡", categoria: "reflejos", tags: ["radar", "sonar", "puntería", "visión", "un jugador"],
+      desc: "El radar sólo muestra lo que su barrido ilumina: tocá los intrusos rojos mientras brillan antes de que lleguen al centro, evitá a los aliados verdes y usá el pulso dorado para limpiar todo. Combos, niveles y récord guardado.",
+      controles: "Tocá / clic sobre los blips mientras brillan. Teclado: Espacio golpea el blip más brillante",
+      fecha: "2026-11-05", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

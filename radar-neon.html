@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RADAR NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--green:#39ff9e;--gold:#ffd23b;--red:#ff5470;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(24px,6.6vw,38px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;filter:drop-shadow(0 0 22px rgba(138,75,255,.35));}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:crosshair;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:340px;}
+  .overlay .big{font-size:52px;filter:drop-shadow(0 0 16px rgba(39,232,255,.5));}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">RADAR NEÓN</div><div class="sub">DEFENDÉ EL CENTRO</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">VIDAS<b id="hLives">3</b></div>
+    <div class="box">COMBO<b id="hCombo">x1</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap">
+    <canvas id="cv" width="480" height="560"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">📡</div><h2>RADAR NEÓN</h2>
+      <p>El radar sólo muestra lo que su barrido ilumina. Tocá los <b style="color:#ff5470">intrusos rojos</b> mientras brillan antes de que lleguen al centro. <b style="color:#39ff9e">No toques los aliados verdes</b> (te cuestan una vida). El <b style="color:#ffd23b">pulso dorado</b> destruye todos los intrusos visibles. Cada acierto seguido sube el combo.</p>
+      <button class="btn" id="btnStart">ENCENDER RADAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">💥</div><h2>CENTRO CAÍDO</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Tocá / clic sobre los blips mientras brillan · Teclado: tocá con el mouse o Espacio para pulso</div>
+</div>
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),W=480,H=560,CX=240,CY=290,R=225;
+var $=function(i){return document.getElementById(i);};
+var KEY="neon_radar_best",best=0;try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+$("hBest").textContent=best;
+var state="menu",sweep,blips,parts,pops,score,lives,combo,streak,t,spawnT,level,kills,shake,pulses,last,flash;
+function reset(){sweep=0;blips=[];parts=[];pops=[];score=0;lives=3;combo=1;streak=0;t=0;spawnT=0.5;level=1;kills=0;shake=0;pulses=0;flash=0;hud();}
+function hud(){$("hScore").textContent=score;$("hLives").textContent=lives;$("hCombo").textContent="x"+combo;}
+function spawn(){
+  var a=Math.random()*Math.PI*2,d=R*(0.78+Math.random()*0.2);
+  var r=Math.random(),type="foe";
+  if(r<0.22)type="ally"; else if(r<0.27&&level>1)type="gold";
+  blips.push({x:CX+Math.cos(a)*d,y:CY+Math.sin(a)*d,type:type,vis:0,spd:(14+level*3.2+Math.random()*8),life:type==="foe"?99:12,age:0});
+}
+function burst(x,y,c,n){for(var i=0;i<n;i++){var a=Math.random()*6.28,s=40+Math.random()*130;parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:.6,c:c});}}
+function pop(x,y,s,c){pops.push({x:x,y:y,s:s,c:c,l:1});}
+function angDiff(a,b){var d=(a-b)%(Math.PI*2);if(d<0)d+=Math.PI*2;return d;}
+function loseLife(){lives--;combo=1;streak=0;shake=.4;hud();if(lives<=0)end();}
+function end(){
+  state="over";var nb=score>best;if(nb){best=score;try{localStorage.setItem(KEY,best);}catch(e){}}
+  $("hBest").textContent=best;
+  $("endText").innerHTML="Puntos: <b style='color:#27e8ff'>"+score+"</b> · Intrusos neutralizados: <b style='color:#ff2bd6'>"+kills+"</b> · Nivel "+level+(nb?"<br><b style='color:#ffd23b'>¡Nuevo récord!</b>":"");
+  $("ovEnd").classList.remove("hidden");
+}
+function hit(b){
+  if(b.type==="foe"){
+    kills++;streak++;if(streak%3===0&&combo<6)combo++;
+    var p=10*combo;score+=p;pop(b.x,b.y,"+"+p,"#ff5470");burst(b.x,b.y,"#ff5470",14);
+  }else if(b.type==="ally"){
+    burst(b.x,b.y,"#39ff9e",12);pop(b.x,b.y,"¡Aliado!","#39ff9e");loseLife();
+  }else{
+    flash=.5;pulses++;burst(b.x,b.y,"#ffd23b",22);
+    blips.forEach(function(o){if(o.type==="foe"&&o.vis>.1){kills++;score+=15*combo;burst(o.x,o.y,"#ff5470",10);o.dead=true;}});
+    pop(b.x,b.y,"¡PULSO!","#ffd23b");
+  }
+  b.dead=true;
+  if(kills>0&&kills%12===0&&b.type==="foe"){level++;pop(CX,CY-40,"NIVEL "+level,"#27e8ff");}
+  hud();
+}
+function press(x,y){
+  if(state!=="play")return;
+  var best=null,bd=1e9;
+  blips.forEach(function(b){if(b.vis<.12)return;var d=Math.hypot(b.x-x,b.y-y);if(d<34&&d<bd){bd=d;best=b;}});
+  if(best)hit(best);
+  else{ // fallo: pierde combo
+    if(combo>1||streak>0){combo=1;streak=0;hud();}
+    pop(x,y,"✕","#7fa6c8");
+  }
+}
+function pos(e){var r=cv.getBoundingClientRect();var p=e.touches?e.touches[0]:e;return [(p.clientX-r.left)*W/r.width,(p.clientY-r.top)*H/r.height];}
+cv.addEventListener("mousedown",function(e){var p=pos(e);press(p[0],p[1]);});
+cv.addEventListener("touchstart",function(e){e.preventDefault();var p=pos(e);press(p[0],p[1]);},{passive:false});
+window.addEventListener("keydown",function(e){
+  if(e.code==="Space"){e.preventDefault();if(state!=="play")return;
+    // tecla: golpea el blip visible más brillante
+    var b=null;blips.forEach(function(o){if(o.vis>.12&&(!b||o.vis>b.vis))b=o;});if(b)hit(b);}
+});
+function update(dt){
+  t+=dt;var speed=1.5+level*0.22;
+  var prev=sweep;sweep=(sweep+speed*dt)%(Math.PI*2);
+  spawnT-=dt;if(spawnT<=0){spawn();spawnT=Math.max(.45,1.5-level*.1)*(0.7+Math.random()*.6);}
+  blips.forEach(function(b){
+    b.age+=dt;
+    var a=Math.atan2(b.y-CY,b.x-CX);if(a<0)a+=Math.PI*2;
+    var d=angDiff(sweep,a); // 0 = barrido justo encima
+    if(d<speed*dt*1.5+0.05)b.vis=1; else b.vis=Math.max(0,b.vis-dt*0.55);
+    if(b.type==="foe"){
+      var dx=CX-b.x,dy=CY-b.y,dist=Math.hypot(dx,dy);
+      b.x+=dx/dist*b.spd*dt;b.y+=dy/dist*b.spd*dt;
+      if(dist<26){b.dead=true;burst(b.x,b.y,"#ff5470",18);pop(CX,CY-30,"¡Impacto!","#ff5470");loseLife();}
+    }else if(b.age>b.life)b.dead=true;
+  });
+  blips=blips.filter(function(b){return !b.dead;});
+  parts.forEach(function(p){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt;});parts=parts.filter(function(p){return p.l>0;});
+  pops.forEach(function(p){p.y-=30*dt;p.l-=dt*1.2;});pops=pops.filter(function(p){return p.l>0;});
+  shake=Math.max(0,shake-dt);flash=Math.max(0,flash-dt);
+}
+function draw(){
+  ctx.fillStyle="#050813";ctx.fillRect(0,0,W,H);
+  ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*8,(Math.random()-.5)*8);
+  // anillos
+  ctx.strokeStyle="rgba(39,232,255,.22)";ctx.lineWidth=1.5;
+  for(var i=1;i<=4;i++){ctx.beginPath();ctx.arc(CX,CY,R*i/4,0,6.283);ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(CX-R,CY);ctx.lineTo(CX+R,CY);ctx.moveTo(CX,CY-R);ctx.lineTo(CX,CY+R);ctx.stroke();
+  // barrido
+  if(state!=="menu"||true){
+    var g=ctx.createConicGradient?ctx.createConicGradient(sweep-1.1,CX,CY):null;
+    if(g){g.addColorStop(0,"rgba(39,232,255,0)");g.addColorStop(0.17,"rgba(39,232,255,.35)");g.addColorStop(0.1751,"rgba(39,232,255,0)");g.addColorStop(1,"rgba(39,232,255,0)");
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(CX,CY,R,0,6.283);ctx.fill();}
+    ctx.strokeStyle="#27e8ff";ctx.lineWidth=2.5;ctx.shadowColor="#27e8ff";ctx.shadowBlur=14;
+    ctx.beginPath();ctx.moveTo(CX,CY);ctx.lineTo(CX+Math.cos(sweep)*R,CY+Math.sin(sweep)*R);ctx.stroke();ctx.shadowBlur=0;
+  }
+  ctx.strokeStyle="rgba(138,75,255,.7)";ctx.lineWidth=3;ctx.beginPath();ctx.arc(CX,CY,R,0,6.283);ctx.stroke();
+  // base
+  ctx.fillStyle="#ff2bd6";ctx.shadowColor="#ff2bd6";ctx.shadowBlur=18;ctx.beginPath();ctx.arc(CX,CY,14,0,6.283);ctx.fill();ctx.shadowBlur=0;
+  // blips
+  blips.forEach(function(b){
+    if(b.vis<=.02)return;
+    var c=b.type==="foe"?"#ff5470":b.type==="ally"?"#39ff9e":"#ffd23b";
+    ctx.globalAlpha=Math.min(1,b.vis);ctx.fillStyle=c;ctx.shadowColor=c;ctx.shadowBlur=16;
+    ctx.beginPath();
+    if(b.type==="foe"){ctx.arc(b.x,b.y,11,0,6.283);}
+    else if(b.type==="ally"){ctx.rect(b.x-10,b.y-10,20,20);}
+    else{for(var k=0;k<5;k++){var a=-1.57+k*1.2566;ctx.lineTo(b.x+Math.cos(a)*14,b.y+Math.sin(a)*14);var a2=a+.628;ctx.lineTo(b.x+Math.cos(a2)*6,b.y+Math.sin(a2)*6);}ctx.closePath();}
+    ctx.fill();
+    if(b.type==="foe"){ctx.strokeStyle=c;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(b.x,b.y,11+(1-b.vis)*14,0,6.283);ctx.stroke();}
+    ctx.shadowBlur=0;ctx.globalAlpha=1;
+  });
+  parts.forEach(function(p){ctx.globalAlpha=Math.max(0,p.l/.6);ctx.fillStyle=p.c;ctx.fillRect(p.x-2,p.y-2,4,4);});ctx.globalAlpha=1;
+  pops.forEach(function(p){ctx.globalAlpha=Math.max(0,p.l);ctx.fillStyle=p.c;ctx.font="bold 18px system-ui";ctx.textAlign="center";ctx.fillText(p.s,p.x,p.y);});ctx.globalAlpha=1;
+  if(flash>0){ctx.fillStyle="rgba(255,210,59,"+flash*.5+")";ctx.fillRect(0,0,W,H);}
+  ctx.restore();
+}
+function loop(ts){
+  var dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;
+  if(state==="play")update(dt); else if(state==="menu")sweep=(sweep+dt*1.5)%(Math.PI*2);
+  draw();requestAnimationFrame(loop);
+}
+function start(){reset();state="play";$("ovStart").classList.add("hidden");$("ovEnd").classList.add("hidden");}
+$("btnStart").onclick=start;$("btnAgain").onclick=start;
+reset();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

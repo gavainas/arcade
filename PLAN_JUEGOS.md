@@ -149,6 +149,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 94 | 🏹 | Arquero Neón | `arquero-neon.html` | Acción / Puntería | Tiro con arco: arrastrá hacia atrás y soltá para disparar; el viento desvía la flecha, los blancos se achican y se mueven, el centro da 150, globos dorados +25 y rachas multiplican. 10 flechas y récord. | ✅ 2026-11-02 |
 | 95 | ⚽ | Penales Neón | `penales-neon.html` | Acción / Puntería | Tanda de 5 penales: fijá la mira sobre el arco y frená la barra de potencia en la zona verde (floja = atajada fácil, fuerte = por arriba). Ángulos valen doble, rachas multiplican, el arquero aprende. | ✅ 2026-11-03 |
 | 96 | 🏄 | Ola Neón | `ola-neon.html` | Reflejos | Estilo Tiny Wings: mantené apretado para clavarte en las bajadas y ganar velocidad, soltá para volar en las crestas; deslizamiento perfecto al aterrizar, estrellas que alargan el atardecer. | ✅ 2026-11-04 |
+| 97 | 📡 | Radar Neón | `radar-neon.html` | Reflejos | Radar con barrido giratorio: los blips sólo se ven cuando el barrido los ilumina; tocá los intrusos rojos antes de que lleguen al centro, evitá los aliados verdes y usá el pulso dorado. Combos y récord. | ✅ 2026-11-05 |
 
 ## Reglas para el juego del día
 
