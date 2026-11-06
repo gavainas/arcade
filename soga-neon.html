@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SOGA NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(24px,6.6vw,38px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--purple),var(--cyan),var(--pink),var(--purple));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;filter:drop-shadow(0 0 22px rgba(138,75,255,.35));}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:340px;}
+  .overlay .big{font-size:52px;filter:drop-shadow(0 0 16px rgba(39,232,255,.5));}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">SOGA NEÓN</div><div class="sub">SALTÁ AL RITMO</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">VIDAS<b id="hLives">3</b></div>
+    <div class="box">RACHA<b id="hCombo">x1</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap">
+    <canvas id="cv" width="480" height="560"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🪢</div><h2>SOGA NEÓN</h2>
+      <p>La soga gira sin parar. <b style="color:#27e8ff">Saltá justo antes</b> de que pase por tus pies: si todavía estás en el piso, te enreda. Saltar cerca del tope del salto da <b style="color:#ffd23b">PERFECTO</b>. Más adelante aparece una <b style="color:#ff2bd6">segunda soga</b> y el ritmo se acelera y se descompone.</p>
+      <button class="btn" id="btnStart">EMPEZAR A SALTAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">😵</div><h2>TE ENREDASTE</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Tocá la pantalla · Espacio / ↑ para saltar</div>
+</div>
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),W=480,H=560;
+var $=function(i){return document.getElementById(i);};
+var KEY="neon_soga_best",best=0;try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+$("hBest").textContent=best;
+var GROUND=440,HX1=70,HX2=410,HY=300,K=105,PX=240,JUMPH=64,JT=0.44,CLEAR=22;
+var state="menu",score,lives,streak,mult,level,clears,jumpT,ropes,phase,wob,pops,parts,shake,last,beat,inv,fall,msg,msgT,bestStreak,perfects;
+var ac=null;
+function snd(f,d,type,v){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();var o=ac.createOscillator(),g=ac.createGain();
+  o.type=type||"sine";o.frequency.value=f;g.gain.value=v||0.05;g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+d);
+  o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d);}catch(e){}}
+function reset(){score=0;lives=3;streak=0;mult=1;level=1;clears=0;jumpT=-1;phase=0;wob=0;pops=[];parts=[];shake=0;beat=0;inv=0;fall=0;msg="";msgT=0;bestStreak=0;perfects=0;
+  ropes=[{th:Math.PI*0.35,c:"#27e8ff",prev:0}];hud();}
+function hud(){$("hScore").textContent=score;$("hLives").textContent=lives;$("hCombo").textContent="x"+mult;}
+function omega(){ // rad/s
+  var base=3.6+level*0.42; if(base>8.6)base=8.6;
+  if(level>=5){base*=1+0.38*Math.sin(wob);}
+  return base;
+}
+function jumpH(){ if(jumpT<0)return 0; var p=jumpT/JT; if(p>=1)return 0; return JUMPH*4*p*(1-p); }
+function jump(){
+  if(state==="menu"||state==="over")return;
+  if(jumpT<0&&inv<=0.0001||jumpT<0){jumpT=0;snd(520,.09,"square",.04);}
+}
+function pop(t,c,y){pops.push({t:t,c:c,y:y||GROUND-150,l:1});}
+function burst(x,y,c,n){for(var i=0;i<n;i++){var a=Math.random()*6.28,s=50+Math.random()*150;parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-60,l:.7,c:c});}}
+function crossing(){ // la soga pasa por el punto más bajo
+  var h=jumpH(),p=jumpT<0?0:jumpT/JT;
+  if(h<CLEAR){ // tropiezo
+    lives--;streak=0;mult=1;shake=.5;inv=1.2;fall=.6;snd(110,.4,"sawtooth",.08);
+    burst(PX,GROUND-4,"#ff5470",22);pop("¡ENREDADO!","#ff5470");
+    hud();
+    if(lives<=0){gameOver();}
+    return;
+  }
+  clears++;streak++;if(streak>bestStreak)bestStreak=streak;
+  mult=Math.min(5,1+Math.floor(streak/5));
+  var perfect=Math.abs(p-0.5)<0.2;
+  var pts=10*mult;
+  if(perfect){pts+=10*mult;perfects++;pop("¡PERFECTO!","#ffd23b");burst(PX,GROUND-h,"#ffd23b",16);snd(880,.15,"triangle",.06);}
+  else{snd(660,.08,"triangle",.04);}
+  score+=pts;
+  if(clears%10===0){level++;pop("NIVEL "+level,"#ff2bd6",GROUND-210);
+    if(level===3){ropes.push({th:ropes[0].th+Math.PI,c:"#ff2bd6",prev:0});pop("¡SEGUNDA SOGA!","#ff2bd6",GROUND-240);}
+    if(level===5)pop("¡RITMO LOCO!","#8a4bff",GROUND-240);
+    snd(990,.3,"sine",.06);}
+  hud();
+}
+function gameOver(){
+  state="over";
+  var nb=score>best;if(nb){best=score;try{localStorage.setItem(KEY,best);}catch(e){}$("hBest").textContent=best;}
+  $("endText").innerHTML="Puntos: <b style='color:#27e8ff'>"+score+"</b> · Saltos: <b>"+clears+"</b> · Mejor racha: <b>"+bestStreak+"</b> · Perfectos: <b style='color:#ffd23b'>"+perfects+"</b>"+(nb?"<br><b style='color:#ffd23b'>¡NUEVO RÉCORD!</b>":"<br>Récord: "+best);
+  setTimeout(function(){$("ovEnd").classList.remove("hidden");},650);
+}
+function start(){reset();state="play";$("ovStart").classList.add("hidden");$("ovEnd").classList.add("hidden");last=performance.now();}
+function update(dt){
+  if(state==="menu"){for(var i=0;i<ropes.length;i++)ropes[i].th+=dt*4;return;}
+  var w=omega();wob+=dt*0.9;beat+=dt;
+  if(jumpT>=0){jumpT+=dt;if(jumpT>=JT)jumpT=-1;}
+  if(inv>0)inv-=dt; if(fall>0)fall-=dt;
+  if(state==="play"){
+    for(var i=0;i<ropes.length;i++){
+      var r=ropes[i];r.prev=r.th;r.th+=w*dt;
+      // cruce por θ = 2πk (soga en el punto más bajo)
+      if(Math.floor(r.th/(Math.PI*2))>Math.floor(r.prev/(Math.PI*2))){ if(inv<=0||true)crossing(); if(state!=="play")break;}
+    }
+  } else { for(var j=0;j<ropes.length;j++)ropes[j].th+=w*0.25*dt; }
+  for(var k=parts.length-1;k>=0;k--){var p=parts[k];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.l-=dt;if(p.l<=0)parts.splice(k,1);}
+  for(var m=pops.length-1;m>=0;m--){pops[m].l-=dt*0.9;pops[m].y-=dt*22;if(pops[m].l<=0)pops.splice(m,1);}
+  if(shake>0)shake-=dt;
+}
+function ropeY(th){return HY+K*Math.cos(th);}
+function drawRope(r,front){
+  var cy=ropeY(r.th),ctl=HY+2*(cy-HY);
+  ctx.save();ctx.strokeStyle=r.c;ctx.shadowColor=r.c;ctx.shadowBlur=16;ctx.lineWidth=5;ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(HX1,HY);ctx.quadraticCurveTo((HX1+HX2)/2,ctl,HX2,HY);ctx.stroke();
+  ctx.restore();
+}
+function drawPlayer(){
+  var h=jumpH(),y=GROUND-h,tilt=fall>0?Math.sin(fall*30)*.15:0;
+  ctx.save();ctx.translate(PX,y);ctx.rotate(tilt);
+  if(inv>0&&Math.floor(inv*14)%2===0)ctx.globalAlpha=.4;
+  ctx.shadowColor="#27e8ff";ctx.shadowBlur=14;ctx.strokeStyle="#e8f6ff";ctx.fillStyle="#e8f6ff";ctx.lineWidth=5;ctx.lineCap="round";
+  var air=h>2,leg=air?7:11;
+  ctx.beginPath();ctx.arc(0,-50,10,0,6.28);ctx.fill();               // cabeza
+  ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(0,-20);ctx.stroke();    // torso
+  ctx.beginPath();ctx.moveTo(0,-20);ctx.lineTo(-leg,air?-4:0);ctx.moveTo(0,-20);ctx.lineTo(leg,air?-4:0);ctx.stroke(); // piernas
+  ctx.beginPath();ctx.moveTo(0,-36);ctx.lineTo(-30,-32+(air?-8:0));ctx.moveTo(0,-36);ctx.lineTo(30,-32+(air?-8:0));ctx.stroke(); // brazos (manos en la soga)
+  ctx.restore();
+}
+function draw(){
+  ctx.save();
+  if(shake>0)ctx.translate((Math.random()-.5)*10*shake,(Math.random()-.5)*10*shake);
+  ctx.clearRect(-10,-10,W+20,H+20);
+  // fondo
+  var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#0b1030");g.addColorStop(1,"#1a0f3a");ctx.fillStyle=g;ctx.fillRect(-10,-10,W+20,H+20);
+  var pulse=0.5+0.5*Math.sin(beat*omega()*1.0);
+  ctx.strokeStyle="rgba(138,75,255,"+(0.12+0.1*pulse)+")";ctx.lineWidth=1;
+  for(var i=-6;i<=6;i++){ctx.beginPath();ctx.moveTo(PX+i*28,GROUND+14);ctx.lineTo(PX+i*110,H);ctx.stroke();}
+  for(var j=0;j<5;j++){var yy=GROUND+14+j*j*6+j*8;ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(W,yy);ctx.stroke();}
+  // piso
+  ctx.save();ctx.shadowColor="#8a4bff";ctx.shadowBlur=14;ctx.strokeStyle="#8a4bff";ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(30,GROUND+2);ctx.lineTo(W-30,GROUND+2);ctx.stroke();ctx.restore();
+  // postes
+  ctx.save();ctx.fillStyle="#27e8ff";ctx.shadowColor="#27e8ff";ctx.shadowBlur=12;
+  [HX1,HX2].forEach(function(x){ctx.fillRect(x-4,HY,8,GROUND-HY+2);ctx.beginPath();ctx.arc(x,HY,9,0,6.28);ctx.fill();});
+  ctx.restore();
+  // marca de piso para guiar
+  ctx.fillStyle="rgba(39,232,255,.18)";ctx.beginPath();ctx.ellipse(PX,GROUND+4,30-jumpH()*.2,6,0,0,6.28);ctx.fill();
+  drawPlayer();
+  for(var r=0;r<ropes.length;r++)drawRope(ropes[r]);
+  // partículas
+  for(var k=0;k<parts.length;k++){var p=parts[k];ctx.globalAlpha=Math.max(0,p.l/.7);ctx.fillStyle=p.c;ctx.fillRect(p.x-2,p.y-2,4,4);}
+  ctx.globalAlpha=1;
+  // textos flotantes
+  ctx.textAlign="center";ctx.font="900 26px Segoe UI,sans-serif";
+  for(var m=0;m<pops.length;m++){var o=pops[m];ctx.globalAlpha=Math.min(1,o.l*1.5);ctx.fillStyle=o.c;ctx.shadowColor=o.c;ctx.shadowBlur=14;ctx.fillText(o.t,W/2,o.y);}
+  ctx.globalAlpha=1;ctx.shadowBlur=0;
+  if(state==="play"){ctx.fillStyle="rgba(127,166,200,.7)";ctx.font="600 12px Segoe UI,sans-serif";ctx.fillText("NIVEL "+level+"  ·  "+(10-clears%10)+" saltos para subir",W/2,H-22);}
+  ctx.restore();
+}
+function loop(now){
+  var dt=Math.min(0.05,(now-(last||now))/1000);last=now;
+  update(dt);draw();requestAnimationFrame(loop);
+}
+// entrada
+function act(e){ if(e&&e.preventDefault)e.preventDefault(); jump(); }
+cv.addEventListener("pointerdown",act);
+window.addEventListener("keydown",function(e){
+  if(e.code==="Space"||e.code==="ArrowUp"||e.code==="KeyW"){
+    if(state==="menu"&&!$("ovStart").classList.contains("hidden")){start();e.preventDefault();return;}
+    if(state==="over"&&!$("ovEnd").classList.contains("hidden")){start();e.preventDefault();return;}
+    e.preventDefault();jump();
+  }
+});
+$("btnStart").addEventListener("click",start);
+$("btnAgain").addEventListener("click",start);
+reset();state="menu";requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

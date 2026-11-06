@@ -816,6 +816,13 @@
       desc: "El radar sólo muestra lo que su barrido ilumina: tocá los intrusos rojos mientras brillan antes de que lleguen al centro, evitá a los aliados verdes y usá el pulso dorado para limpiar todo. Combos, niveles y récord guardado.",
       controles: "Tocá / clic sobre los blips mientras brillan. Teclado: Espacio golpea el blip más brillante",
       fecha: "2026-11-05", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "soga-neon", titulo: "Soga Neón", archivo: "soga-neon.html",
+      emoji: "🪢", categoria: "reflejos", tags: ["soga", "salto", "timing", "ritmo", "un jugador"],
+      desc: "Saltá la soga al ritmo justo: si seguís en el piso cuando pasa por tus pies, te enreda. Saltá en el momento perfecto para duplicar los puntos y armá rachas hasta x5. Desde el nivel 3 aparece una segunda soga y más adelante el ritmo se acelera y se descompone. 3 vidas y récord guardado.",
+      controles: "Tocá la pantalla / clic, o Espacio / ↑ para saltar",
+      fecha: "2026-11-06", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

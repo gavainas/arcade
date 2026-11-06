@@ -201,3 +201,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | ⚽ Penales Neón | [`penales-neon.html`](penales-neon.html) | Tanda de 5 penales: fijá la mira, frená la barra de potencia en la zona verde, buscá los ángulos y vencé a un arquero que aprende. Rachas y récord guardado. |
 | 🏄 Ola Neón | [`ola-neon.html`](ola-neon.html) | Surfeá colinas al atardecer: mantené apretado para clavarte en las bajadas, ganá velocidad y volá en las crestas. Estrellas, deslizamientos perfectos y récord guardado. |
 | 📡 Radar Neón | [`radar-neon.html`](radar-neon.html) | El radar sólo muestra lo que su barrido ilumina: tocá los intrusos antes de que lleguen al centro, evitá a los aliados y usá el pulso dorado. Combos y récord guardado. |
+| 🪢 Soga Neón | [`soga-neon.html`](soga-neon.html) | Saltá la soga al ritmo justo: si seguís en el piso cuando pasa, te enreda. Saltos perfectos, rachas, segunda soga y ritmo cambiante. Récord guardado. |
