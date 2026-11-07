@@ -823,6 +823,13 @@
       desc: "Saltá la soga al ritmo justo: si seguís en el piso cuando pasa por tus pies, te enreda. Saltá en el momento perfecto para duplicar los puntos y armá rachas hasta x5. Desde el nivel 3 aparece una segunda soga y más adelante el ritmo se acelera y se descompone. 3 vidas y récord guardado.",
       controles: "Tocá la pantalla / clic, o Espacio / ↑ para saltar",
       fecha: "2026-11-06", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "rayo-neon", titulo: "Rayo Neón", archivo: "rayo-neon.html",
+      emoji: "⚡", categoria: "accion", tags: ["rayo", "cadena", "electricidad", "defensa", "puntería", "un jugador"],
+      desc: "Defendé el núcleo lanzando rayos que saltan de enemigo en enemigo: cuanto más juntos, más larga la cadena y más puntos. Morados de 2 golpes, dorados veloces y drones verdes que no hay que tocar. Energía limitada, olas y récord guardado.",
+      controles: "Tocá / clic sobre los enemigos. Teclado: Espacio lanza el rayo al más cercano",
+      fecha: "2026-11-07", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
