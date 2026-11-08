@@ -830,6 +830,13 @@
       desc: "Defendé el núcleo lanzando rayos que saltan de enemigo en enemigo: cuanto más juntos, más larga la cadena y más puntos. Morados de 2 golpes, dorados veloces y drones verdes que no hay que tocar. Energía limitada, olas y récord guardado.",
       controles: "Tocá / clic sobre los enemigos. Teclado: Espacio lanza el rayo al más cercano",
       fecha: "2026-11-07", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "vias-neon", titulo: "Vías Neón", archivo: "vias-neon.html",
+      emoji: "🚂", categoria: "reflejos", tags: ["trenes", "vías", "cambiavías", "colores", "gestión", "un jugador"],
+      desc: "Los trenes de colores bajan por 4 vías: tocá los cruces para activar o desactivar los desvíos y guiar cada uno a la estación de su mismo color. Un tren en la estación equivocada cuesta una vida; las entregas seguidas multiplican hasta x5. Cada nivel acelera el servicio. Récord guardado.",
+      controles: "Tocá / clic sobre los cruces numerados. Teclado: 1-8 activan cada cruce",
+      fecha: "2026-11-08", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

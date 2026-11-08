@@ -203,3 +203,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 📡 Radar Neón | [`radar-neon.html`](radar-neon.html) | El radar sólo muestra lo que su barrido ilumina: tocá los intrusos antes de que lleguen al centro, evitá a los aliados y usá el pulso dorado. Combos y récord guardado. |
 | 🪢 Soga Neón | [`soga-neon.html`](soga-neon.html) | Saltá la soga al ritmo justo: si seguís en el piso cuando pasa, te enreda. Saltos perfectos, rachas, segunda soga y ritmo cambiante. Récord guardado. |
 | ⚡ Rayo Neón | [`rayo-neon.html`](rayo-neon.html) | Defendé el núcleo con rayos en cadena que saltan entre enemigos cercanos. Morados resistentes, dorados veloces, drones aliados que no hay que tocar, energía limitada y récord guardado. |
+| 🚂 Vías Neón | [`vias-neon.html`](vias-neon.html) | Cambiavías: tocá los cruces para desviar trenes de colores hasta la estación de su mismo color. Combos hasta x5, niveles cada vez más rápidos y récord guardado. |

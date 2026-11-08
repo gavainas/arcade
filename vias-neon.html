@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VÍAS NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:340px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">VÍAS NEÓN</div><div class="sub">CAMBIAVÍAS</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">VIDAS<b id="hLives">3</b></div>
+    <div class="box">NIVEL<b id="hLvl">1</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap">
+    <canvas id="cv" width="480" height="560"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🚂</div><h2>VÍAS NEÓN</h2>
+      <p>Los trenes bajan por las vías. <b style="color:#27e8ff">Tocá los cruces</b> para activar o desactivar el desvío y guiar cada tren a la <b style="color:#ffd23b">estación de su mismo color</b>. Un tren en la estación equivocada te cuesta una vida; las entregas seguidas multiplican el puntaje.</p>
+      <button class="btn" id="btnStart">EMPEZAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">💥</div><h2>FIN DEL SERVICIO</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Tocá / clic sobre un cruce para cambiar el desvío · Teclas 1-8 también</div>
+</div>
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i);};
+var cv=$("cv"),ctx=cv.getContext("2d"),W=480,H=560;
+var KEY="vias-neon-best";
+var LX=[60,180,300,420],COL=["#27e8ff","#ff2bd6","#ffd23b","#4dff9e"],NAMES=["celeste","rosa","dorado","verde"];
+var TOP=40,ST=500,ROWS=[130,200,270,340,410],HALF=18;
+// cruces: fila, columna izquierda (conecta carril c con c+1)
+var JS=[];
+[[0,0],[0,2],[1,1],[2,0],[2,2],[3,1],[4,0],[4,2]].forEach(function(j,i){JS.push({r:j[0],c:j[1],on:false,x:(LX[j[1]]+LX[j[1]+1])/2,y:ROWS[j[0]],flash:0,n:i+1});});
+var state="menu",score=0,lives=3,level=1,deliv=0,combo=1,best=0,tr=[],parts=[],pops=[],spawnT=0,time=0,last=0,shake=0,flash=0;
+try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+$("hBest").textContent=best;
+var AC=null;
+function snd(f,d,t,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain();
+  o.type=t||"sine";o.frequency.value=f;g.gain.value=v||0.05;g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d);
+  o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+function hud(){$("hScore").textContent=score;$("hLives").textContent=lives;$("hLvl").textContent=level;}
+function reset(){score=0;lives=3;level=1;deliv=0;combo=1;tr=[];parts=[];pops=[];spawnT=0.4;shake=0;flash=0;JS.forEach(function(j){j.on=false;});hud();}
+function speed(){return 70+level*14;}
+function spawn(){
+  var lane=Math.floor(Math.random()*4);
+  for(var i=0;i<tr.length;i++)if(tr[i].from===lane&&tr[i].y<TOP+60)return;
+  tr.push({from:lane,to:lane,y0:0,y:TOP,col:Math.floor(Math.random()*4),done:-1});
+}
+function burst(x,y,c,n){for(var i=0;i<n;i++){var a=Math.random()*6.283,s=40+Math.random()*130;parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:0.6,m:0.6,c:c});}}
+function pop(x,y,s,c){pops.push({x:x,y:y,s:s,c:c,t:1});}
+function junctionAt(r,lane){
+  for(var i=0;i<JS.length;i++){var j=JS[i];if(j.r===r&&(j.c===lane||j.c+1===lane))return j;}return null;
+}
+function update(dt){
+  time+=dt;
+  spawnT-=dt;
+  if(spawnT<=0){spawn();spawnT=Math.max(0.7,2.0-level*0.11)*(0.75+Math.random()*0.5);}
+  var v=speed();
+  for(var i=tr.length-1;i>=0;i--){
+    var t=tr[i];t.y+=v*dt;
+    // decidir desvíos al entrar en cada fila
+    for(var r=0;r<ROWS.length;r++){
+      if(t.done<r&&t.y>=ROWS[r]-HALF){
+        t.done=r;t.from=t.to;
+        var j=junctionAt(r,t.from);
+        if(j&&j.on){t.to=(t.from===j.c)?j.c+1:j.c;t.y0=ROWS[r]-HALF;}
+        else{t.to=t.from;}
+      }
+    }
+    if(t.y>=ST){
+      tr.splice(i,1);
+      var x=LX[t.to];
+      if(t.to===t.col){
+        score+=10*combo;deliv++;pop(x,ST-30,"+"+10*combo,COL[t.col]);burst(x,ST,COL[t.col],14);snd(520+combo*60,0.15,"triangle",0.06);
+        if(combo<5)combo++;
+        var nl=1+Math.floor(deliv/10);if(nl>level){level=nl;pop(W/2,H/2,"NIVEL "+level,"#ffd23b");snd(880,0.3,"square",0.04);}
+      }else{
+        lives--;combo=1;shake=0.35;flash=0.3;pop(x,ST-30,"✕ estación "+NAMES[t.to],"#ff4d5e");burst(x,ST,"#ff4d5e",16);snd(90,0.35,"sawtooth",0.07);
+        if(lives<=0){hud();over();return;}
+      }
+      hud();
+    }
+  }
+  for(i=parts.length-1;i>=0;i--){var p=parts[i];p.t-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=0.95;p.vy*=0.95;if(p.t<=0)parts.splice(i,1);}
+  for(i=pops.length-1;i>=0;i--){pops[i].t-=dt*1.1;pops[i].y-=22*dt;if(pops[i].t<=0)pops.splice(i,1);}
+  JS.forEach(function(j){if(j.flash>0)j.flash-=dt;});
+  if(shake>0)shake-=dt;if(flash>0)flash-=dt;
+}
+function over(){
+  state="over";
+  var nb=score>best;if(nb){best=score;try{localStorage.setItem(KEY,best);}catch(e){}$("hBest").textContent=best;}
+  $("endText").innerHTML="Puntos: <b style='color:#27e8ff'>"+score+"</b> · Nivel "+level+"<br>Trenes entregados: <b style='color:#ffd23b'>"+deliv+"</b>"+(nb?"<br><b style='color:#ff2bd6'>¡Nuevo récord!</b>":"<br>Récord: "+best);
+  $("ovEnd").classList.remove("hidden");
+}
+function start(){reset();state="play";$("ovStart").classList.add("hidden");$("ovEnd").classList.add("hidden");}
+function toggle(j){j.on=!j.on;j.flash=0.25;snd(j.on?660:440,0.07,"square",0.03);}
+function trainPos(t){
+  var xa=LX[t.from],xb=LX[t.to],k=t.from===t.to?0:Math.max(0,Math.min(1,(t.y-t.y0)/(2*HALF)));
+  if(k>=1&&t.from!==t.to){}
+  return xa+(xb-xa)*k;
+}
+function draw(){
+  ctx.save();
+  if(shake>0)ctx.translate((Math.random()-0.5)*20*shake,(Math.random()-0.5)*20*shake);
+  ctx.fillStyle="#050813";ctx.fillRect(-10,-10,W+20,H+20);
+  ctx.lineCap="round";
+  // vías rectas
+  for(var i=0;i<4;i++){
+    ctx.strokeStyle="rgba(138,75,255,.35)";ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(LX[i],TOP-20);ctx.lineTo(LX[i],ST);ctx.stroke();
+    ctx.strokeStyle="#0b1230";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(LX[i],TOP-20);ctx.lineTo(LX[i],ST);ctx.stroke();
+  }
+  // cruces
+  JS.forEach(function(j){
+    var xa=LX[j.c],xb=LX[j.c+1],y0=j.y-HALF,y1=j.y+HALF;
+    var col=j.on?"#ffd23b":"rgba(127,166,200,.35)";
+    ctx.shadowColor=col;ctx.shadowBlur=j.on?14:0;
+    ctx.strokeStyle=col;ctx.lineWidth=j.on?5:3;
+    ctx.beginPath();ctx.moveTo(xa,y0);ctx.lineTo(xb,y1);ctx.moveTo(xb,y0);ctx.lineTo(xa,y1);ctx.stroke();
+    ctx.shadowBlur=0;
+    var r=13+j.flash*20;
+    ctx.fillStyle=j.on?"#3a2f08":"#0a0f1e";ctx.strokeStyle=j.on?"#ffd23b":"#4a5f80";ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(j.x,j.y,r,0,6.283);ctx.fill();ctx.stroke();
+    ctx.fillStyle=j.on?"#ffd23b":"#7fa6c8";ctx.font="bold 12px sans-serif";ctx.textAlign="center";ctx.fillText(j.n,j.x,j.y+4);
+  });
+  // estaciones
+  for(i=0;i<4;i++){
+    ctx.shadowColor=COL[i];ctx.shadowBlur=16;ctx.fillStyle="#0a0f1e";ctx.strokeStyle=COL[i];ctx.lineWidth=3;
+    ctx.beginPath();ctx.rect(LX[i]-42,ST+4,84,46);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle=COL[i];ctx.font="bold 12px sans-serif";ctx.textAlign="center";ctx.fillText("ESTACIÓN",LX[i],ST+32);
+  }
+  // trenes
+  for(i=0;i<tr.length;i++){
+    var t=tr[i],x=trainPos(t),c=COL[t.col];
+    ctx.shadowColor=c;ctx.shadowBlur=16;ctx.fillStyle=c;
+    ctx.beginPath();ctx.moveTo(x-13,t.y-18);ctx.lineTo(x+13,t.y-18);ctx.lineTo(x+13,t.y+14);ctx.lineTo(x,t.y+22);ctx.lineTo(x-13,t.y+14);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.fillStyle="#050813";ctx.fillRect(x-8,t.y-11,16,9);
+  }
+  for(i=0;i<parts.length;i++){var q=parts[i];ctx.globalAlpha=Math.max(0,q.t/q.m);ctx.fillStyle=q.c;ctx.fillRect(q.x-2,q.y-2,4,4);}
+  ctx.globalAlpha=1;ctx.textAlign="center";ctx.font="bold 16px sans-serif";
+  for(i=0;i<pops.length;i++){var pp=pops[i];ctx.globalAlpha=Math.min(1,pp.t);ctx.fillStyle=pp.c;ctx.fillText(pp.s,pp.x,pp.y);}
+  ctx.globalAlpha=1;
+  ctx.fillStyle="#7fa6c8";ctx.font="11px sans-serif";ctx.textAlign="left";ctx.fillText("COMBO x"+combo,10,18);
+  if(flash>0){ctx.fillStyle="rgba(255,60,80,"+flash*0.5+")";ctx.fillRect(0,0,W,H);}
+  ctx.restore();
+}
+function loop(ts){
+  var dt=Math.min(0.05,(ts-last)/1000||0);last=ts;
+  if(state==="play")update(dt);else time+=dt;
+  if(state==="menu"&&Math.random()<0.02)spawn();
+  draw();requestAnimationFrame(loop);
+}
+cv.addEventListener("pointerdown",function(ev){
+  ev.preventDefault();if(state!=="play")return;
+  var r=cv.getBoundingClientRect(),x=(ev.clientX-r.left)*W/r.width,y=(ev.clientY-r.top)*H/r.height;
+  var b=null,bd=1e9;
+  JS.forEach(function(j){var d=Math.hypot(j.x-x,(j.y-y)*1.2);if(d<bd){bd=d;b=j;}});
+  if(b&&bd<60)toggle(b);
+});
+window.addEventListener("keydown",function(ev){
+  if(state==="play"){var n=parseInt(ev.key,10);if(n>=1&&n<=8)toggle(JS[n-1]);}
+  else if((ev.code==="Space"||ev.key===" ")&&state!=="play"){ev.preventDefault();start();}
+});
+$("btnStart").onclick=start;$("btnAgain").onclick=start;
+reset();last=performance.now();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
