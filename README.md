@@ -204,3 +204,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🪢 Soga Neón | [`soga-neon.html`](soga-neon.html) | Saltá la soga al ritmo justo: si seguís en el piso cuando pasa, te enreda. Saltos perfectos, rachas, segunda soga y ritmo cambiante. Récord guardado. |
 | ⚡ Rayo Neón | [`rayo-neon.html`](rayo-neon.html) | Defendé el núcleo con rayos en cadena que saltan entre enemigos cercanos. Morados resistentes, dorados veloces, drones aliados que no hay que tocar, energía limitada y récord guardado. |
 | 🚂 Vías Neón | [`vias-neon.html`](vias-neon.html) | Cambiavías: tocá los cruces para desviar trenes de colores hasta la estación de su mismo color. Combos hasta x5, niveles cada vez más rápidos y récord guardado. |
+| 🐕 Pastor Neón | [`pastor-neon.html`](pastor-neon.html) | Perro pastor: las ovejas huyen de vos, arrealas al corral antes de que se acabe el tiempo y espantá a los lobos. Niveles con más ovejas y récord guardado. |

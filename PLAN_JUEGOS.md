@@ -153,6 +153,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 97 | 📡 | Radar Neón | `radar-neon.html` | Reflejos | Radar con barrido giratorio: los blips sólo se ven cuando el barrido los ilumina; tocá los intrusos rojos antes de que lleguen al centro, evitá los aliados verdes y usá el pulso dorado. Combos y récord. | ✅ 2026-11-05 |
 | 98 | 🪢 | Soga Neón | `soga-neon.html` | Reflejos / Timing | Saltá la soga que gira: si seguís en el piso al pasar por tus pies te enreda; saltar cerca del tope da PERFECTO (doble), rachas hasta x5, segunda soga desde el nivel 3 y ritmo variable desde el 5. | ✅ 2026-11-06 |
 | 99 | ⚡ | Rayo Neón | `rayo-neon.html` | Acción | Rayo en cadena: tocá un enemigo y la descarga salta a los cercanos (cadenas largas = más puntos y energía); morados de 2 golpes, dorados veloces, drones aliados que no se tocan, energía limitada y olas. | ✅ 2026-11-07 |
+| 100 | 🐕 | Pastor Neón | `pastor-neon.html` | Acción / Reflejos | Perro pastor: movés al perro y las ovejas huyen de él; arrealas al corral antes de que se acabe el tiempo. Desde el nivel 2 aparecen lobos que se llevan ovejas si no los espantás; 3 perdidas y fin. Récord guardado. | ✅ 2026-11-09 |
 
 ## Reglas para el juego del día
 

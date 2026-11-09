@@ -837,6 +837,13 @@
       desc: "Los trenes de colores bajan por 4 vías: tocá los cruces para activar o desactivar los desvíos y guiar cada uno a la estación de su mismo color. Un tren en la estación equivocada cuesta una vida; las entregas seguidas multiplican hasta x5. Cada nivel acelera el servicio. Récord guardado.",
       controles: "Tocá / clic sobre los cruces numerados. Teclado: 1-8 activan cada cruce",
       fecha: "2026-11-08", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "pastor-neon", titulo: "Pastor Neón", archivo: "pastor-neon.html",
+      emoji: "🐕", categoria: "accion", tags: ["perro", "ovejas", "pastoreo", "lobos", "arcade", "un jugador"],
+      desc: "Sos el perro pastor: las ovejas huyen de vos, así que arrealas hasta el corral antes de que se acabe el tiempo. Desde el nivel 2 aparecen lobos que se llevan ovejas si no los espantás. Tres ovejas perdidas y termina la jornada. Récord guardado.",
+      controles: "Arrastrá el dedo / mouse para mover al perro. Teclado: flechas o WASD",
+      fecha: "2026-11-09", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

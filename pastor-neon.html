@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PASTOR NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:340px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">PASTOR NEÓN</div><div class="sub">PERRO PASTOR</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">PERDIDAS<b id="hLost">0/3</b></div>
+    <div class="box">TIEMPO<b id="hTime">45</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap">
+    <canvas id="cv" width="480" height="560"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🐕</div><h2>PASTOR NEÓN</h2>
+      <p>Movés al <b style="color:#27e8ff">perro</b> y las ovejas <b style="color:#ff2bd6">huyen de él</b>: arrealas hasta el <b style="color:#ffd23b">corral</b> antes de que se acabe el tiempo. Desde el nivel 2 aparecen <b style="color:#ff5a5a">lobos</b>: espantalos acercándote, o se llevan una oveja. Con 3 ovejas perdidas, se acabó.</p>
+      <button class="btn" id="btnStart">EMPEZAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🌙</div><h2>FIN DE LA JORNADA</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Arrastrá el dedo / mouse o usá flechas · WASD</div>
+</div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i);};
+var cv=$("cv"),ctx=cv.getContext("2d"),W=480,H=560,KEY="pastor-neon-best";
+var best=0;try{best=+localStorage.getItem(KEY)||0;}catch(e){}
+$("hBest").textContent=best;
+var PEN={x:150,y:H-110,w:180,h:100}; // corral abierto arriba
+var state="menu",score=0,lost=0,level=1,timeLeft=45,sheep=[],wolves=[],parts=[],floats=[],saved=0,total=0,flash=0,wolfT=0,lvlDone=0;
+var dog={x:W/2,y:H/2,tx:W/2,ty:H/2,a:0};
+var keys={},usingKeys=false,last=0;
+
+function rnd(a,b){return a+Math.random()*(b-a);}
+function setHud(){$("hScore").textContent=score;$("hLost").textContent=lost+"/3";$("hTime").textContent=Math.max(0,Math.ceil(timeLeft));$("hBest").textContent=best;}
+
+function startLevel(){
+  total=Math.min(6+level*2,16);saved=0;lvlDone=0;timeLeft=Math.max(30,50-level*2);
+  sheep=[];wolves=[];wolfT=rnd(6,10);
+  for(var i=0;i<total;i++){
+    var x,y,ok;do{x=rnd(40,W-40);y=rnd(50,H-220);ok=Math.hypot(x-W/2,y-H/2)>70;}while(!ok);
+    sheep.push({x:x,y:y,vx:0,vy:0,in:false,t:0,wob:rnd(0,6)});
+  }
+  dog.x=dog.tx=W/2;dog.y=dog.ty=H-170;
+  setHud();
+}
+function start(){score=0;lost=0;level=1;parts=[];floats=[];startLevel();state="play";
+  $("ovStart").classList.add("hidden");$("ovEnd").classList.add("hidden");}
+function burst(x,y,c,n){for(var i=0;i<n;i++){var a=rnd(0,6.28),s=rnd(40,160);parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:rnd(.3,.7),c:c});}}
+function float(x,y,t,c){floats.push({x:x,y:y,t:t,c:c,l:1});}
+
+function endGame(){
+  state="over";
+  var nb=score>best;if(nb){best=score;try{localStorage.setItem(KEY,best);}catch(e){}}
+  setHud();
+  $("endText").innerHTML="Llegaste al nivel <b>"+level+"</b> con <b style='color:#27e8ff'>"+score+"</b> puntos."+(nb?"<br><b style='color:#ffd23b'>¡Nuevo récord!</b>":"<br>Récord: "+best);
+  $("ovEnd").classList.remove("hidden");
+}
+function finishLevel(){
+  var bonus=Math.round(timeLeft)*5+level*20;
+  if(lvlDone===0){score+=bonus;float(W/2,H/2,"¡Todas a salvo! +"+bonus,"#ffd23b");}
+  state="between";flash=1.6;
+}
+
+function spawnWolf(){
+  var side=Math.floor(rnd(0,3)),x,y;
+  if(side===0){x=-20;y=rnd(40,H-200);}else if(side===1){x=W+20;y=rnd(40,H-200);}else{x=rnd(40,W-40);y=-20;}
+  wolves.push({x:x,y:y,vx:0,vy:0,fear:0,target:null});
+}
+
+function update(dt){
+  // perro
+  var mx=0,my=0;
+  if(keys.ArrowLeft||keys.a)mx--;if(keys.ArrowRight||keys.d)mx++;
+  if(keys.ArrowUp||keys.w)my--;if(keys.ArrowDown||keys.s)my++;
+  if(mx||my){usingKeys=true;dog.tx=Math.max(10,Math.min(W-10,dog.x+mx*100));dog.ty=Math.max(10,Math.min(H-10,dog.y+my*100));}
+  var dx=dog.tx-dog.x,dy=dog.ty-dog.y,d=Math.hypot(dx,dy),sp=Math.min(d*9,300);
+  if(d>1){dog.x+=dx/d*sp*dt;dog.y+=dy/d*sp*dt;dog.a=Math.atan2(dy,dx);}
+  if(state==="between"){flash-=dt;if(flash<=0){level++;startLevel();state="play";}return;}
+  timeLeft-=dt;
+  // ovejas
+  var active=0;
+  sheep.forEach(function(s){
+    if(s.gone)return;
+    active++;
+    if(s.in){ // dentro del corral: se mueve lento y se cuenta
+      s.t+=dt;
+      s.vx*=.95;s.vy*=.95;
+      s.vx+=rnd(-20,20)*dt*4;s.vy+=rnd(-20,20)*dt*4;
+    }
+    var ddx=s.x-dog.x,ddy=s.y-dog.y,dd=Math.hypot(ddx,ddy)||1,R=95;
+    if(dd<R){var f=(1-dd/R)*(s.in?260:620);s.vx+=ddx/dd*f*dt;s.vy+=ddy/dd*f*dt;}
+    else if(!s.in){s.vx+=rnd(-1,1)*30*dt;s.vy+=rnd(-1,1)*30*dt;}
+    // separación suave
+    for(var j=0;j<sheep.length;j++){var o=sheep[j];if(o===s||o.gone)continue;
+      var ox=s.x-o.x,oy=s.y-o.y,od=Math.hypot(ox,oy);
+      if(od>0&&od<22){s.vx+=ox/od*120*dt;s.vy+=oy/od*120*dt;}}
+    var v=Math.hypot(s.vx,s.vy),mxv=s.in?60:230;if(v>mxv){s.vx*=mxv/v;s.vy*=mxv/v;}
+    s.vx*=Math.pow(.2,dt);s.vy*=Math.pow(.2,dt);
+    var nx=s.x+s.vx*dt,ny=s.y+s.vy*dt;
+    // paredes del corral (izq, der, fondo)
+    var inX=nx>PEN.x&&nx<PEN.x+PEN.w;
+    if(!s.in){
+      // pared izquierda / derecha / fondo: sólo se entra por arriba
+      if(ny>PEN.y&&ny<PEN.y+PEN.h+8){
+        if(s.x<=PEN.x&&nx>PEN.x-6&&nx<PEN.x+PEN.w){nx=PEN.x-6;s.vx*=-.3;}
+        if(s.x>=PEN.x+PEN.w&&nx<PEN.x+PEN.w+6&&nx>PEN.x){nx=PEN.x+PEN.w+6;s.vx*=-.3;}
+      }
+      if(inX&&s.y<PEN.y&&ny>=PEN.y&&false){}
+      if(inX&&ny>PEN.y+14&&s.y<=PEN.y+14){s.in=true;}
+    }
+    if(s.in){
+      if(nx<PEN.x+10){nx=PEN.x+10;s.vx*=-.5;}
+      if(nx>PEN.x+PEN.w-10){nx=PEN.x+PEN.w-10;s.vx*=-.5;}
+      if(ny>PEN.y+PEN.h-10){ny=PEN.y+PEN.h-10;s.vy*=-.5;}
+      if(ny<PEN.y+8){s.in=false;}
+    }
+    if(nx<10){nx=10;s.vx*=-.5;}if(nx>W-10){nx=W-10;s.vx*=-.5;}
+    if(ny<10){ny=10;s.vy*=-.5;}if(ny>H-10){ny=H-10;s.vy*=-.5;}
+    s.x=nx;s.y=ny;
+    if(s.in&&s.t>0.9&&!s.gone){
+      s.gone=true;saved++;score+=100;float(s.x,s.y-10,"+100","#27e8ff");burst(s.x,s.y,"#27e8ff",10);
+    }
+    if(!s.in)s.t=0;
+  });
+  // lobos
+  if(level>=2){wolfT-=dt;if(wolfT<=0&&wolves.length<Math.min(1+Math.floor(level/3),3)){spawnWolf();wolfT=rnd(7,12)-level*.3;}}
+  wolves.forEach(function(w){
+    var dd=Math.hypot(w.x-dog.x,w.y-dog.y);
+    if(dd<70){w.fear=2;}
+    if(w.fear>0){w.fear-=dt;var a=Math.atan2(w.y-dog.y,w.x-dog.x);w.vx=Math.cos(a)*230;w.vy=Math.sin(a)*230;}
+    else{
+      var best2=null,bd=1e9;sheep.forEach(function(s){if(s.gone||s.in)return;var q=Math.hypot(s.x-w.x,s.y-w.y);if(q<bd){bd=q;best2=s;}});
+      if(best2){var a2=Math.atan2(best2.y-w.y,best2.x-w.x),spd=95+level*6;w.vx=Math.cos(a2)*spd;w.vy=Math.sin(a2)*spd;
+        if(bd<16){best2.gone=true;lost++;float(best2.x,best2.y-10,"¡Oveja perdida!","#ff5a5a");burst(best2.x,best2.y,"#ff5a5a",16);w.fear=3;flash=0;
+          var aa=Math.atan2(w.y-dog.y,w.x-dog.x);w.vx=Math.cos(aa)*200;w.vy=Math.sin(aa)*200;}}
+      else{w.vx=0;w.vy=0;}
+    }
+    w.x+=w.vx*dt;w.y+=w.vy*dt;
+  });
+  wolves=wolves.filter(function(w){return !(w.fear>0&&(w.x<-40||w.x>W+40||w.y<-40||w.y>H+40));});
+  // fin
+  if(lost>=3){setHud();endGame();return;}
+  var remaining=sheep.filter(function(s){return !s.gone;}).length;
+  if(remaining===0){lvlDone=lost>0?1:0;if(saved===0){endGame();}else finishLevel();}
+  else if(timeLeft<=0){
+    var n=remaining;lost+=n;float(W/2,H/2,"¡Se acabó el tiempo! -"+n,"#ff5a5a");
+    sheep.forEach(function(s){s.gone=true;});
+    if(lost>=3||saved===0){setHud();endGame();return;}
+    lvlDone=1;finishLevel();
+  }
+  setHud();
+}
+
+function drawSheep(s){
+  ctx.save();ctx.translate(s.x,s.y);
+  ctx.shadowColor=s.in?"#ffd23b":"#e8f6ff";ctx.shadowBlur=10;
+  ctx.fillStyle=s.in?"#fff2b0":"#e8f6ff";
+  ctx.beginPath();ctx.arc(0,0,10,0,6.3);ctx.arc(-6,3,6,0,6.3);ctx.arc(6,3,6,0,6.3);ctx.arc(0,-5,6,0,6.3);ctx.fill();
+  ctx.shadowBlur=0;ctx.fillStyle="#2a2f55";
+  var a=Math.atan2(s.vy,s.vx||0.01);if(Math.hypot(s.vx,s.vy)<5)a=1.57;
+  ctx.beginPath();ctx.arc(Math.cos(a)*9,Math.sin(a)*9,4.5,0,6.3);ctx.fill();
+  ctx.restore();
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // pasto con grilla
+  ctx.strokeStyle="rgba(39,232,255,.05)";ctx.lineWidth=1;
+  for(var x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(var y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // corral
+  ctx.fillStyle="rgba(255,210,59,.08)";ctx.fillRect(PEN.x,PEN.y,PEN.w,PEN.h);
+  ctx.strokeStyle="#ffd23b";ctx.lineWidth=4;ctx.shadowColor="#ffd23b";ctx.shadowBlur=14;
+  ctx.beginPath();ctx.moveTo(PEN.x,PEN.y);ctx.lineTo(PEN.x,PEN.y+PEN.h);ctx.lineTo(PEN.x+PEN.w,PEN.y+PEN.h);ctx.lineTo(PEN.x+PEN.w,PEN.y);ctx.stroke();
+  ctx.shadowBlur=0;ctx.fillStyle="rgba(255,210,59,.7)";ctx.font="bold 11px sans-serif";ctx.textAlign="center";ctx.fillText("CORRAL",PEN.x+PEN.w/2,PEN.y-8);
+  ctx.fillText(saved+" / "+total,PEN.x+PEN.w/2,PEN.y+PEN.h+(PEN.y+PEN.h+14>H?-4:14));
+  sheep.forEach(function(s){if(!s.gone)drawSheep(s);});
+  // lobos
+  wolves.forEach(function(w){
+    ctx.save();ctx.translate(w.x,w.y);ctx.shadowColor="#ff5a5a";ctx.shadowBlur=14;
+    ctx.fillStyle=w.fear>0?"#aa3a3a":"#ff5a5a";
+    ctx.beginPath();ctx.moveTo(-12,10);ctx.lineTo(-10,-8);ctx.lineTo(-4,-2);ctx.lineTo(4,-2);ctx.lineTo(10,-8);ctx.lineTo(12,10);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.fillStyle="#fff";ctx.fillRect(-6,1,3,3);ctx.fillRect(3,1,3,3);ctx.restore();
+  });
+  // perro + radio de miedo
+  ctx.strokeStyle="rgba(39,232,255,.18)";ctx.lineWidth=1.5;ctx.setLineDash([5,6]);
+  ctx.beginPath();ctx.arc(dog.x,dog.y,95,0,6.3);ctx.stroke();ctx.setLineDash([]);
+  ctx.save();ctx.translate(dog.x,dog.y);ctx.rotate(dog.a);
+  ctx.shadowColor="#27e8ff";ctx.shadowBlur=18;ctx.fillStyle="#27e8ff";
+  ctx.beginPath();ctx.ellipse(0,0,13,8,0,0,6.3);ctx.fill();
+  ctx.beginPath();ctx.arc(12,0,6,0,6.3);ctx.fill();
+  ctx.fillStyle="#8a4bff";ctx.beginPath();ctx.moveTo(10,-5);ctx.lineTo(8,-12);ctx.lineTo(14,-6);ctx.fill();
+  ctx.beginPath();ctx.moveTo(10,5);ctx.lineTo(8,12);ctx.lineTo(14,6);ctx.fill();ctx.restore();
+  // partículas y textos
+  parts.forEach(function(p){ctx.globalAlpha=Math.max(0,p.l*1.6);ctx.fillStyle=p.c;ctx.fillRect(p.x-2,p.y-2,4,4);});ctx.globalAlpha=1;
+  floats.forEach(function(f){ctx.globalAlpha=Math.max(0,f.l);ctx.fillStyle=f.c;ctx.font="bold 15px sans-serif";ctx.textAlign="center";ctx.fillText(f.t,Math.max(70,Math.min(W-70,f.x)),f.y);});ctx.globalAlpha=1;
+  if(state==="between"){
+    ctx.fillStyle="rgba(5,8,19,.55)";ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#ffd23b";ctx.font="900 30px sans-serif";ctx.textAlign="center";
+    ctx.fillText("NIVEL "+level+" COMPLETO",W/2,H/2-10);
+    ctx.fillStyle="#e8f6ff";ctx.font="14px sans-serif";ctx.fillText("A salvo: "+saved+" · Perdidas: "+lost+"/3",W/2,H/2+18);
+  }
+}
+function loop(t){
+  var dt=Math.min(.04,(t-last)/1000||0);last=t;
+  if(state==="play"||state==="between"){
+    update(dt);
+    parts.forEach(function(p){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt;});parts=parts.filter(function(p){return p.l>0;});
+    floats.forEach(function(f){f.y-=30*dt;f.l-=dt*.7;});floats=floats.filter(function(f){return f.l>0;});
+  }
+  draw();requestAnimationFrame(loop);
+}
+function setTarget(ev){
+  var r=cv.getBoundingClientRect();
+  dog.tx=(ev.clientX-r.left)*W/r.width;dog.ty=(ev.clientY-r.top)*H/r.height;usingKeys=false;
+}
+var down=false;
+cv.addEventListener("pointerdown",function(ev){down=true;setTarget(ev);try{cv.setPointerCapture(ev.pointerId);}catch(e){}});
+cv.addEventListener("pointermove",function(ev){if(down||ev.pointerType==="mouse")setTarget(ev);});
+cv.addEventListener("pointerup",function(){down=false;});
+window.addEventListener("keydown",function(ev){
+  var k=ev.key.length===1?ev.key.toLowerCase():ev.key;
+  if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].indexOf(k)>=0)ev.preventDefault();
+  keys[k]=true;
+  if((k==="Enter"||k===" ")&&state!=="play"&&state!=="between"){start();}
+});
+window.addEventListener("keyup",function(ev){var k=ev.key.length===1?ev.key.toLowerCase():ev.key;keys[k]=false;});
+$("btnStart").onclick=start;$("btnAgain").onclick=start;
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
