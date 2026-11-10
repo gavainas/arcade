@@ -844,6 +844,13 @@
       desc: "Sos el perro pastor: las ovejas huyen de vos, así que arrealas hasta el corral antes de que se acabe el tiempo. Desde el nivel 2 aparecen lobos que se llevan ovejas si no los espantás. Tres ovejas perdidas y termina la jornada. Récord guardado.",
       controles: "Arrastrá el dedo / mouse para mover al perro. Teclado: flechas o WASD",
       fecha: "2026-11-09", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "resortera-neon", titulo: "Resortera Neón", archivo: "resortera-neon.html",
+      emoji: "🎯", categoria: "accion", tags: ["honda", "resortera", "puntería", "rebotes", "física", "un jugador"],
+      desc: "Arrastrá hacia atrás y soltá: la bola rebota en paredes y barreras. Rompé todos los cristales con las bolas que tengas; los dorados dan bola extra y los rojos explotan y arrastran a los vecinos. Combos, niveles y récord guardado.",
+      controles: "Arrastrá hacia atrás y soltá. Teclado: ←→ apuntar, ↑↓ fuerza, espacio dispara",
+      fecha: "2026-11-10", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
