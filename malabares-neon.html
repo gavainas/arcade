@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MALABARES NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:pointer;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:340px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">MALABARES NEÓN</div><div class="sub">QUE NO TOQUE EL PISO</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">PELOTAS<b id="hBalls">1</b></div>
+    <div class="box">VIDAS<b id="hLives">❤❤❤</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap">
+    <canvas id="cv" width="480" height="620"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🤹</div><h2>MALABARES NEÓN</h2>
+      <p><b style="color:#27e8ff">Tocá las pelotas</b> para tirarlas para arriba: si las tocás de costado salen para el otro lado. Pegarles en la <b style="color:#ff2bd6">zona caliente</b> (abajo de todo) vale doble y suma racha. Cada 12 toques entra una pelota más. Agarrá las <b style="color:#ffd23b">estrellas</b> y <b style="color:#ff5a5a">no toques las bombas</b>. Tres pelotas al piso y se acabó el show.</p>
+      <button class="btn" id="btnStart">EMPEZAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🎪</div><h2>FIN DEL SHOW</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Tocá / clic sobre las pelotas. Teclado: <b>espacio</b> tira la pelota más baja, con <b>← →</b> la mandás para un costado · <b>P</b> pausa</div>
+</div>
+<script>
+(() => {
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  const FLOOR = H - 26, HOT = FLOOR - 120, R = 26;
+  const COLORS = ["#27e8ff", "#ff2bd6", "#8a4bff", "#39ff9e", "#ff9838", "#4b7bff"];
+  const BEST_KEY = "malabares-neon-best";
+  const $ = id => document.getElementById(id);
+  const hScore = $("hScore"), hBalls = $("hBalls"), hLives = $("hLives"), hBest = $("hBest");
+  const ovStart = $("ovStart"), ovEnd = $("ovEnd"), endText = $("endText");
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  hBest.textContent = best;
+
+  // ---------- Audio ----------
+  let actx = null;
+  function beep(freq, dur, type, vol, slide) {
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+      g.gain.setValueAtTime(vol || 0.12, t); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+
+  // ---------- Estado ----------
+  let state = "menu", balls, items, parts, floats, score, lives, tosses, streak, maxStreak, grav, nextBallAt;
+  let fumble = 0, itemTimer, shake, flash, paused = false, keyDir = 0, t0 = 0, time = 0;
+
+  function reset() {
+    balls = []; items = []; parts = []; floats = [];
+    score = 0; lives = 3; tosses = 0; streak = 0; maxStreak = 0;
+    grav = 1150; nextBallAt = 12; itemTimer = 5; shake = 0; flash = 0; time = 0;
+    addBall(W / 2, true);
+    updHud();
+  }
+
+  function addBall(x, first) {
+    balls.push({
+      x: x, y: first ? 200 : -R - 10, vx: first ? 0 : (Math.random() - 0.5) * 80, vy: first ? -120 : 60,
+      col: COLORS[balls.length % COLORS.length], trail: [], spin: 0, pop: 0, warn: first ? 0 : 0.9
+    });
+  }
+
+  function updHud() {
+    hScore.textContent = score;
+    hBalls.textContent = balls.length;
+    hLives.textContent = lives > 0 ? "❤".repeat(lives) : "—";
+    hBest.textContent = best;
+  }
+
+  function burst(x, y, col, n, spd) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, s = (0.3 + Math.random()) * (spd || 220);
+      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.5 + Math.random() * 0.4, max: 0.9, col });
+    }
+  }
+  function floatTxt(x, y, txt, col, size) { floats.push({ x, y, txt, col, life: 1, size: size || 20 }); }
+
+  // ---------- Toques ----------
+  function toss(b, tapX) {
+    const h = Math.max(140, b.y - (70 + Math.random() * 40));
+    b.vy = -Math.sqrt(2 * grav * h);
+    let off = (b.x - tapX) / R;               // tocás a la izquierda -> sale a la derecha
+    off = Math.max(-1.4, Math.min(1.4, off));
+    b.vx = off * 230 + (Math.random() - 0.5) * 40;
+    b.pop = 1; b.spin += off * 6;
+    tosses++;
+    const hot = b.y > HOT;
+    if (hot) {
+      streak++; maxStreak = Math.max(maxStreak, streak);
+      const mult = Math.min(5, 1 + Math.floor(streak / 3));
+      const pts = 2 * mult;
+      score += pts;
+      floatTxt(b.x, b.y - 30, (mult > 1 ? "x" + mult + " " : "") + "¡AL LÍMITE! +" + pts, "#ff2bd6", 18);
+      burst(b.x, b.y + R * 0.6, "#ff2bd6", 14, 260);
+      beep(520 + streak * 30, 0.12, "triangle", 0.13, 900 + streak * 30);
+    } else {
+      streak = 0;
+      score += 1;
+      burst(b.x, b.y + R * 0.6, b.col, 7, 160);
+      beep(380 + Math.random() * 60, 0.09, "sine", 0.11, 640);
+    }
+    if (tosses >= nextBallAt && balls.length < 6) {
+      nextBallAt += 12 + balls.length * 4;
+      grav *= 1.04;
+      addBall(60 + Math.random() * (W - 120), false);
+      floatTxt(W / 2, 120, "¡UNA PELOTA MÁS!", "#ffd23b", 24);
+      beep(660, 0.25, "square", 0.07, 990);
+    }
+    updHud();
+  }
+
+  function hitAt(x, y) {
+    if (state !== "play" || paused) return;
+    // Lo más cercano dentro del radio de toque gana (pelotas, estrellas y bombas)
+    let bestObj = null, bestD = Infinity, kind = null;
+    for (const b of balls) {
+      if (b.warn > 0 || b.vy < -120) continue;   // sólo las que están bajando
+      const d = Math.hypot(b.x - x, b.y - y);
+      if (d < R * 1.9 && d < bestD) { bestD = d; bestObj = b; kind = "ball"; }
+    }
+    for (const it of items) {
+      const d = Math.hypot(it.x - x, it.y - y);
+      if (d < it.r * 1.7 && d < bestD) { bestD = d; bestObj = it; kind = it.type; }
+    }
+    if (!bestObj) return;
+    if (kind === "ball") toss(bestObj, x);
+    else if (kind === "star") {
+      items.splice(items.indexOf(bestObj), 1);
+      score += 10; updHud();
+      floatTxt(bestObj.x, bestObj.y - 20, "★ +10", "#ffd23b", 22);
+      burst(bestObj.x, bestObj.y, "#ffd23b", 22, 280);
+      beep(880, 0.1, "triangle", 0.12, 1320); setTimeout(() => beep(1320, 0.15, "triangle", 0.1, 1760), 80);
+    } else if (kind === "bomb") {
+      items.splice(items.indexOf(bestObj), 1);
+      boom(bestObj.x, bestObj.y);
+    }
+  }
+
+  function boom(x, y) {
+    burst(x, y, "#ff5a5a", 30, 380); burst(x, y, "#ffd23b", 16, 260);
+    shake = 14; flash = 0.5; streak = 0;
+    floatTxt(x, y - 20, "¡BOOM! -1 vida", "#ff5a5a", 22);
+    beep(120, 0.4, "sawtooth", 0.18, 40);
+    loseLife();
+  }
+
+  function loseLife() {
+    lives--;
+    updHud();
+    if (lives <= 0) endGame();
+  }
+
+  function endGame() {
+    state = "over";
+    const record = score > best;
+    if (record) { best = score; try { localStorage.setItem(BEST_KEY, best); } catch (e) {} }
+    updHud();
+    endText.innerHTML = `Hiciste <b style="color:#27e8ff">${score}</b> puntos con <b style="color:#ff2bd6">${balls.length}</b> pelota${balls.length > 1 ? "s" : ""} en el aire y ${tosses} toques.<br>Mejor racha al límite: <b style="color:#ffd23b">${maxStreak}</b>` +
+      (record ? `<br><b style="color:#ffd23b">¡NUEVO RÉCORD! 🏆</b>` : `<br>Récord: ${best}`);
+    setTimeout(() => ovEnd.classList.remove("hidden"), 700);
+  }
+
+  // ---------- Input ----------
+  function canvasPos(e) {
+    const r = cv.getBoundingClientRect();
+    return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
+  }
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); const [x, y] = canvasPos(e); hitAt(x, y); });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") keyDir = -1;
+    else if (e.key === "ArrowRight") keyDir = 1;
+    else if (e.key === "p" || e.key === "P") { if (state === "play") paused = !paused; }
+    else if (e.key === " " || e.key === "ArrowUp" || e.key === "Enter") {
+      e.preventDefault();
+      if (state === "menu") { start(); return; }
+      if (state === "over" && !ovEnd.classList.contains("hidden")) { start(); return; }
+      if (state !== "play" || paused || fumble > 0) return;
+      let low = null;
+      for (const b of balls) if (b.warn <= 0 && b.vy > -120 && b.y > H * 0.5 && (!low || b.y > low.y)) low = b;
+      if (low) toss(low, low.x - keyDir * R * 0.9);
+      else { fumble = 0.35; beep(150, 0.08, "square", 0.05); floatTxt(W / 2, H * 0.5, "¡muy temprano!", "#7fa6c8", 14); }
+    }
+    if (e.key.startsWith("Arrow")) e.preventDefault();
+  });
+  document.addEventListener("keyup", e => {
+    if ((e.key === "ArrowLeft" && keyDir < 0) || (e.key === "ArrowRight" && keyDir > 0)) keyDir = 0;
+  });
+
+  function start() {
+    ovStart.classList.add("hidden"); ovEnd.classList.add("hidden");
+    reset(); state = "play"; paused = false;
+    beep(440, 0.12, "triangle", 0.1, 660);
+  }
+  $("btnStart").addEventListener("click", start);
+  $("btnAgain").addEventListener("click", start);
+
+  // ---------- Update ----------
+  function spawnItem() {
+    const lvl = balls.length;
+    const bomb = lvl >= 3 && Math.random() < 0.45 + Math.min(0.2, (lvl - 3) * 0.06);
+    items.push({
+      type: bomb ? "bomb" : "star", x: 50 + Math.random() * (W - 100), y: -30,
+      vy: 120 + Math.random() * 60 + lvl * 12, r: bomb ? 20 : 18, rot: 0, sway: Math.random() * 6
+    });
+  }
+
+  function update(dt) {
+    time += dt;
+    if (fumble > 0) fumble -= dt;
+    if (shake > 0) shake = Math.max(0, shake - dt * 40);
+    if (flash > 0) flash = Math.max(0, flash - dt);
+
+    if (state === "play") {
+      itemTimer -= dt;
+      if (itemTimer <= 0) { spawnItem(); itemTimer = 4 + Math.random() * 4 - Math.min(2, balls.length * 0.3); }
+    }
+
+    for (let i = balls.length - 1; i >= 0; i--) {
+      const b = balls[i];
+      if (b.warn > 0) { b.warn -= dt; continue; }
+      b.vy += grav * dt * (state === "play" ? 1 : 0.6);
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      b.vx *= 1 - 0.25 * dt;
+      b.spin += b.vx * dt * 0.02;
+      if (b.pop > 0) b.pop = Math.max(0, b.pop - dt * 4);
+      if (b.x < R) { b.x = R; b.vx = Math.abs(b.vx) * 0.8; beep(240, 0.04, "sine", 0.05); }
+      if (b.x > W - R) { b.x = W - R; b.vx = -Math.abs(b.vx) * 0.8; beep(240, 0.04, "sine", 0.05); }
+      b.trail.push([b.x, b.y]); if (b.trail.length > 10) b.trail.shift();
+      if (b.y > FLOOR - R) {
+        if (state === "play") {
+          burst(b.x, FLOOR, "#ff5a5a", 24, 300); shake = 10; flash = 0.35; streak = 0;
+          floatTxt(b.x, FLOOR - 40, "¡SE CAYÓ!", "#ff5a5a", 22);
+          beep(200, 0.3, "sawtooth", 0.14, 70);
+          // la pelota vuelve a entrar desde arriba
+          b.x = 60 + Math.random() * (W - 120); b.y = -R - 10; b.vx = 0; b.vy = 60; b.warn = 1.1; b.trail = [];
+          loseLife();
+        } else {
+          b.y = FLOOR - R; b.vy = -Math.abs(b.vy) * 0.45; b.vx *= 0.8;
+        }
+      }
+    }
+
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      it.y += it.vy * dt; it.rot += dt * 2;
+      it.x += Math.sin(time * 2 + it.sway) * 30 * dt;
+      if (it.y > FLOOR + 30) {
+        if (it.type === "bomb" && state === "play") { score += 3; floatTxt(it.x, FLOOR - 30, "esquivada +3", "#7fa6c8", 14); updHud(); }
+        items.splice(i, 1);
+      }
+    }
+
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.vy += 500 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+      if (p.life <= 0) parts.splice(i, 1);
+    }
+    for (let i = floats.length - 1; i >= 0; i--) {
+      const f = floats[i]; f.y -= 40 * dt; f.life -= dt * 0.9;
+      if (f.life <= 0) floats.splice(i, 1);
+    }
+  }
+
+  // ---------- Draw ----------
+  const stars = Array.from({ length: 60 }, () => [Math.random() * W, Math.random() * (H - 140), Math.random() * 1.5 + 0.3, Math.random() * 6]);
+
+  function drawBg() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#0a0f26"); g.addColorStop(1, "#050813");
+    ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+    for (const s of stars) {
+      ctx.globalAlpha = 0.35 + 0.35 * Math.sin(time * 1.5 + s[3]);
+      ctx.fillStyle = "#9fd8ff"; ctx.fillRect(s[0], s[1], s[2], s[2]);
+    }
+    ctx.globalAlpha = 1;
+    // reflectores del circo
+    for (const [x, c] of [[70, "rgba(39,232,255,0.06)"], [W - 70, "rgba(255,43,214,0.06)"]]) {
+      const sw = Math.sin(time * 0.6 + x) * 60;
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, 0);
+      ctx.lineTo(W / 2 + sw - 90, FLOOR); ctx.lineTo(W / 2 + sw + 90, FLOOR); ctx.closePath(); ctx.fill();
+    }
+    // zona caliente
+    const hg = ctx.createLinearGradient(0, HOT, 0, FLOOR);
+    hg.addColorStop(0, "rgba(255,43,214,0)"); hg.addColorStop(1, "rgba(255,43,214," + (0.14 + 0.05 * Math.sin(time * 4)) + ")");
+    ctx.fillStyle = hg; ctx.fillRect(0, HOT, W, FLOOR - HOT);
+    ctx.setLineDash([6, 8]); ctx.strokeStyle = "rgba(255,43,214,0.35)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, HOT); ctx.lineTo(W, HOT); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(255,43,214,0.5)"; ctx.font = "bold 11px Segoe UI, sans-serif"; ctx.textAlign = "right";
+    ctx.fillText("ZONA CALIENTE x2", W - 10, HOT + 15);
+    // piso
+    ctx.shadowColor = "#8a4bff"; ctx.shadowBlur = 16; ctx.strokeStyle = "#8a4bff"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, FLOOR); ctx.lineTo(W, FLOOR); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.fillStyle = "#0a0716"; ctx.fillRect(0, FLOOR + 1.5, W, H - FLOOR);
+    for (let x = -40 + ((time * 30) % 40); x < W; x += 40) {
+      ctx.strokeStyle = "rgba(138,75,255,0.25)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, FLOOR + 2); ctx.lineTo(x - 20, H); ctx.stroke();
+    }
+  }
+
+  function drawBall(b) {
+    if (b.warn > 0) {
+      // aviso de entrada
+      const a = 0.5 + 0.5 * Math.sin(time * 18);
+      ctx.fillStyle = b.col; ctx.globalAlpha = a;
+      ctx.beginPath(); ctx.moveTo(b.x, 10); ctx.lineTo(b.x - 10, 26); ctx.lineTo(b.x + 10, 26); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1; return;
+    }
+    for (let i = 0; i < b.trail.length; i++) {
+      const [tx, ty] = b.trail[i];
+      ctx.globalAlpha = (i / b.trail.length) * 0.25; ctx.fillStyle = b.col;
+      ctx.beginPath(); ctx.arc(tx, ty, R * (0.4 + 0.5 * i / b.trail.length), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // sombra en el piso
+    const sh = Math.max(0.15, 1 - (FLOOR - b.y) / FLOOR);
+    ctx.fillStyle = "rgba(0,0,0," + 0.45 * sh + ")";
+    ctx.beginPath(); ctx.ellipse(b.x, FLOOR + 4, R * sh * 1.1, 5 * sh, 0, 0, Math.PI * 2); ctx.fill();
+    const danger = b.y > HOT;
+    const rr = R * (1 + b.pop * 0.18);
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.spin);
+    ctx.shadowColor = b.col; ctx.shadowBlur = danger ? 30 : 20;
+    const g = ctx.createRadialGradient(-rr * 0.35, -rr * 0.35, rr * 0.1, 0, 0, rr);
+    g.addColorStop(0, "#ffffff"); g.addColorStop(0.25, b.col); g.addColorStop(1, "rgba(5,8,19,0.9)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = b.col; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 0.7; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(0, 0, rr, rr * 0.35, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    if (danger && state === "play") {
+      ctx.strokeStyle = "rgba(255,43,214," + (0.4 + 0.4 * Math.sin(time * 20)) + ")"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(b.x, b.y, rr + 7, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  function drawItem(it) {
+    ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(it.rot);
+    if (it.type === "star") {
+      ctx.shadowColor = "#ffd23b"; ctx.shadowBlur = 20; ctx.fillStyle = "#ffd23b";
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 ? it.r * 0.45 : it.r, a = i * Math.PI / 5 - Math.PI / 2;
+        ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      ctx.closePath(); ctx.fill();
+    } else {
+      ctx.shadowColor = "#ff3b3b"; ctx.shadowBlur = 18;
+      ctx.strokeStyle = "#ff5a5a"; ctx.lineWidth = 3;
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a) * it.r * 0.8, Math.sin(a) * it.r * 0.8);
+        ctx.lineTo(Math.cos(a) * it.r * 1.3, Math.sin(a) * it.r * 1.3); ctx.stroke();
+      }
+      ctx.fillStyle = "#1a0508"; ctx.beginPath(); ctx.arc(0, 0, it.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.rotate(-it.rot); ctx.shadowBlur = 0;
+      ctx.fillStyle = Math.sin(time * 14) > 0 ? "#ff5a5a" : "#ffd23b";
+      ctx.font = "bold 16px Segoe UI, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("✕", 0, 1);
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    drawBg();
+    for (const it of items) drawItem(it);
+    for (const b of balls) drawBall(b);
+    for (const p of parts) {
+      ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.col;
+      ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    for (const f of floats) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 1.5));
+      ctx.font = "900 " + f.size + "px Segoe UI, sans-serif";
+      ctx.shadowColor = f.col; ctx.shadowBlur = 12; ctx.fillStyle = f.col;
+      ctx.fillText(f.txt, f.x < 90 ? 90 : f.x > W - 90 ? W - 90 : f.x, f.y);
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    if (state === "play") {
+      // barra de progreso hacia la próxima pelota
+      if (balls.length < 6) {
+        const prev = nextBallAt - (12 + (balls.length - 1) * 4);
+        const pr = Math.max(0, Math.min(1, (tosses - prev) / (nextBallAt - prev)));
+        ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(14, 14, W - 28, 6);
+        ctx.fillStyle = "#ffd23b"; ctx.shadowColor = "#ffd23b"; ctx.shadowBlur = 8;
+        ctx.fillRect(14, 14, (W - 28) * pr, 6); ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(255,210,59,0.7)"; ctx.font = "bold 10px Segoe UI, sans-serif"; ctx.textAlign = "left";
+        ctx.fillText("PRÓXIMA PELOTA", 14, 34);
+      }
+      if (streak >= 2) {
+        ctx.textAlign = "right"; ctx.fillStyle = "#ff2bd6"; ctx.font = "900 14px Segoe UI, sans-serif";
+        ctx.fillText("RACHA " + streak + " · x" + Math.min(5, 1 + Math.floor(streak / 3)), W - 14, 36);
+      }
+    }
+    if (paused) {
+      ctx.fillStyle = "rgba(5,7,15,0.7)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#27e8ff"; ctx.font = "900 34px Segoe UI, sans-serif"; ctx.textAlign = "center";
+      ctx.fillText("PAUSA", W / 2, H / 2); ctx.font = "14px Segoe UI, sans-serif"; ctx.fillStyle = "#7fa6c8";
+      ctx.fillText("Apretá P para seguir", W / 2, H / 2 + 30);
+    }
+    if (flash > 0) { ctx.fillStyle = "rgba(255,60,80," + flash * 0.4 + ")"; ctx.fillRect(-20, -20, W + 40, H + 40); }
+    ctx.restore();
+  }
+
+  // Demo en el menú: una pelota que rebota sola de fondo
+  reset();
+
+  function loop(t) {
+    const dt = Math.min(0.033, (t - t0) / 1000 || 0); t0 = t;
+    if (!paused) {
+      if (state === "menu") {
+        // autojuego suave de fondo
+        for (const b of balls) if (b.warn <= 0 && b.y > HOT + 30 && b.vy > 0) {
+          b.vy = -Math.sqrt(2 * grav * (b.y - 110)); b.vx = (W / 2 - b.x) * 0.6 + (Math.random() - 0.5) * 120; b.pop = 1;
+        }
+      }
+      update(dt);
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  document.addEventListener("visibilitychange", () => { if (document.hidden && state === "play") paused = true; });
+})();
+</script>
+</body>
+</html>

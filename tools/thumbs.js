@@ -52,6 +52,7 @@ const OVERRIDES = {
   "espejo-neon": { steps: ["#startBtn"], wait: 2500 },
   "platillos-neon": { steps: ["#btnStart"], wait: 2500 },
   "resortera-neon": { steps: ["#btnStart"], wait: 1200 },
+  "malabares-neon": { steps: ["#btnStart"], wait: 700 },
   "pastor-neon": { steps: ["#btnStart"], wait: 1500 },
   "vias-neon": { steps: ["#btnStart"], wait: 4000 },
   "arquero-neon": { steps: ["#btnStart"], wait: 1200 },

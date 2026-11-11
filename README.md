@@ -206,3 +206,4 @@ Vercel, Netlify o cualquier servidor de archivos.
 | 🚂 Vías Neón | [`vias-neon.html`](vias-neon.html) | Cambiavías: tocá los cruces para desviar trenes de colores hasta la estación de su mismo color. Combos hasta x5, niveles cada vez más rápidos y récord guardado. |
 | 🐕 Pastor Neón | [`pastor-neon.html`](pastor-neon.html) | Perro pastor: las ovejas huyen de vos, arrealas al corral antes de que se acabe el tiempo y espantá a los lobos. Niveles con más ovejas y récord guardado. |
 | 🎯 Resortera Neón | [`resortera-neon.html`](resortera-neon.html) | Honda con rebotes: arrastrá hacia atrás, soltá y rompé todos los cristales. Dorados dan bola extra, rojos explotan en cadena. Niveles y récord guardado. |
+| 🤹 Malabares Neón | [`malabares-neon.html`](malabares-neon.html) | Malabares: tocá las pelotas para que no toquen el piso; en la zona caliente valen doble y arman racha. Cada 12 toques entra otra pelota; estrellas sí, bombas no. Récord guardado. |

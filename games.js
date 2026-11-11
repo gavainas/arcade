@@ -851,6 +851,13 @@
       desc: "Arrastrá hacia atrás y soltá: la bola rebota en paredes y barreras. Rompé todos los cristales con las bolas que tengas; los dorados dan bola extra y los rojos explotan y arrastran a los vecinos. Combos, niveles y récord guardado.",
       controles: "Arrastrá hacia atrás y soltá. Teclado: ←→ apuntar, ↑↓ fuerza, espacio dispara",
       fecha: "2026-11-10", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "malabares-neon", titulo: "Malabares Neón", archivo: "malabares-neon.html",
+      emoji: "🤹", categoria: "reflejos", tags: ["malabares", "pelotas", "circo", "toques", "racha", "un jugador"],
+      desc: "Tocá las pelotas para mantenerlas en el aire: si les pegás de costado salen para el otro lado. Los toques en la zona caliente, abajo de todo, valen doble y arman racha hasta x5. Cada 12 toques entra una pelota más; agarrá las estrellas y no toques las bombas. Tres caídas y se termina el show. Récord guardado.",
+      controles: "Tocá / clic sobre las pelotas. Teclado: espacio tira la más baja, ← → para mandarla de costado, P pausa",
+      fecha: "2026-11-11", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

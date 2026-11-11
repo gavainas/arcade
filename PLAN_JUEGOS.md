@@ -155,6 +155,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 99 | ⚡ | Rayo Neón | `rayo-neon.html` | Acción | Rayo en cadena: tocá un enemigo y la descarga salta a los cercanos (cadenas largas = más puntos y energía); morados de 2 golpes, dorados veloces, drones aliados que no se tocan, energía limitada y olas. | ✅ 2026-11-07 |
 | 100 | 🐕 | Pastor Neón | `pastor-neon.html` | Acción / Reflejos | Perro pastor: movés al perro y las ovejas huyen de él; arrealas al corral antes de que se acabe el tiempo. Desde el nivel 2 aparecen lobos que se llevan ovejas si no los espantás; 3 perdidas y fin. Récord guardado. | ✅ 2026-11-09 |
 | 101 | 🎯 | Resortera Neón | `resortera-neon.html` | Acción / Puntería | Honda con rebotes: arrastrá hacia atrás y soltá; la bola rebota en paredes y barreras para romper todos los cristales. Dorados dan bola extra, rojos explotan en cadena, combos, niveles y récord. | ✅ 2026-11-10 |
+| 102 | 🤹 | Malabares Neón | `malabares-neon.html` | Reflejos | Malabares: tocá las pelotas para tirarlas arriba (el lado del toque define la dirección); la zona caliente cerca del piso vale doble y arma racha hasta x5. Pelota nueva cada 12 toques (hasta 6), estrellas de bonus y bombas que no hay que tocar. 3 caídas y fin. Récord guardado. | ✅ 2026-11-11 |
 
 ## Reglas para el juego del día
 
