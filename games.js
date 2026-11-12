@@ -858,6 +858,13 @@
       desc: "Tocá las pelotas para mantenerlas en el aire: si les pegás de costado salen para el otro lado. Los toques en la zona caliente, abajo de todo, valen doble y arman racha hasta x5. Cada 12 toques entra una pelota más; agarrá las estrellas y no toques las bombas. Tres caídas y se termina el show. Récord guardado.",
       controles: "Tocá / clic sobre las pelotas. Teclado: espacio tira la más baja, ← → para mandarla de costado, P pausa",
       fecha: "2026-11-11", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "espiral-neon", titulo: "Espiral Neón", archivo: "espiral-neon.html",
+      emoji: "🔻", categoria: "reflejos", tags: ["espiral", "torre", "caida", "pelota", "girar", "bola de fuego", "un jugador"],
+      desc: "La pelota rebota sola: girá la torre para que caiga por los huecos de cada piso y llegue a la meta dorada. Los tramos rojos te sacan una vida; atravesá 3 pisos seguidos sin rebotar y te volvés una bola de fuego que rompe todo. Gemas, pisos que giran solos desde el nivel 3 y récord guardado.",
+      controles: "Arrastrá de costado para girar la torre. Teclado: ← → (A D) giran, P pausa",
+      fecha: "2026-11-12", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

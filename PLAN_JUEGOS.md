@@ -156,6 +156,7 @@ cuenta (mecánicas que no se repiten con las de arriba), como indica la regla de
 | 100 | 🐕 | Pastor Neón | `pastor-neon.html` | Acción / Reflejos | Perro pastor: movés al perro y las ovejas huyen de él; arrealas al corral antes de que se acabe el tiempo. Desde el nivel 2 aparecen lobos que se llevan ovejas si no los espantás; 3 perdidas y fin. Récord guardado. | ✅ 2026-11-09 |
 | 101 | 🎯 | Resortera Neón | `resortera-neon.html` | Acción / Puntería | Honda con rebotes: arrastrá hacia atrás y soltá; la bola rebota en paredes y barreras para romper todos los cristales. Dorados dan bola extra, rojos explotan en cadena, combos, niveles y récord. | ✅ 2026-11-10 |
 | 102 | 🤹 | Malabares Neón | `malabares-neon.html` | Reflejos | Malabares: tocá las pelotas para tirarlas arriba (el lado del toque define la dirección); la zona caliente cerca del piso vale doble y arma racha hasta x5. Pelota nueva cada 12 toques (hasta 6), estrellas de bonus y bombas que no hay que tocar. 3 caídas y fin. Récord guardado. | ✅ 2026-11-11 |
+| 103 | 🔻 | Espiral Neón | `espiral-neon.html` | Reflejos | Torre en espiral: la pelota rebota sola y vos girás la torre (arrastrar o ← →) para que caiga por el hueco de cada piso; tramos rojos sacan vida, 3 pisos seguidos sin rebotar = bola de fuego que rompe cualquier piso. Gemas doradas, pisos que giran solos desde el nivel 3, meta dorada por nivel, 3 vidas y récord. | ✅ 2026-11-12 |
 
 ## Reglas para el juego del día
 
