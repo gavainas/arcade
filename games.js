@@ -865,6 +865,13 @@
       desc: "La pelota rebota sola: girá la torre para que caiga por los huecos de cada piso y llegue a la meta dorada. Los tramos rojos te sacan una vida; atravesá 3 pisos seguidos sin rebotar y te volvés una bola de fuego que rompe todo. Gemas, pisos que giran solos desde el nivel 3 y récord guardado.",
       controles: "Arrastrá de costado para girar la torre. Teclado: ← → (A D) giran, P pausa",
       fecha: "2026-11-12", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "bombero-neon", titulo: "Bombero Neón", archivo: "bombero-neon.html",
+      emoji: "🚒", categoria: "accion", tags: ["bombero", "fuego", "manguera", "agua", "puntería", "rescate", "un jugador"],
+      desc: "Se prende fuego el Hotel Neón: mantené apretado para tirar agua y apuntá un poco más arriba, porque el chorro cae con la gravedad. Los fuegos crecen y se contagian a las ventanas vecinas; salvá a los vecinos que piden ayuda, cuidá el tanque y, desde el nivel 3, calculá el viento. Combos, niveles y récord guardado.",
+      controles: "Mantené apretado y arrastrá para apuntar el chorro (el camión te sigue). Teclado: ← → mueven, ↑ ↓ apuntan, espacio tira agua, P pausa",
+      fecha: "2026-11-13", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
