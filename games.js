@@ -872,6 +872,13 @@
       desc: "Se prende fuego el Hotel Neón: mantené apretado para tirar agua y apuntá un poco más arriba, porque el chorro cae con la gravedad. Los fuegos crecen y se contagian a las ventanas vecinas; salvá a los vecinos que piden ayuda, cuidá el tanque y, desde el nivel 3, calculá el viento. Combos, niveles y récord guardado.",
       controles: "Mantené apretado y arrastrá para apuntar el chorro (el camión te sigue). Teclado: ← → mueven, ↑ ↓ apuntan, espacio tira agua, P pausa",
       fecha: "2026-11-13", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "mezcla-neon", titulo: "Mezcla Neón", archivo: "mezcla-neon.html",
+      emoji: "🖌️", categoria: "mental", tags: ["colores", "rgb", "mezcla", "luz", "memoria", "contra reloj", "un jugador"],
+      desc: "Mezclá luz roja, verde y azul hasta clavar el color objetivo antes de que se acabe el tiempo: cuando coincide exacto, pasa solo. Llegar con la menor cantidad de toques da PERFECTO y racha hasta x5; cada nivel suma tonos por canal, aparecen objetivos dorados y desde el nivel 4 el color se apaga y hay que memorizarlo. Pistas, 3 vidas y récord guardado.",
+      controles: "Tocá + / − en cada canal. Teclado: Q/A rojo, W/S verde, E/D azul, 1 2 3 suman y vuelven a cero, H pista, V ver objetivo, P pausa",
+      fecha: "2026-11-14", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

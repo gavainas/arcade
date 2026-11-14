@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MEZCLA NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;
+    --r:#ff3b5c;--g:#3bff8a;--b:#3b7bff;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--r),var(--g),var(--b),var(--pink),var(--r));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:4px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);} .hud .box.l b{color:var(--r);letter-spacing:2px;}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);user-select:none;-webkit-user-select:none;background:#050813;}
+  canvas{display:block;width:100%;height:auto;background:#050813;}
+  .mixer{display:flex;gap:10px;padding:12px;background:linear-gradient(180deg,#0a0f22,#060914);border-top:1px solid rgba(138,75,255,.25);touch-action:manipulation;}
+  .ch{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .ch button{width:100%;border:none;cursor:pointer;border-radius:12px;font-size:24px;font-weight:900;padding:8px 0;color:#04060e;
+    transition:transform .06s,filter .1s;}
+  .ch button:active{transform:scale(.94);}
+  .ch button.minus{background:transparent;border:2px solid;font-size:22px;padding:6px 0;}
+  .ch.r button.plus{background:var(--r);box-shadow:0 0 18px rgba(255,59,92,.5);} .ch.r button.minus{border-color:var(--r);color:var(--r);}
+  .ch.g button.plus{background:var(--g);box-shadow:0 0 18px rgba(59,255,138,.45);} .ch.g button.minus{border-color:var(--g);color:var(--g);}
+  .ch.b button.plus{background:var(--b);box-shadow:0 0 18px rgba(59,123,255,.5);} .ch.b button.minus{border-color:var(--b);color:var(--b);}
+  .ch.locked button{filter:grayscale(.8) brightness(.6);pointer-events:none;}
+  .pips{display:flex;gap:4px;height:14px;align-items:center;}
+  .pip{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;opacity:.35;}
+  .pip.on{background:currentColor;opacity:1;box-shadow:0 0 8px currentColor;}
+  .ch.r .pips{color:var(--r);} .ch.g .pips{color:var(--g);} .ch.b .pips{color:var(--b);}
+  .lab{font-size:10px;letter-spacing:2px;color:var(--muted);}
+  .tools{display:flex;gap:8px;justify-content:center;margin-top:10px;}
+  .tbtn{cursor:pointer;border:1px solid rgba(138,75,255,.45);background:rgba(20,28,58,.6);color:var(--ink);border-radius:999px;padding:8px 16px;font-size:12.5px;font-weight:700;letter-spacing:.5px;}
+  .tbtn:disabled{opacity:.35;cursor:default;}
+  .tbtn b{color:var(--gold);}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.92);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--r),var(--g),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:360px;}
+  .overlay p b{color:var(--ink);}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">MEZCLA NEÓN</div><div class="sub">MEZCLÁ LUZ · CLAVÁ EL COLOR</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">NIVEL<b id="hLevel">1</b></div>
+    <div class="box l">VIDAS<b id="hLives">♥♥♥</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="cv" width="480" height="300"></canvas>
+    <div class="mixer" id="mixer">
+      <div class="ch r" data-c="0"><span class="lab">ROJO · Q/A</span><button class="plus" data-c="0" data-d="1" aria-label="Más rojo">+</button><div class="pips"></div><button class="minus" data-c="0" data-d="-1" aria-label="Menos rojo">−</button></div>
+      <div class="ch g" data-c="1"><span class="lab">VERDE · W/S</span><button class="plus" data-c="1" data-d="1" aria-label="Más verde">+</button><div class="pips"></div><button class="minus" data-c="1" data-d="-1" aria-label="Menos verde">−</button></div>
+      <div class="ch b" data-c="2"><span class="lab">AZUL · E/D</span><button class="plus" data-c="2" data-d="1" aria-label="Más azul">+</button><div class="pips"></div><button class="minus" data-c="2" data-d="-1" aria-label="Menos azul">−</button></div>
+    </div>
+    <div class="overlay" id="ov">
+      <div class="big">🖌️</div>
+      <h2>MEZCLA NEÓN</h2>
+      <p>Arriba aparece un <b>color objetivo</b>. Mezclá luz <b style="color:var(--r)">roja</b>, <b style="color:var(--g)">verde</b> y <b style="color:var(--b)">azul</b> con los botones hasta clavarlo: cuando coincide exacto, pasa solo.</p>
+      <p>Rojo + verde = amarillo · verde + azul = cian · rojo + azul = magenta · todo = blanco.<br>Si se acaba el tiempo perdés una vida. Llegar con la menor cantidad de toques da <b>PERFECTO</b> y racha hasta x5. Desde el nivel 4 el objetivo se apaga: ¡memorizalo!</p>
+      <button class="btn" id="startBtn">JUGAR</button>
+    </div>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="hintBtn">💡 Pista (H) · <b id="hintN">1</b></button>
+    <button class="tbtn" id="peekBtn">👁️ Ver objetivo (V) · <b id="peekN">1</b></button>
+    <button class="tbtn" id="pauseBtn">⏸ Pausa (P)</button>
+  </div>
+  <div class="hint">Tocá + / − en cada canal. Teclado: Q/A rojo, W/S verde, E/D azul · 1 2 3 suman y vuelven a cero.</div>
+</div>
+<script>
+(()=>{
+"use strict";
+const LS="mezcla-neon-best";
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+const W=cv.width,H=cv.height;
+const $=id=>document.getElementById(id);
+const ov=$("ov");
+let best=0;try{best=+localStorage.getItem(LS)||0;}catch(e){}
+$("hBest").textContent=best;
+
+// ---------- audio ----------
+let AC=null;
+function au(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC;}
+function tone(f,d=.1,type="sine",v=.12,slide=0,delay=0){const a=au();if(!a)return;const t=a.currentTime+delay;const o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+d);
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0008,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.02);}
+const sfx={
+  tap(c,lv){tone([330,392,262][c]*(1+lv*.12),.07,"triangle",.09);},
+  ok(p){[0,4,7,12].forEach((s,i)=>tone(523*Math.pow(2,s/12),.14,"sine",.11,0,i*.06));if(p)tone(1568,.25,"triangle",.07,0,.26);},
+  fail(){tone(220,.35,"sawtooth",.08,-120);tone(165,.4,"square",.05,-80,.12);},
+  tick(){tone(880,.04,"square",.04);},
+  lvl(){[0,7,12,16,19].forEach((s,i)=>tone(392*Math.pow(2,s/12),.16,"triangle",.1,0,i*.08));},
+  hint(){tone(660,.2,"sine",.08,440);}
+};
+
+// ---------- estado ----------
+let state="menu";            // menu | play | reveal | pause | over
+let score=0,level=1,lives=3,streak=0,solvedInLevel=0;
+let steps=3,mix=[0,0,0],target=[0,0,0],locked=[false,false,false];
+let tMax=14,tLeft=14,taps=0,minTaps=0,golden=false,memory=false,memShow=0;
+let hints=1,peeks=1,peekT=0,revealT=0,revealOk=false,lastGain=0,lastPerfect=false;
+let parts=[],floats=[],flash=0,shake=0,pulse=0;
+const PER_LEVEL=5;
+
+function cfg(l){
+  if(l===1)return{steps:3,t:15,mem:false};
+  if(l===2)return{steps:3,t:11,mem:false};
+  if(l===3)return{steps:4,t:15,mem:false};
+  if(l===4)return{steps:4,t:13,mem:true};
+  if(l===5)return{steps:5,t:17,mem:false};
+  return{steps:5,t:Math.max(8,17-(l-5)*1.5),mem:l%2===0};
+}
+const val=(lv)=>Math.round(255*lv/(steps-1));
+const rgb=(a,al=1)=>`rgba(${val(a[0])},${val(a[1])},${val(a[2])},${al})`;
+function rebuildPips(){
+  document.querySelectorAll(".ch").forEach(ch=>{
+    const c=+ch.dataset.c,p=ch.querySelector(".pips");
+    p.innerHTML="";for(let i=1;i<steps;i++){const d=document.createElement("div");d.className="pip"+(mix[c]>=i?" on":"");p.appendChild(d);}
+    ch.classList.toggle("locked",locked[c]);
+  });
+}
+function updHud(){
+  $("hScore").textContent=score;$("hLevel").textContent=level;
+  $("hLives").textContent="♥".repeat(lives)+"♡".repeat(Math.max(0,3-lives));
+  $("hBest").textContent=Math.max(best,score);
+  $("hintN").textContent=hints;$("peekN").textContent=peeks;
+  $("hintBtn").disabled=!(state==="play"&&hints>0);
+  $("peekBtn").disabled=!(state==="play"&&peeks>0&&memory&&memShow<=0);
+}
+
+function newTarget(){
+  const c=cfg(level);
+  const stepsChanged=c.steps!==steps;
+  if(stepsChanged){ // reescalar la mezcla actual a la nueva grilla
+    const ns=c.steps;mix=mix.map(v=>Math.round(v*(ns-1)/(steps-1)));steps=ns;
+  }
+  let t;
+  do{t=[0,1,2].map(()=>Math.floor(Math.random()*steps));}
+  while((t[0]+t[1]+t[2]===0)||(t[0]===mix[0]&&t[1]===mix[1]&&t[2]===mix[2])||
+        (t.reduce((s,v,i)=>s+Math.abs(v-mix[i]),0)<2));
+  target=t;locked=[false,false,false];
+  minTaps=t.reduce((s,v,i)=>s+Math.abs(v-mix[i]),0);taps=0;
+  golden=level>=2&&Math.random()<.15;
+  memory=c.mem;memShow=memory?3.2:0;
+  tMax=c.t+(golden?-2:0);tLeft=tMax;
+  state="play";rebuildPips();updHud();
+}
+
+function start(){
+  au();score=0;level=1;lives=3;streak=0;solvedInLevel=0;steps=3;mix=[0,0,0];hints=1;peeks=1;
+  parts=[];floats=[];ov.classList.add("hidden");newTarget();
+}
+
+function change(c,d,wrap){
+  if(state!=="play"||locked[c])return;
+  let v=mix[c]+d;
+  if(wrap){if(v>=steps)v=0;}
+  if(v<0||v>=steps){shake=.15;tone(120,.06,"square",.05);return;}
+  mix[c]=v;taps++;sfx.tap(c,v);
+  burst(240+(c-1)*60,252,["#ff3b5c","#3bff8a","#3b7bff"][c],5,1.2);
+  rebuildPips();
+  if(mix[0]===target[0]&&mix[1]===target[1]&&mix[2]===target[2])solve();
+}
+
+function solve(){
+  const frac=tLeft/tMax;
+  const perfect=taps<=minTaps;
+  if(perfect||frac>.5)streak=Math.min(5,streak+1);else streak=Math.max(1,Math.floor(streak/2));
+  let gain=50+level*25+Math.round(frac*100);
+  if(perfect)gain=Math.round(gain*1.5);
+  if(memory)gain=Math.round(gain*1.25);
+  gain*=Math.max(1,streak);
+  if(golden)gain*=2;
+  score+=gain;lastGain=gain;lastPerfect=perfect;
+  sfx.ok(perfect);flash=.6;pulse=1;
+  burst(W*.5,120,rgb(target),40,3);
+  floats.push({x:W/2,y:125,t:1.4,txt:"+"+gain,c:golden?"#ffd23b":"#e8f6ff",s:28});
+  if(perfect)floats.push({x:W/2,y:92,t:1.4,txt:"¡PERFECTO!",c:"#27e8ff",s:18});
+  if(streak>1)floats.push({x:W/2,y:158,t:1.4,txt:"RACHA x"+streak,c:"#ff2bd6",s:15});
+  revealOk=true;state="reveal";revealT=.9;solvedInLevel++;updHud();
+}
+
+function fail(){
+  lives--;streak=0;sfx.fail();shake=.4;flash=0;
+  floats.push({x:W/2,y:120,t:1.6,txt:"¡SE ACABÓ EL TIEMPO!",c:"#ff3b5c",s:18});
+  revealOk=false;state="reveal";revealT=1.8;updHud();
+}
+
+function afterReveal(){
+  if(lives<=0){gameOver();return;}
+  if(solvedInLevel>=PER_LEVEL){
+    level++;solvedInLevel=0;hints=Math.min(3,hints+1);peeks=Math.min(3,peeks+1);sfx.lvl();
+    floats.push({x:W/2,y:H/2,t:1.8,txt:"NIVEL "+level,c:"#ffd23b",s:34});
+    const c=cfg(level);
+    if(c.steps!==cfg(level-1).steps)floats.push({x:W/2,y:H/2+32,t:1.8,txt:"¡más tonos por canal!",c:"#27e8ff",s:14});
+    else if(c.mem&&!cfg(level-1).mem)floats.push({x:W/2,y:H/2+32,t:1.8,txt:"el objetivo se apaga: memorizalo",c:"#27e8ff",s:14});
+  }
+  newTarget();
+}
+
+function gameOver(){
+  state="over";
+  const nb=score>best;if(nb){best=score;try{localStorage.setItem(LS,best);}catch(e){}}
+  updHud();
+  ov.innerHTML=`<div class="big">${nb?"🏆":"🎨"}</div><h2>${nb?"¡NUEVO RÉCORD!":"FIN DE LA MEZCLA"}</h2>
+  <p>Puntos: <b>${score}</b> · Nivel alcanzado: <b>${level}</b><br>Récord: <b>${best}</b></p>
+  <button class="btn" id="startBtn">OTRA VEZ</button>`;
+  ov.classList.remove("hidden");$("startBtn").onclick=start;
+}
+
+function useHint(){
+  if(state!=="play"||hints<=0)return;
+  const opts=[0,1,2].filter(c=>!locked[c]&&mix[c]!==target[c]);
+  if(!opts.length)return;
+  const c=opts[Math.floor(Math.random()*opts.length)];
+  mix[c]=target[c];locked[c]=true;hints--;taps+=1;minTaps+=1;sfx.hint();
+  floats.push({x:W*.73,y:60,t:1,txt:["ROJO","VERDE","AZUL"][c]+" OK",c:["#ff3b5c","#3bff8a","#3b7bff"][c],s:14});
+  rebuildPips();updHud();
+  if(mix[0]===target[0]&&mix[1]===target[1]&&mix[2]===target[2])solve();
+}
+function usePeek(){
+  if(state!=="play"||peeks<=0||!memory||memShow>0)return;
+  peeks--;peekT=1.2;tone(520,.12,"sine",.07,200);updHud();
+}
+function togglePause(){
+  if(state==="play"){state="pause";$("pauseBtn").textContent="▶ Seguir (P)";}
+  else if(state==="pause"){state="play";$("pauseBtn").textContent="⏸ Pausa (P)";}
+  updHud();
+}
+
+// ---------- partículas ----------
+function burst(x,y,c,n,sp){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=(40+Math.random()*120)*sp;
+  parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t:.6+Math.random()*.5,c});}}
+
+// ---------- dibujo ----------
+function glowCircle(x,y,r,col,blur){ctx.save();ctx.shadowColor=col;ctx.shadowBlur=blur;ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.restore();}
+function draw(now){
+  const t=now/1000;
+  ctx.save();
+  if(shake>0)ctx.translate((Math.random()-.5)*10*shake,(Math.random()-.5)*10*shake);
+  ctx.fillStyle="#050813";ctx.fillRect(-10,-10,W+20,H+20);
+  // grilla de fondo
+  ctx.strokeStyle="rgba(138,75,255,.08)";ctx.lineWidth=1;
+  for(let x=0;x<W;x+=24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  const showing=state==="menu"?false:true;
+  // barra de tiempo
+  if(showing){
+    const f=Math.max(0,tLeft/tMax);
+    ctx.fillStyle="rgba(255,255,255,.06)";ctx.fillRect(20,14,W-40,8);
+    const col=f>.5?"#27e8ff":f>.25?"#ffd23b":"#ff3b5c";
+    ctx.save();ctx.shadowColor=col;ctx.shadowBlur=10;ctx.fillStyle=col;ctx.fillRect(20,14,(W-40)*f,8);ctx.restore();
+    ctx.fillStyle="#7fa6c8";ctx.font="700 11px Segoe UI,system-ui,sans-serif";ctx.textAlign="left";
+    ctx.fillText(`COLOR ${solvedInLevel+1}/${PER_LEVEL}`,20,38);
+    ctx.textAlign="right";ctx.fillText(streak>1?`RACHA x${streak}`:`TOQUES ${taps} · MÍN ${minTaps}`,W-20,38);
+  }
+
+  const cy=150,r=70;
+  const tx=W*.27,mx=W*.73;
+  // objetivo
+  const tVisible=state==="menu"||!memory||memShow>0||peekT>0||state==="reveal"||state==="over";
+  ctx.textAlign="center";ctx.font="800 12px Segoe UI,system-ui,sans-serif";
+  ctx.fillStyle=golden?"#ffd23b":"#7fa6c8";ctx.fillText(golden?"★ OBJETIVO DORADO ★":"OBJETIVO",tx,cy-r-14);
+  ctx.fillStyle="#7fa6c8";ctx.fillText("TU MEZCLA",mx,cy-r-14);
+  if(state==="menu"){
+    const a=[Math.round((Math.sin(t*.7)+1)),Math.round((Math.sin(t*.9+2)+1)),Math.round((Math.sin(t*1.1+4)+1))];
+    steps=3;glowCircle(tx,cy,r,rgb(a),40);
+  }else if(tVisible){
+    glowCircle(tx,cy,r,rgb(target),30+pulse*30);
+    if(memory&&memShow>0){ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=4;ctx.beginPath();
+      ctx.arc(tx,cy,r+8,-Math.PI/2,-Math.PI/2+Math.PI*2*(memShow/3.2));ctx.stroke();}
+  }else{
+    ctx.save();ctx.setLineDash([8,8]);ctx.lineDashOffset=-t*20;ctx.strokeStyle="rgba(232,246,255,.45)";ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(tx,cy,r,0,Math.PI*2);ctx.stroke();ctx.restore();
+    ctx.fillStyle="rgba(232,246,255,.6)";ctx.font="900 54px Segoe UI,system-ui,sans-serif";ctx.textBaseline="middle";ctx.fillText("?",tx,cy+2);ctx.textBaseline="alphabetic";
+  }
+  if(golden&&state!=="menu"){ctx.strokeStyle="#ffd23b";ctx.lineWidth=2;ctx.beginPath();ctx.arc(tx,cy,r+14+Math.sin(t*4)*2,0,Math.PI*2);ctx.stroke();}
+
+  // tu mezcla: tres luces aditivas que convergen
+  if(state!=="menu"){
+    ctx.save();ctx.globalCompositeOperation="lighter";
+    const cols=[[255,0,0],[0,255,0],[0,0,255]];
+    const spread=22;
+    for(let c=0;c<3;c++){
+      if(mix[c]===0)continue;
+      const a=-Math.PI/2+c*Math.PI*2/3+t*.4;
+      const x=mx+Math.cos(a)*spread,y=cy+Math.sin(a)*spread;
+      const k=mix[c]/(steps-1);
+      const g=ctx.createRadialGradient(x,y,0,x,y,r*1.05);
+      const cc=cols[c].map(v=>Math.round(v*k));
+      g.addColorStop(0,`rgba(${cc[0]},${cc[1]},${cc[2]},1)`);g.addColorStop(.75,`rgba(${cc[0]},${cc[1]},${cc[2]},.9)`);g.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.05,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+    // núcleo con el color exacto
+    glowCircle(mx,cy,r*.55,rgb(mix),20);
+    ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=2;ctx.beginPath();ctx.arc(mx,cy,r*.55,0,Math.PI*2);ctx.stroke();
+    if(mix[0]+mix[1]+mix[2]===0){ctx.fillStyle="#7fa6c8";ctx.font="700 12px Segoe UI,system-ui,sans-serif";ctx.fillText("sin luz",mx,cy+4);}
+  }else{
+    const a=[Math.round((Math.sin(t*.7+1)+1)),Math.round((Math.sin(t*.9+3)+1)),Math.round((Math.sin(t*1.1+5)+1))];
+    glowCircle(mx,cy,r,rgb(a),40);
+  }
+
+  // medidor de parecido (sólo si el objetivo está visible o en revelación)
+  if(state!=="menu"){
+    const max=Math.sqrt(3)*(steps-1);
+    const d=Math.hypot(mix[0]-target[0],mix[1]-target[1],mix[2]-target[2]);
+    const sim=Math.round(100*(1-d/max));
+    ctx.fillStyle="rgba(255,255,255,.06)";ctx.fillRect(W/2-90,H-46,180,8);
+    const col=sim>=90?"#3bff8a":sim>=65?"#ffd23b":"#ff2bd6";
+    ctx.save();ctx.shadowColor=col;ctx.shadowBlur=8;ctx.fillStyle=col;ctx.fillRect(W/2-90,H-46,180*sim/100,8);ctx.restore();
+    ctx.fillStyle="#7fa6c8";ctx.font="700 11px Segoe UI,system-ui,sans-serif";ctx.textAlign="center";
+    ctx.fillText(`PARECIDO ${sim}%`,W/2,H-20);
+    // = entre los círculos
+    ctx.fillStyle=state==="reveal"&&revealOk?"#3bff8a":"rgba(232,246,255,.5)";ctx.font="900 30px Segoe UI,system-ui,sans-serif";
+    ctx.fillText(state==="reveal"&&revealOk?"=":(state==="reveal"?"≠":"→"),W/2,cy+10);
+  }
+  // revelación del fallo: niveles del objetivo
+  if(state==="reveal"&&!revealOk){
+    ctx.font="800 12px Segoe UI,system-ui,sans-serif";
+    ["#ff3b5c","#3bff8a","#3b7bff"].forEach((c,i)=>{ctx.fillStyle=c;ctx.fillText(`${["R","G","B"][i]} ${target[i]}`,tx-36+i*36,cy+r+22);});
+  }
+  if(state==="pause"){ctx.fillStyle="rgba(5,8,19,.8)";ctx.fillRect(0,0,W,H);ctx.fillStyle="#27e8ff";ctx.font="900 34px Segoe UI,system-ui,sans-serif";ctx.textAlign="center";ctx.fillText("PAUSA",W/2,H/2+10);}
+
+  // partículas
+  for(const p of parts){ctx.globalAlpha=Math.max(0,p.t);ctx.fillStyle=p.c;ctx.fillRect(p.x-2,p.y-2,4,4);}
+  ctx.globalAlpha=1;
+  for(const f of floats){ctx.globalAlpha=Math.min(1,f.t);ctx.fillStyle=f.c;ctx.font=`900 ${f.s}px Segoe UI,system-ui,sans-serif`;ctx.textAlign="center";
+    ctx.save();ctx.shadowColor=f.c;ctx.shadowBlur=12;ctx.fillText(f.txt,f.x,f.y);ctx.restore();}
+  ctx.globalAlpha=1;
+  if(flash>0){ctx.fillStyle=`rgba(255,255,255,${flash*.25})`;ctx.fillRect(0,0,W,H);}
+  ctx.restore();
+}
+
+// ---------- loop ----------
+let last=performance.now(),lastTick=0;
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(state==="play"){
+    tLeft-=dt;
+    if(memShow>0){memShow-=dt;if(memShow<=0)updHud();}
+    if(peekT>0){peekT-=dt;if(peekT<=0)updHud();}
+    if(tLeft<3&&tLeft>0&&Math.floor(tLeft)!==lastTick){lastTick=Math.floor(tLeft);sfx.tick();}
+    if(tLeft<=0){tLeft=0;fail();}
+  }else if(state==="reveal"){
+    revealT-=dt;if(revealT<=0)afterReveal();
+  }
+  for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.t-=dt;}
+  parts=parts.filter(p=>p.t>0);
+  for(const f of floats){f.y-=22*dt;f.t-=dt*.8;}
+  floats=floats.filter(f=>f.t>0);
+  flash=Math.max(0,flash-dt*1.5);shake=Math.max(0,shake-dt);pulse=Math.max(0,pulse-dt*2);
+  draw(now);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------- controles ----------
+document.querySelectorAll(".ch button").forEach(b=>{
+  b.addEventListener("pointerdown",e=>{e.preventDefault();au();change(+b.dataset.c,+b.dataset.d,false);});
+});
+$("startBtn").onclick=start;
+$("hintBtn").onclick=useHint;
+$("peekBtn").onclick=usePeek;
+$("pauseBtn").onclick=togglePause;
+addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if((state==="menu"||state==="over")&&(k==="enter"||k===" ")){e.preventDefault();start();return;}
+  const map={q:[0,1],a:[0,-1],w:[1,1],s:[1,-1],e:[2,1],d:[2,-1]};
+  if(map[k]){e.preventDefault();change(map[k][0],map[k][1],false);return;}
+  if(k==="1"||k==="2"||k==="3"){change(+k-1,1,true);return;}
+  if(k==="h")useHint();
+  else if(k==="v")usePeek();
+  else if(k==="p"||k==="escape")togglePause();
+});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="play")togglePause();});
+rebuildPips();updHud();
+})();
+</script>
+</body>
+</html>
