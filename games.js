@@ -879,6 +879,13 @@
       desc: "Mezclá luz roja, verde y azul hasta clavar el color objetivo antes de que se acabe el tiempo: cuando coincide exacto, pasa solo. Llegar con la menor cantidad de toques da PERFECTO y racha hasta x5; cada nivel suma tonos por canal, aparecen objetivos dorados y desde el nivel 4 el color se apaga y hay que memorizarlo. Pistas, 3 vidas y récord guardado.",
       controles: "Tocá + / − en cada canal. Teclado: Q/A rojo, W/S verde, E/D azul, 1 2 3 suman y vuelven a cero, H pista, V ver objetivo, P pausa",
       fecha: "2026-11-14", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "dagas-neon", titulo: "Dagas Neón", archivo: "dagas-neon.html",
+      emoji: "🗡️", categoria: "reflejos", tags: ["dagas", "lanzar", "núcleo", "giro", "timing", "jefes", "un jugador"],
+      desc: "Lanzá dagas a un núcleo que gira y clavalas todas para romperlo, pero si pegás contra otra daga rebota y perdés una vida. Las gemas del borde suman puntos, los lanzamientos seguidos arman racha hasta x5 y el núcleo cambia de ritmo: vaivén, arranca y frena, y cada 5 niveles un jefe errático. Récord guardado.",
+      controles: "Tocá / clic en cualquier lado para lanzar. Teclado: espacio o ↑ lanza, P pausa",
+      fecha: "2026-11-15", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

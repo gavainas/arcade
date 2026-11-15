@@ -53,6 +53,8 @@ const OVERRIDES = {
   "platillos-neon": { steps: ["#btnStart"], wait: 2500 },
   "resortera-neon": { steps: ["#btnStart"], wait: 1200 },
   "malabares-neon": { steps: ["#btnStart"], wait: 700 },
+  // Unos lanzamientos (tocando arriba del canvas para que el núcleo quede a la vista) para que la miniatura muestre dagas clavadas en el núcleo.
+  "dagas-neon": { steps: ["#btnStart", { canvas: [0.5, 0.02] }, { canvas: [0.5, 0.02] }, { canvas: [0.5, 0.02] }], wait: 2000 },
   "espiral-neon": { steps: ["#btnStart"], wait: 1600 },
   "bombero-neon": { steps: ["#btnStart"], wait: 9000 },
   "pastor-neon": { steps: ["#btnStart"], wait: 1500 },
