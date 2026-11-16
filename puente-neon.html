@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PUENTE NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:pointer;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:360px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">PUENTE NEÓN</div><div class="sub">ESTIRÁ, SOLTÁ Y CRUZÁ</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">NIVEL<b id="hLevel">1</b></div>
+    <div class="box">VIDAS<b id="hLives">❤❤❤</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="cv" width="480" height="620"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🌉</div><h2>PUENTE NEÓN</h2>
+      <p><b style="color:#27e8ff">Mantené apretado</b> para estirar el puente de luz y <b style="color:#27e8ff">soltá</b> para que caiga sobre el próximo pilar. Corto o largo: te caés y perdés una vida. Si cae en el <b style="color:#ff2bd6">centro rosa</b> es PERFECTO y armás <b style="color:#ff2bd6">racha hasta x5</b>.<br>Mientras cruzás, <b style="color:#ffd23b">tocá para saltar</b>: juntá estrellas y esquivá las chispas rojas. Desde el nivel 3 los pilares se mueven.</p>
+      <button class="btn" id="btnStart">EMPEZAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🌌</div><h2>AL VACÍO</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Mantené apretado para estirar, soltá para tirar el puente · tocá mientras cruzás para saltar.<br>Teclado: <b>espacio</b> o <b>↑</b> (mantener / saltar) · <b>P</b> pausa</div>
+</div>
+<script>
+(() => {
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  const TOP = 430;               // altura de la cima de los pilares
+  const HERO_SCREEN_X = 104;     // dónde queda el borde del pilar actual en pantalla
+  const HERO_W = 20, HERO_H = 28;
+  const WALK = 270, JUMP_V = 430, GRAV = 1350;
+  const PERFECT_W = 10;
+  const BEST_KEY = "puente-neon-best";
+  const $ = id => document.getElementById(id);
+  const hScore = $("hScore"), hLevel = $("hLevel"), hLives = $("hLives"), hBest = $("hBest");
+  const ovStart = $("ovStart"), ovEnd = $("ovEnd"), endText = $("endText");
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  hBest.textContent = best;
+
+  // ---------- Audio ----------
+  let actx = null, growOsc = null, growGain = null;
+  function audio() {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (actx && actx.state === "suspended") actx.resume();
+    return actx;
+  }
+  function tone(freq, dur, type = "square", vol = 0.08, slide = 0) {
+    const a = audio(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function growStart() {
+    const a = audio(); if (!a) return;
+    growStop();
+    growOsc = a.createOscillator(); growGain = a.createGain();
+    growOsc.type = "triangle"; growOsc.frequency.value = 160;
+    growGain.gain.value = 0.035;
+    growOsc.connect(growGain); growGain.connect(a.destination); growOsc.start();
+  }
+  function growPitch(len) { if (growOsc) growOsc.frequency.value = 160 + len * 1.6; }
+  function growStop() {
+    if (growOsc) { try { growGain.gain.setTargetAtTime(0.0001, actx.currentTime, 0.02); growOsc.stop(actx.currentTime + 0.1); } catch (e) {} }
+    growOsc = null; growGain = null;
+  }
+  const sfx = {
+    thud: () => tone(110, 0.16, "square", 0.09, -50),
+    ok: m => tone(520 + m * 60, 0.09, "triangle", 0.06),
+    perfect: m => { [660, 880, 1100].forEach((f, i) => setTimeout(() => tone(f + m * 40, 0.1, "triangle", 0.06), i * 55)); },
+    jump: () => tone(420, 0.1, "sine", 0.05, 380),
+    star: () => { tone(1200, 0.07, "sine", 0.07); setTimeout(() => tone(1800, 0.1, "sine", 0.06), 60); },
+    hit: () => { tone(900, 0.12, "sawtooth", 0.07, -700); tone(80, 0.25, "square", 0.08, -30); },
+    fall: () => tone(600, 0.6, "sawtooth", 0.06, -520),
+    level: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.12, "triangle", 0.06), i * 70)),
+    life: () => [784, 988, 1319].forEach((f, i) => setTimeout(() => tone(f, 0.12, "sine", 0.07), i * 80)),
+    over: () => [392, 330, 262, 196].forEach((f, i) => setTimeout(() => tone(f, 0.22, "triangle", 0.07), i * 140)),
+  };
+
+  // ---------- Estado ----------
+  let state = "menu";        // menu | play | over
+  let phase = "idle";        // idle | grow | rotate | walk | fall | scroll
+  let paused = false;
+  let score, level, lives, streak, crossed, perfects, starsGot;
+  let pillars, ci;           // pilares y el índice del actual
+  let bridges, bridge;       // puentes viejos y el actual {x0, len, ang, av, fallen}
+  let camX, camFrom, camTo, camT;
+  let hx, jy, jv, fy, fv;    // héroe: x mundo, altura del salto, vel. salto, caída
+  let target, success, wasPerfect;
+  let stars, sparksArr;      // objetos en el hueco
+  let parts, texts, shake, flash, t, idleT;
+  const sky = [];
+  for (let i = 0; i < 70; i++) sky.push({ x: Math.random() * W, y: Math.random() * TOP * 0.9, r: Math.random() * 1.4 + 0.3, tw: Math.random() * 6 });
+  const city = [[], []];
+  for (let l = 0; l < 2; l++) { let x = 0; while (x < W * 3) { const w = 26 + Math.random() * 46; city[l].push({ x, w, h: (l ? 70 : 120) + Math.random() * (l ? 80 : 130) }); x += w + 4; } }
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function mult() { return Math.min(5, 1 + streak); }
+
+  function params() {
+    const L = level;
+    return {
+      minGap: Math.min(140, 34 + L * 9),
+      maxGap: Math.min(262, 120 + L * 14),
+      minW: Math.max(18, 52 - L * 4),
+      maxW: Math.max(34, 104 - L * 7),
+      grow: Math.min(540, 290 + L * 24),
+    };
+  }
+
+  function newGame() {
+    score = 0; level = 1; lives = 3; streak = 0; crossed = 0; perfects = 0; starsGot = 0;
+    pillars = [{ x: 0, w: HERO_SCREEN_X, gold: false, move: null }];
+    ci = 0; bridges = []; bridge = null;
+    camX = 0; parts = []; texts = []; shake = 0; flash = 0; t = 0; idleT = 0;
+    stars = []; sparksArr = [];
+    hx = pillars[0].x + pillars[0].w - HERO_W / 2 - 2; jy = 0; jv = 0; fy = 0; fv = 0;
+    spawnNext();
+    phase = "idle";
+    state = "play"; paused = false;
+    ovStart.classList.add("hidden"); ovEnd.classList.add("hidden");
+    updateHud();
+  }
+
+  function spawnNext() {
+    const p = params(), cur = pillars[ci];
+    const edge = cur.x + cur.w;
+    const gap = rand(p.minGap, p.maxGap);
+    const w = rand(p.minW, p.maxW);
+    const gold = level >= 2 && Math.random() < 0.16;
+    let move = null;
+    if (level >= 3 && Math.random() < Math.min(0.75, 0.3 + (level - 3) * 0.1)) {
+      const A = Math.min(26 + level * 3, gap * 0.4, 60);
+      move = { base: edge + gap, A, w: rand(1.4, 2.2) + level * 0.08, ph: rand(0, Math.PI * 2) };
+    }
+    pillars.push({ x: edge + gap, w, gold, move });
+    // estrella flotando sobre el hueco
+    stars = []; sparksArr = [];
+    if (Math.random() < 0.55) stars.push({ x: edge + gap * rand(0.35, 0.65), got: false, ph: rand(0, 6) });
+    // chispas sobre el camino desde el nivel 4
+    if (level >= 4 && gap > 70 && Math.random() < Math.min(0.7, 0.35 + (level - 4) * 0.08)) {
+      let sx = edge + gap * rand(0.3, 0.7);
+      if (stars.length && Math.abs(stars[0].x - sx) < 30) sx = stars[0].x;   // a veces la estrella justo encima de la chispa
+      sparksArr.push({ x: sx, hit: false, ph: rand(0, 6) });
+    }
+  }
+
+  function next() { return pillars[ci + 1]; }
+
+  // ---------- Entrada ----------
+  function press() {
+    audio();
+    if (state !== "play") return;
+    if (paused) { paused = false; return; }
+    if (phase === "idle") {
+      const cur = pillars[ci];
+      bridge = { x0: cur.x + cur.w, len: 0, ang: 0, av: 0, fallen: false };
+      phase = "grow"; growStart();
+    } else if (phase === "walk" && jy === 0) {
+      jv = JUMP_V; sfx.jump();
+    }
+  }
+  function release() {
+    if (state !== "play" || paused) return;
+    if (phase === "grow") {
+      growStop();
+      phase = "rotate"; bridge.av = 0;
+    }
+  }
+
+  function resolveDrop() {
+    const n = next();
+    const end = bridge.x0 + bridge.len;
+    success = end >= n.x && end <= n.x + n.w;
+    const mid = n.x + n.w / 2;
+    wasPerfect = success && Math.abs(end - mid) <= PERFECT_W / 2 + 0.5;
+    target = success ? n.x + n.w - HERO_W / 2 - 2 : end;
+    sfx.thud(); shake = Math.max(shake, 4);
+    if (wasPerfect) {
+      streak++; perfects++;
+      sfx.perfect(mult());
+      addText(mid - camX, TOP - 46, "¡PERFECTO!", "#ff2bd6", 22);
+      burst(mid - camX, TOP, "#ff2bd6", 24);
+    }
+    phase = "walk";
+  }
+
+  function crossDone() {
+    const n = next();
+    crossed++;
+    if (!wasPerfect) streak = 0;
+    const m = wasPerfect ? mult() : 1;
+    let pts = (wasPerfect ? 20 : 10) * m;
+    score += pts;
+    addText(n.x + n.w / 2 - camX, TOP - 20, "+" + pts + (m > 1 ? "  x" + m : ""), wasPerfect ? "#ff2bd6" : "#27e8ff", 18);
+    if (!wasPerfect) sfx.ok(1);
+    if (n.gold) {
+      if (wasPerfect && lives < 3) { lives++; sfx.life(); addText(n.x + n.w / 2 - camX, TOP - 80, "+1 ❤", "#ffd23b", 22); }
+      else { score += 50; addText(n.x + n.w / 2 - camX, TOP - 80, "+50 DORADO", "#ffd23b", 18); }
+      burst(n.x + n.w / 2 - camX, TOP, "#ffd23b", 18);
+    }
+    const newLevel = 1 + Math.floor(crossed / 6);
+    if (newLevel > level) {
+      level = newLevel;
+      sfx.level();
+      flash = 0.5;
+      addText(W / 2, 150, "NIVEL " + level, "#ffd23b", 34);
+      if (level === 3) addText(W / 2, 188, "¡pilares que se mueven!", "#27e8ff", 16);
+      if (level === 4) addText(W / 2, 188, "¡cuidado con las chispas!", "#ff5a5a", 16);
+    }
+    bridges.push(bridge); bridge = null;
+    ci++;
+    // dejamos de mover el pilar en el que estamos parados
+    pillars[ci].move = null;
+    spawnNext();
+    camFrom = camX; camTo = pillars[ci].x + pillars[ci].w - HERO_SCREEN_X; camT = 0;
+    phase = "scroll";
+    // limpiar lo que quedó muy atrás
+    while (pillars.length > 2 && ci > 1 && pillars[0].x + pillars[0].w < camTo - 40) { pillars.shift(); ci--; }
+    while (bridges.length && bridges[0].x0 + bridges[0].len < camTo - 40) bridges.shift();
+    updateHud();
+  }
+
+  function startFall() {
+    phase = "fall"; fy = 0; fv = 0;
+    if (bridge) { bridge.fallen = true; bridge.av = 0; }
+    streak = 0;
+    sfx.fall();
+  }
+
+  function afterFall() {
+    lives--;
+    updateHud();
+    if (lives <= 0) { gameOver(); return; }
+    // volvemos al pilar actual, sin puente
+    bridge = null;
+    const cur = pillars[ci];
+    hx = cur.x + cur.w - HERO_W / 2 - 2; jy = 0; jv = 0; fy = 0;
+    // la estrella/chispa siguen ahí, pero las chispas golpeadas desaparecen
+    sparksArr = sparksArr.filter(s => !s.hit);
+    flash = 0.35;
+    phase = "idle"; idleT = 0;
+  }
+
+  function hitSpark(s) {
+    s.hit = true;
+    lives--; streak = 0;
+    sfx.hit(); shake = 10; flash = 0.4;
+    burst(s.x - camX, TOP - 8, "#ff5a5a", 26);
+    addText(s.x - camX, TOP - 50, "-1 ❤", "#ff5a5a", 20);
+    updateHud();
+    if (lives <= 0) { startFall(); lives = 1; }   // afterFall lo baja a 0 y termina
+  }
+
+  function gameOver() {
+    state = "over";
+    growStop();
+    sfx.over();
+    const record = score > best;
+    if (record) { best = score; try { localStorage.setItem(BEST_KEY, best); } catch (e) {} }
+    updateHud();
+    setTimeout(() => {
+      endText.innerHTML = `Cruzaste <b style="color:#27e8ff">${crossed}</b> pilares (${perfects} perfectos, ${starsGot} estrellas) y llegaste al <b style="color:#ff2bd6">nivel ${level}</b> con <b style="color:#27e8ff">${score}</b> puntos.<br>` +
+        (record ? `<b style="color:#ffd23b">¡Nuevo récord!</b>` : `Récord: <b style="color:#ffd23b">${best}</b>`);
+      ovEnd.classList.remove("hidden");
+    }, 700);
+  }
+
+  // ---------- Efectos ----------
+  function burst(x, y, col, n) {
+    for (let i = 0; i < n; i++) {
+      const a = rand(0, Math.PI * 2), sp = rand(60, 300);
+      parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80, life: rand(0.3, 0.8), col });
+    }
+  }
+  function addText(x, y, s, col, size) { texts.push({ x, y, s, col, size, life: 1.2 }); }
+
+  function updateHud() {
+    hScore.textContent = score;
+    hLevel.textContent = level;
+    hLives.textContent = "❤".repeat(Math.max(0, lives)) + "♡".repeat(Math.max(0, 3 - lives));
+    hBest.textContent = (score > best && state !== "over") ? score : best;
+  }
+
+  // ---------- Update ----------
+  function update(dt) {
+    t += dt;
+    if (state === "play" && !paused) {
+      const n = next();
+      // pilar móvil: oscila mientras no soltaste el puente
+      if (n.move && (phase === "idle" || phase === "grow")) n.x = n.move.base + Math.sin(t * n.move.w + n.move.ph) * n.move.A;
+
+      if (phase === "idle") idleT += dt;
+      if (phase === "grow") {
+        bridge.len += params().grow * dt;
+        growPitch(bridge.len);
+        if (bridge.len >= 470) release();
+      } else if (phase === "rotate") {
+        bridge.av += 22 * dt;
+        bridge.ang += (2.2 + bridge.av) * dt;
+        if (bridge.ang >= Math.PI / 2) { bridge.ang = Math.PI / 2; resolveDrop(); }
+      } else if (phase === "walk") {
+        hx = Math.min(target, hx + WALK * dt);
+        if (jy > 0 || jv > 0) { jv -= GRAV * dt; jy += jv * dt; if (jy <= 0) { jy = 0; jv = 0; } }
+        stars.forEach(s => {
+          if (!s.got && Math.abs(hx - s.x) < 20 && jy > 34) {
+            s.got = true; starsGot++;
+            const pts = 15 * mult(); score += pts;
+            sfx.star(); burst(s.x - camX, TOP - 62, "#ffd23b", 16);
+            addText(s.x - camX, TOP - 92, "+" + pts + " ★", "#ffd23b", 17);
+            updateHud();
+          }
+        });
+        sparksArr.forEach(s => { if (!s.hit && Math.abs(hx - s.x) < 13 && jy < 16) hitSpark(s); });
+        if (phase === "walk" && hx >= target && jy === 0) {
+          if (success) crossDone(); else startFall();
+        }
+      } else if (phase === "fall") {
+        fv += GRAV * dt; fy += fv * dt;
+        if (bridge && bridge.fallen && bridge.ang < Math.PI) { bridge.av += 14 * dt; bridge.ang = Math.min(Math.PI, bridge.ang + (1 + bridge.av) * dt); }
+        if (TOP + fy - HERO_H > H + 30) afterFall();
+      } else if (phase === "scroll") {
+        camT = Math.min(1, camT + dt / 0.42);
+        const e = 1 - Math.pow(1 - camT, 3);
+        camX = camFrom + (camTo - camFrom) * e;
+        if (camT >= 1) { phase = "idle"; idleT = 0; }
+      }
+    }
+    // efectos
+    parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 500 * dt; p.life -= dt; });
+    parts = parts.filter(p => p.life > 0);
+    texts.forEach(x => { x.y -= 30 * dt; x.life -= dt; });
+    texts = texts.filter(x => x.life > 0);
+    shake = Math.max(0, shake - dt * 30);
+    flash = Math.max(0, flash - dt);
+  }
+
+  // ---------- Dibujo ----------
+  function glowRect(x, y, w, h, col, blur) {
+    ctx.shadowColor = col; ctx.shadowBlur = blur; ctx.fillStyle = col; ctx.fillRect(x, y, w, h); ctx.shadowBlur = 0;
+  }
+
+  function drawBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#0a0b26"); g.addColorStop(0.55, "#1a0c33"); g.addColorStop(1, "#05040c");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // estrellas
+    sky.forEach(s => { ctx.globalAlpha = 0.4 + 0.4 * Math.sin(t * 2 + s.tw); ctx.fillStyle = "#cfe9ff"; ctx.fillRect(s.x, s.y, s.r, s.r); });
+    ctx.globalAlpha = 1;
+    // sol neón
+    const sg = ctx.createLinearGradient(0, 150, 0, 330);
+    sg.addColorStop(0, "#ffd23b"); sg.addColorStop(1, "#ff2bd6");
+    ctx.save(); ctx.beginPath(); ctx.arc(W / 2 - (camX * 0.02) % 40, 270, 92, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = sg; ctx.globalAlpha = 0.55; ctx.fillRect(0, 170, W, 200);
+    ctx.globalAlpha = 1; ctx.fillStyle = "#14092a";
+    for (let i = 0; i < 7; i++) ctx.fillRect(0, 280 + i * 12, W, 2 + i * 1.2);
+    ctx.restore();
+    // ciudad en parallax
+    [["#160f36", 0.15, 0], ["#1f1048", 0.32, 1]].forEach(([col, k, l]) => {
+      const off = (camX * k) % (W * 2);
+      ctx.fillStyle = col;
+      city[l].forEach(b => {
+        let x = b.x - off; if (x + b.w < 0) x += W * 3; if (x > W) return;
+        ctx.fillRect(x, TOP + 30 - b.h, b.w, b.h + 200);
+        if (l === 1) {
+          ctx.fillStyle = "rgba(39,232,255,.18)";
+          for (let wy = TOP + 40 - b.h; wy < TOP + 10; wy += 14) for (let wx = x + 5; wx < x + b.w - 6; wx += 10) if ((wx * 7 + wy * 3) % 5 < 2) ctx.fillRect(wx, wy, 3, 5);
+          ctx.fillStyle = col;
+        }
+      });
+    });
+    // niebla del abismo
+    const fg = ctx.createLinearGradient(0, TOP + 40, 0, H);
+    fg.addColorStop(0, "rgba(138,75,255,0)"); fg.addColorStop(1, "rgba(138,75,255,.28)");
+    ctx.fillStyle = fg; ctx.fillRect(0, TOP + 40, W, H - TOP - 40);
+  }
+
+  function drawPillar(p, isNext) {
+    const x = p.x - camX;
+    if (x > W + 10 || x + p.w < -10) return;
+    const col = p.gold ? "#ffd23b" : (isNext ? "#ff2bd6" : "#27e8ff");
+    const g = ctx.createLinearGradient(0, TOP, 0, H);
+    g.addColorStop(0, p.gold ? "rgba(255,210,59,.35)" : "rgba(138,75,255,.38)"); g.addColorStop(1, "rgba(20,10,40,.9)");
+    ctx.fillStyle = g; ctx.fillRect(x, TOP, p.w, H - TOP);
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.shadowColor = col; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(x, TOP); ctx.lineTo(x + p.w, TOP); ctx.lineTo(x + p.w, H); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // franjas
+    ctx.strokeStyle = "rgba(255,255,255,.06)"; ctx.lineWidth = 1;
+    for (let y = TOP + 18; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(x + 3, y); ctx.lineTo(x + p.w - 3, y); ctx.stroke(); }
+    if (isNext) {
+      const cx = x + p.w / 2;
+      glowRect(cx - PERFECT_W / 2, TOP - 1, PERFECT_W, 5, "#ff2bd6", 10);
+      if (p.move) {
+        ctx.fillStyle = "rgba(39,232,255,.7)"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center";
+        ctx.fillText("◀ ▶", cx, TOP + 22);
+      }
+      if (p.gold) { ctx.fillStyle = "#ffd23b"; ctx.font = "bold 13px system-ui"; ctx.textAlign = "center"; ctx.fillText("★", cx, TOP + (p.move ? 40 : 22)); }
+    }
+  }
+
+  function drawBridge(b, live) {
+    const x0 = b.x0 - camX, y0 = TOP;
+    const x1 = x0 + Math.sin(b.ang) * b.len, y1 = y0 - Math.cos(b.ang) * b.len;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = live ? "#27e8ff" : "rgba(39,232,255,.35)";
+    ctx.lineWidth = 4; ctx.shadowColor = "#27e8ff"; ctx.shadowBlur = live ? 16 : 4;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    ctx.shadowBlur = 0;
+    if (live) { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x1, y1, 2.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.lineCap = "butt";
+  }
+
+  function drawHero() {
+    const x = hx - camX;
+    const feet = TOP - jy + (phase === "fall" ? fy : 0);
+    const walking = phase === "walk" && jy === 0;
+    const bob = walking ? Math.abs(Math.sin(t * 18)) * 2 : (phase === "idle" ? Math.sin(t * 3) * 1 : 0);
+    const top = feet - HERO_H - bob;
+    ctx.save();
+    if (phase === "fall") { ctx.translate(x, feet - HERO_H / 2); ctx.rotate(Math.min(fy / 80, 2.5)); ctx.translate(-x, -(feet - HERO_H / 2)); }
+    // cuerpo
+    ctx.shadowColor = "#ff2bd6"; ctx.shadowBlur = 14;
+    ctx.fillStyle = "#ff2bd6";
+    roundRect(x - HERO_W / 2, top + 6, HERO_W, HERO_H - 12, 6); ctx.fill();
+    ctx.shadowBlur = 0;
+    // casco / visor
+    ctx.fillStyle = "#1a0c33"; roundRect(x - HERO_W / 2 + 3, top + 10, HERO_W - 6, 7, 3); ctx.fill();
+    ctx.fillStyle = "#27e8ff"; ctx.fillRect(x + 1, top + 12, 6, 3);
+    // antena
+    ctx.strokeStyle = "#ffd23b"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x - 3, top + 6); ctx.lineTo(x - 6, top); ctx.stroke();
+    ctx.fillStyle = "#ffd23b"; ctx.beginPath(); ctx.arc(x - 6, top, 2.5, 0, Math.PI * 2); ctx.fill();
+    // piernas
+    ctx.strokeStyle = "#e8f6ff"; ctx.lineWidth = 3;
+    const sw = walking ? Math.sin(t * 18) * 4 : 0;
+    ctx.beginPath(); ctx.moveTo(x - 4, top + HERO_H - 6); ctx.lineTo(x - 4 + sw, feet - bob);
+    ctx.moveTo(x + 4, top + HERO_H - 6); ctx.lineTo(x + 4 - sw, feet - bob); ctx.stroke();
+    // bufanda al viento
+    if (phase === "walk" || phase === "grow") {
+      ctx.strokeStyle = "#27e8ff"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x - HERO_W / 2, top + 19);
+      ctx.quadraticCurveTo(x - HERO_W / 2 - 8, top + 15 + Math.sin(t * 14) * 3, x - HERO_W / 2 - 14, top + 19 + Math.sin(t * 10) * 4); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function drawStar(cx, cy, r, rot) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = rot + i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? r * 0.45 : r;
+      ctx.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+    }
+    ctx.closePath();
+  }
+
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate(rand(-shake, shake), rand(-shake, shake));
+    drawBackground();
+    if (state === "menu") { drawMenuScene(); ctx.restore(); return; }
+
+    bridges.forEach(b => drawBridge(b, false));
+    pillars.forEach((p, i) => drawPillar(p, i === ci + 1));
+
+    // estrellas y chispas
+    stars.forEach(s => {
+      if (s.got) return;
+      const x = s.x - camX, y = TOP - 62 + Math.sin(t * 3 + s.ph) * 4;
+      ctx.shadowColor = "#ffd23b"; ctx.shadowBlur = 14; ctx.fillStyle = "#ffd23b";
+      drawStar(x, y, 10, t * 1.5); ctx.fill(); ctx.shadowBlur = 0;
+    });
+    sparksArr.forEach(s => {
+      if (s.hit) return;
+      const x = s.x - camX, y = TOP - 8;
+      const show = bridge && bridge.ang >= Math.PI / 2 - 0.001 && bridge.x0 + bridge.len >= s.x - 8;
+      ctx.globalAlpha = show ? 1 : 0.35;
+      ctx.shadowColor = "#ff3b3b"; ctx.shadowBlur = 16; ctx.fillStyle = "#ff3b3b";
+      ctx.beginPath();
+      for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + t * 6 + s.ph, r = i % 2 ? 4 : 9 + Math.sin(t * 20 + i) * 1.5; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
+      ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    if (bridge) drawBridge(bridge, true);
+    drawHero();
+
+    // partículas y textos
+    parts.forEach(p => { ctx.globalAlpha = Math.max(0, p.life / 0.8); ctx.fillStyle = p.col; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); });
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "center";
+    texts.forEach(x => {
+      ctx.globalAlpha = Math.min(1, x.life * 1.5);
+      ctx.font = `900 ${x.size}px system-ui, sans-serif`; ctx.fillStyle = x.col;
+      ctx.shadowColor = x.col; ctx.shadowBlur = 10; ctx.fillText(x.s, x.x, x.y); ctx.shadowBlur = 0;
+    });
+    ctx.globalAlpha = 1;
+
+    // racha
+    if (state === "play") {
+      ctx.textAlign = "left"; ctx.font = "800 14px system-ui";
+      ctx.fillStyle = streak > 0 ? "#ff2bd6" : "rgba(127,166,200,.7)";
+      ctx.fillText("RACHA x" + mult(), 16, 30);
+      for (let i = 0; i < 5; i++) { ctx.fillStyle = i < mult() ? "#ff2bd6" : "rgba(255,43,214,.18)"; ctx.fillRect(16 + i * 16, 38, 12, 5); }
+      ctx.textAlign = "right"; ctx.fillStyle = "rgba(127,166,200,.8)"; ctx.font = "700 12px system-ui";
+      ctx.fillText("PILARES " + crossed, W - 16, 30);
+      if (phase === "idle" && idleT > 1.6 && crossed < 2) {
+        ctx.textAlign = "center"; ctx.fillStyle = `rgba(232,246,255,${0.5 + 0.4 * Math.sin(t * 5)})`; ctx.font = "700 15px system-ui";
+        ctx.fillText("mantené apretado para estirar el puente", W / 2, 110);
+      }
+      if (phase === "walk" && crossed < 4 && (stars.some(s => !s.got) || sparksArr.some(s => !s.hit))) {
+        ctx.textAlign = "center"; ctx.fillStyle = "rgba(255,210,59,.85)"; ctx.font = "700 14px system-ui";
+        ctx.fillText("¡tocá para saltar!", W / 2, 110);
+      }
+    }
+    if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash * 0.25})`; ctx.fillRect(-20, -20, W + 40, H + 40); }
+    if (paused) {
+      ctx.fillStyle = "rgba(5,7,15,.7)"; ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = "center"; ctx.fillStyle = "#27e8ff"; ctx.font = "900 34px system-ui"; ctx.fillText("PAUSA", W / 2, H / 2);
+      ctx.font = "600 14px system-ui"; ctx.fillStyle = "#7fa6c8"; ctx.fillText("tocá o apretá P para seguir", W / 2, H / 2 + 30);
+    }
+    ctx.restore();
+  }
+
+  function drawMenuScene() {
+    // escena decorativa detrás del menú
+    const ps = [{ x: 30, w: 90 }, { x: 240, w: 60 }, { x: 400, w: 50 }];
+    ps.forEach((p, i) => drawPillar({ x: p.x + camX, w: p.w, gold: i === 2 }, i === 1));
+    const len = 120 + 70 * (0.5 + 0.5 * Math.sin(t * 1.3));
+    drawBridge({ x0: 120 + camX, len, ang: 0 }, true);
+  }
+
+  // ---------- Loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (state === "menu") t += dt; else update(dt);
+    if (state === "over") { /* sigue animando efectos */ }
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Controles ----------
+  const wrap = $("wrap");
+  let holding = false;
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); holding = true; press(); });
+  window.addEventListener("pointerup", () => { if (holding) { holding = false; release(); } });
+  window.addEventListener("pointercancel", () => { if (holding) { holding = false; release(); } });
+  wrap.addEventListener("contextmenu", e => e.preventDefault());
+  window.addEventListener("keydown", e => {
+    if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+      e.preventDefault();
+      if (e.repeat) return;
+      if (state === "menu") { newGame(); return; }
+      if (state === "over" && !ovEnd.classList.contains("hidden")) { newGame(); return; }
+      press();
+    } else if (e.code === "KeyP" && state === "play") {
+      if (phase === "grow") release();
+      paused = !paused;
+    }
+  });
+  window.addEventListener("keyup", e => {
+    if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") release();
+  });
+  window.addEventListener("blur", () => { if (state === "play" && !paused) { if (phase === "grow") release(); paused = true; } });
+  $("btnStart").addEventListener("click", () => { audio(); newGame(); });
+  $("btnAgain").addEventListener("click", () => { audio(); newGame(); });
+
+  camX = 0;
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

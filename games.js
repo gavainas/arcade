@@ -886,6 +886,13 @@
       desc: "Lanzá dagas a un núcleo que gira y clavalas todas para romperlo, pero si pegás contra otra daga rebota y perdés una vida. Las gemas del borde suman puntos, los lanzamientos seguidos arman racha hasta x5 y el núcleo cambia de ritmo: vaivén, arranca y frena, y cada 5 niveles un jefe errático. Récord guardado.",
       controles: "Tocá / clic en cualquier lado para lanzar. Teclado: espacio o ↑ lanza, P pausa",
       fecha: "2026-11-15", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "puente-neon", titulo: "Puente Neón", archivo: "puente-neon.html",
+      emoji: "🌉", categoria: "reflejos", tags: ["puente", "estirar", "timing", "pilares", "saltar", "estrellas", "un jugador"],
+      desc: "Mantené apretado para estirar un puente de luz y soltalo para que caiga sobre el próximo pilar: si queda corto o largo, al vacío. Clavarlo en el centro rosa es PERFECTO y arma racha hasta x5. Mientras cruzás, saltá para juntar estrellas y esquivar chispas; los pilares se achican, se alejan y desde el nivel 3 se mueven. Pilares dorados dan vida extra. Récord guardado.",
+      controles: "Mantené apretado (o espacio / ↑) para estirar y soltá para tirar el puente; tocá mientras cruzás para saltar. P pausa",
+      fecha: "2026-11-16", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
