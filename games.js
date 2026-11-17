@@ -893,6 +893,13 @@
       desc: "Mantené apretado para estirar un puente de luz y soltalo para que caiga sobre el próximo pilar: si queda corto o largo, al vacío. Clavarlo en el centro rosa es PERFECTO y arma racha hasta x5. Mientras cruzás, saltá para juntar estrellas y esquivar chispas; los pilares se achican, se alejan y desde el nivel 3 se mueven. Pilares dorados dan vida extra. Récord guardado.",
       controles: "Mantené apretado (o espacio / ↑) para estirar y soltá para tirar el puente; tocá mientras cruzás para saltar. P pausa",
       fecha: "2026-11-16", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "ascensor-neon", titulo: "Ascensor Neón", archivo: "ascensor-neon.html",
+      emoji: "🛗", categoria: "accion", tags: ["ascensor", "pasajeros", "despacho", "paciencia", "combo", "hora pico", "un jugador"],
+      desc: "Sos el ascensorista de una torre de luz: tocá un piso para mandar la cabina y llevá a cada pasajero a su destino antes de que se le acabe la paciencia, o se va enojado y perdés una vida. Entran 6: bajá a varios en la misma parada para hacer combo, cuidá la racha hasta x5 y atendé primero a los VIP dorados. La torre crece hasta 9 pisos y desde el nivel 3 llega la hora pico. Récord guardado.",
+      controles: "Tocá / clic en un piso para mandar la cabina. Teclado: ↑ ↓ (o W / S) cambian el destino, 0–9 van directo (0 = PB), P pausa",
+      fecha: "2026-11-17", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

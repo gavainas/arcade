@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ASCENSOR NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:pointer;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:360px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">ASCENSOR NEÓN</div><div class="sub">SUBÍ, BAJÁ Y NO HAGAS ESPERAR</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">NIVEL<b id="hLevel">1</b></div>
+    <div class="box">VIDAS<b id="hLives">❤❤❤</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="cv" width="480" height="620"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🛗</div><h2>ASCENSOR NEÓN</h2>
+      <p>Sos el ascensorista de una torre de luz. <b style="color:#27e8ff">Tocá un piso</b> y la cabina va para ahí: al frenar se bajan los que llegaron a destino y suben los que esperan (entran <b style="color:#27e8ff">6</b>). Cada pasajero muestra a qué piso va y su <b style="color:#ff2bd6">paciencia</b>: si se agota, se va enojado y perdés una vida.<br>Dejá varios en la misma parada para hacer <b style="color:#ff2bd6">combo</b>, cuidá la racha hasta <b style="color:#ff2bd6">x5</b> y atendé rápido a los <b style="color:#ffd23b">VIP dorados ★</b> (valen triple). Desde el nivel 3 llega la <b style="color:#ffd23b">hora pico</b>.</p>
+      <button class="btn" id="btnStart">EMPEZAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">😤</div><h2>TE QUEDASTE SIN CLIENTES</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Tocá / clic en un piso para mandar la cabina ahí.<br>Teclado: <b>↑ ↓</b> (o W / S) cambian el piso destino · <b>0–9</b> van directo (0 = PB) · <b>P</b> pausa</div>
+</div>
+<script>
+(() => {
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  const B_TOP = 34, B_BOT = H - 12;            // edificio
+  const SH_X = 150, SH_W = 84;                  // hueco del ascensor
+  const Q_X = SH_X + SH_W + 32, Q_GAP = 30;     // fila de espera
+  const CAP = 6, SPEED = 3.1, MAX_Q = 7;
+  const BEST_KEY = "ascensor-neon-best";
+  const $ = id => document.getElementById(id);
+  const hScore = $("hScore"), hLevel = $("hLevel"), hLives = $("hLives"), hBest = $("hBest");
+  const ovStart = $("ovStart"), ovEnd = $("ovEnd"), endText = $("endText");
+  const DEST_COL = ["#27e8ff", "#ff2bd6", "#39ff9e", "#ff9838", "#8a4bff", "#4b7bff", "#ff4d5e", "#c6ff3b", "#ff7ad9"];
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  hBest.textContent = best;
+
+  // ---------- Audio ----------
+  let actx = null;
+  function audio() {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (actx && actx.state === "suspended") actx.resume();
+    return actx;
+  }
+  function tone(freq, dur, type = "square", vol = 0.08, slide = 0) {
+    const a = audio(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  const sfx = {
+    ding: () => { tone(1320, 0.18, "sine", 0.06); setTimeout(() => tone(1046, 0.3, "sine", 0.05), 120); },
+    go: () => tone(220, 0.08, "triangle", 0.04, 60),
+    coin: m => tone(700 + m * 70, 0.08, "triangle", 0.06),
+    combo: n => [660, 880, 1100, 1320].slice(0, n).forEach((f, i) => setTimeout(() => tone(f, 0.1, "triangle", 0.06), i * 60)),
+    board: () => tone(380, 0.05, "sine", 0.04),
+    vip: () => { tone(1200, 0.07, "sine", 0.07); setTimeout(() => tone(1800, 0.12, "sine", 0.06), 70); },
+    angry: () => { tone(160, 0.3, "sawtooth", 0.08, -80); tone(120, 0.3, "square", 0.05, -40); },
+    warn: () => tone(880, 0.05, "square", 0.03),
+    level: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.12, "triangle", 0.06), i * 70)),
+    rush: () => [440, 554, 440, 554].forEach((f, i) => setTimeout(() => tone(f, 0.12, "square", 0.045), i * 120)),
+    life: () => [784, 988, 1319].forEach((f, i) => setTimeout(() => tone(f, 0.12, "sine", 0.07), i * 80)),
+    over: () => [392, 330, 262, 196].forEach((f, i) => setTimeout(() => tone(f, 0.22, "triangle", 0.07), i * 140)),
+  };
+
+  // ---------- Estado ----------
+  let state = "menu", paused = false;
+  let score, level, lives, streak, delivered, levelDel, angryCount, bestCombo;
+  let floors, cabY, target, cabState, cabT, doorOpen, riders, queues, walkers;
+  let spawnT, rushT, rushOn, rushNext, rushMode;
+  let parts, texts, shake, flash, t, banner, bannerT;
+  const stars = [];
+  for (let i = 0; i < 50; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.3 + 0.3, tw: Math.random() * 6 });
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const ri = (a, b) => Math.floor(rand(a, b + 1));
+  const fh = () => (B_BOT - B_TOP) / floors;
+  const floorY = f => B_BOT - f * fh();          // piso (suelo) del nivel f
+  const fname = f => f === 0 ? "PB" : String(f);
+  const mult = () => Math.min(5, 1 + Math.floor(streak / 5));
+  const needFor = l => 8 + l * 2;
+
+  function reset() {
+    score = 0; level = 1; lives = 3; streak = 0; delivered = 0; levelDel = 0; angryCount = 0; bestCombo = 0;
+    floors = 6; cabY = 0; target = 0; cabState = "idle"; cabT = 0; doorOpen = 0;
+    riders = []; queues = []; for (let i = 0; i < 10; i++) queues.push([]);
+    walkers = []; parts = []; texts = []; shake = 0; flash = 0; t = 0;
+    spawnT = 1; rushT = 0; rushOn = false; rushNext = 30; rushMode = "up";
+    banner = ""; bannerT = 0;
+    for (let i = 0; i < 2; i++) spawn(true);
+    hud();
+  }
+  function hud() {
+    hScore.textContent = score; hLevel.textContent = level;
+    hLives.textContent = "❤".repeat(Math.max(0, lives)) || "–";
+    hBest.textContent = Math.max(best, score);
+  }
+  function say(txt, x, y, col = "#27e8ff", size = 16) { texts.push({ txt, x, y, col, size, life: 1.1 }); }
+  function burst(x, y, col, n = 12) {
+    for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, s = rand(40, 170); parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rand(.4, .8), col }); }
+  }
+  function showBanner(s) { banner = s; bannerT = 2.2; }
+
+  // ---------- Pasajeros ----------
+  function patienceBase() { return Math.max(9, 23 - level * 1.3); }
+  function spawn(easy) {
+    let from, dest;
+    if (rushOn && rushMode === "up") { from = 0; dest = ri(1, floors - 1); }
+    else if (rushOn && rushMode === "down") { from = ri(1, floors - 1); dest = 0; }
+    else {
+      from = Math.random() < 0.4 ? 0 : ri(1, floors - 1);
+      if (from === 0) dest = ri(1, floors - 1);
+      else dest = Math.random() < 0.45 ? 0 : (() => { let d; do d = ri(1, floors - 1); while (d === from); return d; })();
+    }
+    if (queues[from].length >= MAX_Q) return;
+    const vip = !easy && level >= 2 && Math.random() < 0.1 + level * 0.01;
+    const pm = patienceBase() * (vip ? 0.65 : 1) * (easy ? 1.3 : 1) * rand(0.9, 1.15);
+    queues[from].push({ from, dest, vip, pat: pm, patMax: pm, x: W + 20, bob: Math.random() * 6, warned: false });
+  }
+
+  function arrive() {
+    const f = Math.round(cabY);
+    // bajan
+    const out = riders.filter(p => p.dest === f);
+    riders = riders.filter(p => p.dest !== f);
+    let gained = 0;
+    out.forEach((p, i) => {
+      streak++; delivered++; levelDel++;
+      const frac = Math.max(0, p.pat / p.patMax);
+      const pts = Math.round((10 + 10 * frac) * (p.vip ? 3 : 1) * mult());
+      gained += pts;
+      walkers.push({ x: SH_X + 10 - i * 4, y: floorY(f), col: DEST_COL[p.dest], vip: p.vip, dir: -1, life: 1.6, angry: false, dest: p.dest });
+      if (p.vip) sfx.vip(); else setTimeout(() => sfx.coin(i), i * 70);
+    });
+    if (out.length) {
+      let bonus = 0;
+      if (out.length >= 2) {
+        bonus = (out.length - 1) * 10 * out.length;
+        const names = ["", "", "DOBLE", "TRIPLE", "CUÁDRUPLE", "QUÍNTUPLE", "¡SÉXTUPLE!"];
+        say(names[out.length] + " +" + bonus, SH_X + SH_W / 2, floorY(f) - fh() - 4, "#ff2bd6", 18);
+        sfx.combo(out.length);
+        bestCombo = Math.max(bestCombo, out.length);
+      }
+      score += gained + bonus;
+      say("+" + gained + (mult() > 1 ? "  x" + mult() : ""), 80, floorY(f) - fh() * 0.5, out.some(p => p.vip) ? "#ffd23b" : "#39ff9e", 17);
+      burst(SH_X, floorY(f) - 16, "#39ff9e", 10 + out.length * 3);
+    }
+    // suben
+    const q = queues[f];
+    let n = 0;
+    while (q.length && riders.length < CAP) {
+      const p = q.shift(); riders.push(p); n++;
+    }
+    if (n) sfx.board();
+    if (q.length && riders.length >= CAP) say("¡LLENO!", Q_X + 40, floorY(f) - fh() * 0.6, "#ff9838", 14);
+    checkLevel();
+    hud();
+  }
+
+  function checkLevel() {
+    if (levelDel < needFor(level)) return;
+    levelDel = 0; level++;
+    floors = Math.min(9, 5 + level);
+    sfx.level(); flash = 0.5;
+    showBanner("NIVEL " + level + (floors > 6 ? "  ·  " + floors + " PISOS" : ""));
+    if (level % 3 === 0 && lives < 5) { lives++; sfx.life(); say("+1 ❤", W / 2, H / 2 + 30, "#ff2bd6", 22); }
+    hud();
+  }
+
+  function loseLife(p, x, y) {
+    lives--; streak = 0; angryCount++; shake = 0.35; flash = 0.25;
+    sfx.angry();
+    say("¡SE FUE ENOJADO!", Math.min(W - 90, Math.max(90, x)), y - 30, "#ff4d5e", 15);
+    burst(x, y - 14, "#ff4d5e", 14);
+    hud();
+    if (lives <= 0) gameOver();
+  }
+
+  // ---------- Bucle ----------
+  function update(dt) {
+    if (!parts) return;
+    t += dt;
+    if (bannerT > 0) bannerT -= dt;
+    shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt);
+    parts = parts.filter(p => (p.life -= dt) > 0); parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * dt; });
+    texts = texts.filter(x => (x.life -= dt) > 0); texts.forEach(x => x.y -= 28 * dt);
+    walkers = walkers.filter(w => (w.life -= dt) > 0); walkers.forEach(w => w.x += w.dir * 90 * dt);
+    if (state !== "play" || paused) return;
+
+    // hora pico
+    if (level >= 3) {
+      if (!rushOn && (rushNext -= dt) <= 0) {
+        rushOn = true; rushT = 7 + Math.min(5, level - 3);
+        rushMode = Math.random() < 0.5 ? "up" : "down";
+        showBanner(rushMode === "up" ? "⏰ HORA PICO · TODOS SUBEN" : "⏰ HORA PICO · TODOS A PB");
+        sfx.rush();
+      } else if (rushOn && (rushT -= dt) <= 0) { rushOn = false; rushNext = rand(28, 38); }
+    }
+    // aparición
+    spawnT -= dt;
+    if (spawnT <= 0) {
+      spawn(false);
+      const base = Math.max(0.95, 3.3 - level * 0.27);
+      spawnT = (rushOn ? base * 0.4 : base) * rand(0.75, 1.25);
+    }
+
+    // cabina
+    if (cabState === "idle") {
+      if (Math.abs(target - cabY) > 0.001) { cabState = "move"; sfx.go(); }
+      else {
+        const f = Math.round(cabY);
+        if (queues[f].length && riders.length < CAP) { cabState = "open"; cabT = 0.28; }
+      }
+    }
+    if (cabState === "move") {
+      doorOpen = Math.max(0, doorOpen - dt * 6);
+      if (doorOpen <= 0) {
+        const d = target - cabY, step = SPEED * dt * Math.min(1, 0.35 + Math.abs(d) * 1.4);
+        if (Math.abs(d) <= step) { cabY = target; cabState = "open"; cabT = 0.25; sfx.ding(); }
+        else cabY += Math.sign(d) * step;
+      }
+    } else if (cabState === "open") {
+      doorOpen = Math.min(1, doorOpen + dt * 5);
+      if ((cabT -= dt) <= 0) { arrive(); cabState = "dwell"; cabT = 0.3; }
+    } else if (cabState === "dwell") {
+      if ((cabT -= dt) <= 0) cabState = "idle";
+    } else if (cabState === "idle") {
+      if (Math.abs(target - cabY) <= 0.001) doorOpen = Math.min(1, doorOpen + dt * 4);
+    }
+
+    // paciencia
+    for (let f = 0; f < floors; f++) {
+      const q = queues[f];
+      for (let i = q.length - 1; i >= 0; i--) {
+        const p = q[i];
+        p.pat -= dt * (rushOn ? 0.85 : 1);
+        if (!p.warned && p.pat < p.patMax * 0.25) { p.warned = true; sfx.warn(); }
+        if (p.pat <= 0) {
+          q.splice(i, 1);
+          const x = Q_X + i * Q_GAP;
+          walkers.push({ x, y: floorY(f), col: DEST_COL[p.dest], vip: p.vip, dir: 1, life: 1.4, angry: true, dest: p.dest });
+          loseLife(p, x, floorY(f));
+          if (state !== "play") return;
+        }
+      }
+      q.forEach((p, i) => { const tx = Q_X + i * Q_GAP; p.x += (tx - p.x) * Math.min(1, dt * 6); });
+    }
+    for (let i = riders.length - 1; i >= 0; i--) {
+      const p = riders[i];
+      p.pat -= dt * 0.35;
+      if (p.pat <= 0) {
+        riders.splice(i, 1);
+        loseLife(p, SH_X + SH_W / 2, floorY(cabY));
+        if (state !== "play") return;
+      }
+    }
+  }
+
+  // ---------- Dibujo ----------
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+  function person(x, y, col, dest, vip, frac, scale = 1, alpha = 1, angry = false) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.scale(scale, scale);
+    const c = angry ? "#ff4d5e" : col;
+    ctx.shadowColor = c; ctx.shadowBlur = 10;
+    ctx.fillStyle = c;
+    rr(-7, -22, 14, 16, 5); ctx.fill();                   // cuerpo
+    ctx.fillRect(-6, -7, 4, 7); ctx.fillRect(2, -7, 4, 7);  // piernas
+    ctx.beginPath(); ctx.arc(0, -29, 6.5, 0, Math.PI * 2); ctx.fill(); // cabeza
+    ctx.shadowBlur = 0;
+    if (frac !== null) {                                     // anillo de paciencia
+      const pc = frac > 0.5 ? "#39ff9e" : frac > 0.25 ? "#ffd23b" : "#ff4d5e";
+      ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, -29, 10, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = pc; ctx.beginPath(); ctx.arc(0, -29, 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, frac)); ctx.stroke();
+    }
+    ctx.fillStyle = "#050813"; ctx.font = "bold 9px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(angry ? "!" : fname(dest), 0, -28.5);
+    if (vip) { ctx.fillStyle = "#ffd23b"; ctx.font = "bold 11px system-ui"; ctx.fillText("★", 0, -44); }
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate(rand(-5, 5) * shake * 2, rand(-5, 5) * shake * 2);
+    ctx.fillStyle = "#050813"; ctx.fillRect(-10, -10, W + 20, H + 20);
+    stars.forEach(s => { ctx.globalAlpha = 0.25 + 0.25 * Math.sin(t * 2 + s.tw); ctx.fillStyle = "#9fd8ff"; ctx.fillRect(s.x, s.y, s.r, s.r); });
+    ctx.globalAlpha = 1;
+    if (state === "menu" && !floors) { ctx.restore(); return; }
+
+    const h = fh();
+    // pisos
+    for (let f = 0; f < floors; f++) {
+      const y = floorY(f);
+      const isT = f === target && state === "play";
+      ctx.fillStyle = isT ? "rgba(39,232,255,.07)" : f % 2 ? "rgba(138,75,255,.04)" : "rgba(39,232,255,.025)";
+      ctx.fillRect(0, y - h, W, h);
+      ctx.strokeStyle = "rgba(138,75,255,.5)"; ctx.lineWidth = 2; ctx.shadowColor = "#8a4bff"; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.shadowBlur = 0;
+      // cartel del piso
+      const waiting = queues[f].length;
+      ctx.fillStyle = DEST_COL[f]; ctx.globalAlpha = 0.9;
+      ctx.font = "900 " + Math.min(26, h * 0.42) + "px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.shadowColor = DEST_COL[f]; ctx.shadowBlur = 8;
+      ctx.fillText(fname(f), 12, y - h / 2); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+      if (waiting) {                                          // botón de llamada encendido
+        const urgent = queues[f].some(p => p.pat < p.patMax * 0.25);
+        ctx.fillStyle = urgent && Math.sin(t * 14) > 0 ? "#ff4d5e" : "#ffd23b";
+        ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(SH_X + SH_W + 9, y - h / 2, 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+      }
+      if (isT) {
+        ctx.fillStyle = "#27e8ff"; ctx.beginPath();
+        ctx.moveTo(SH_X - 8, y - h / 2); ctx.lineTo(SH_X - 18, y - h / 2 - 7); ctx.lineTo(SH_X - 18, y - h / 2 + 7); ctx.fill();
+      }
+      // fila de espera
+      queues[f].forEach(p => person(p.x, y - 2 + Math.sin(t * 3 + p.bob) * 0.6, DEST_COL[p.dest], p.dest, p.vip, p.pat / p.patMax, Math.min(1, h / 68)));
+    }
+    // techo
+    ctx.strokeStyle = "rgba(255,43,214,.6)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, B_TOP); ctx.lineTo(W, B_TOP); ctx.stroke();
+
+    // hueco
+    ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(SH_X, B_TOP, SH_W, B_BOT - B_TOP);
+    ctx.strokeStyle = "rgba(39,232,255,.35)"; ctx.lineWidth = 1.5; ctx.strokeRect(SH_X, B_TOP, SH_W, B_BOT - B_TOP);
+    ctx.strokeStyle = "rgba(127,166,200,.25)"; ctx.beginPath(); ctx.moveTo(SH_X + SH_W / 2, B_TOP); ctx.lineTo(SH_X + SH_W / 2, floorY(cabY) - h + 4); ctx.stroke();
+
+    // cabina
+    const cy0 = floorY(cabY) - h + 4, ch = h - 6, cx0 = SH_X + 4, cw = SH_W - 8;
+    ctx.fillStyle = "rgba(20,30,64,.95)"; ctx.shadowColor = "#27e8ff"; ctx.shadowBlur = 16;
+    rr(cx0, cy0, cw, ch, 6); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = riders.length >= CAP ? "#ff9838" : "#27e8ff"; ctx.lineWidth = 2; rr(cx0, cy0, cw, ch, 6); ctx.stroke();
+    // pasajeros dentro (3 x 2)
+    const sc = Math.min(0.8, h / 85);
+    riders.forEach((p, i) => {
+      const col = i % 3, row = Math.floor(i / 3);
+      const px = cx0 + 14 + col * ((cw - 28) / 2), py = cy0 + ch - 4 - row * (ch * 0.42);
+      person(px, py, DEST_COL[p.dest], p.dest, p.vip, p.pat / p.patMax, sc * (row ? 0.85 : 1), row ? 0.8 : 1);
+    });
+    // puertas
+    const dw = (cw / 2) * (1 - doorOpen);
+    if (dw > 0.5) {
+      ctx.fillStyle = "rgba(39,232,255,.22)";
+      ctx.fillRect(cx0, cy0, dw, ch); ctx.fillRect(cx0 + cw - dw, cy0, dw, ch);
+      ctx.strokeStyle = "rgba(39,232,255,.6)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx0 + dw, cy0); ctx.lineTo(cx0 + dw, cy0 + ch); ctx.moveTo(cx0 + cw - dw, cy0); ctx.lineTo(cx0 + cw - dw, cy0 + ch); ctx.stroke();
+    }
+    // display
+    ctx.fillStyle = "#050813"; rr(cx0 + cw / 2 - 24, cy0 - 13, 48, 13, 4); ctx.fill();
+    ctx.fillStyle = "#ff2bd6"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const arrow = cabState === "move" ? (target > cabY ? "▲" : "▼") : "•";
+    ctx.fillText(arrow + " " + fname(Math.round(cabY)) + "  " + riders.length + "/" + CAP, cx0 + cw / 2, cy0 - 6.5);
+
+    // los que se van
+    walkers.forEach(w => person(w.x, w.y - 2, w.col, w.dest, w.vip, null, Math.min(1, h / 68), Math.min(1, w.life), w.angry));
+    parts.forEach(p => { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = p.col; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); });
+    ctx.globalAlpha = 1;
+    texts.forEach(x => {
+      ctx.globalAlpha = Math.min(1, x.life * 1.6); ctx.fillStyle = x.col; ctx.shadowColor = x.col; ctx.shadowBlur = 10;
+      ctx.font = "900 " + x.size + "px system-ui"; ctx.textAlign = "center"; ctx.fillText(x.txt, x.x, x.y);
+    });
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+    // barra superior: progreso de nivel y racha
+    if (state !== "menu") {
+      const pr = levelDel / needFor(level);
+      ctx.fillStyle = "rgba(255,255,255,.08)"; rr(12, 10, 200, 10, 5); ctx.fill();
+      ctx.fillStyle = "#39ff9e"; rr(12, 10, Math.max(10, 200 * pr), 10, 5); ctx.fill();
+      ctx.fillStyle = "#7fa6c8"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(levelDel + "/" + needFor(level), 218, 15);
+      ctx.textAlign = "right"; ctx.font = "900 13px system-ui";
+      ctx.fillStyle = mult() > 1 ? "#ff2bd6" : "#7fa6c8";
+      ctx.fillText("RACHA " + streak + "  x" + mult(), W - 12, 15);
+      if (rushOn) { ctx.fillStyle = Math.sin(t * 10) > 0 ? "#ffd23b" : "#ff9838"; ctx.textAlign = "center"; ctx.fillText("⏰ " + Math.ceil(rushT), 300, 15); }
+    }
+    if (bannerT > 0) {
+      ctx.globalAlpha = Math.min(1, bannerT * 2);
+      ctx.fillStyle = "rgba(5,8,19,.75)"; ctx.fillRect(0, H / 2 - 30, W, 60);
+      ctx.fillStyle = "#ffd23b"; ctx.shadowColor = "#ffd23b"; ctx.shadowBlur = 14;
+      ctx.font = "900 22px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(banner, W / 2, H / 2);
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    }
+    if (flash > 0) { ctx.fillStyle = "rgba(255,43,214," + flash * 0.25 + ")"; ctx.fillRect(0, 0, W, H); }
+    if (paused && state === "play") {
+      ctx.fillStyle = "rgba(5,7,15,.7)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#27e8ff"; ctx.font = "900 34px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("PAUSA", W / 2, H / 2); ctx.font = "13px system-ui"; ctx.fillStyle = "#7fa6c8"; ctx.fillText("Tocá o apretá P para seguir", W / 2, H / 2 + 30);
+    }
+    ctx.restore();
+  }
+
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    update(dt); draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Control ----------
+  function setTarget(f) {
+    if (state !== "play" || paused) return;
+    f = Math.max(0, Math.min(floors - 1, f));
+    if (f !== target) { target = f; tone(300 + f * 40, 0.04, "sine", 0.03); }
+  }
+  function start() {
+    audio(); reset(); state = "play"; paused = false;
+    ovStart.classList.add("hidden"); ovEnd.classList.add("hidden");
+    showBanner("¡A TRABAJAR!");
+  }
+  function gameOver() {
+    state = "over"; sfx.over();
+    const rec = score > best;
+    if (rec) { best = score; try { localStorage.setItem(BEST_KEY, best); } catch (e) {} }
+    endText.innerHTML = `Hiciste <b style="color:#27e8ff">${score}</b> puntos y llegaste al nivel <b style="color:#ff2bd6">${level}</b>.<br>` +
+      `Llevaste a <b>${delivered}</b> pasajeros · mejor combo: <b>${bestCombo || 1}</b> en una parada.<br>` +
+      (rec ? `<b style="color:#ffd23b">¡NUEVO RÉCORD!</b>` : `Récord: <b style="color:#ffd23b">${best}</b>`);
+    setTimeout(() => ovEnd.classList.remove("hidden"), 700);
+    hud();
+  }
+  $("btnStart").onclick = start; $("btnAgain").onclick = start;
+
+  cv.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    if (state !== "play") return;
+    if (paused) { paused = false; return; }
+    const r = cv.getBoundingClientRect();
+    const y = (e.clientY - r.top) * (H / r.height);
+    if (y < B_TOP - 6) return;
+    setTarget(Math.floor((B_BOT - y) / fh()));
+  });
+  window.addEventListener("keydown", e => {
+    const k = e.key;
+    if (state !== "play") {
+      if ((k === " " || k === "Enter") && (state === "menu" || !ovEnd.classList.contains("hidden"))) { e.preventDefault(); start(); }
+      return;
+    }
+    if (k === "p" || k === "P" || k === "Escape") { paused = !paused; return; }
+    if (paused) return;
+    if (k === "ArrowUp" || k === "w" || k === "W") { e.preventDefault(); setTarget(target + 1); }
+    else if (k === "ArrowDown" || k === "s" || k === "S") { e.preventDefault(); setTarget(target - 1); }
+    else if (/^[0-9]$/.test(k)) { const f = +k; if (f < floors) setTarget(f); }
+  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && state === "play") paused = true; });
+
+  floors = 0;
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
