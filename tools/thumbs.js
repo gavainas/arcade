@@ -57,6 +57,9 @@ const OVERRIDES = {
   "dagas-neon": { steps: ["#btnStart", { canvas: [0.5, 0.02] }, { canvas: [0.5, 0.02] }, { canvas: [0.5, 0.02] }], wait: 2000 },
   "espiral-neon": { steps: ["#btnStart"], wait: 1600 },
   "puente-neon": { steps: ["#btnStart"], wait: 900 },
+  // Un toque en el borde de arriba del canvas (fuera de la grilla, no elige color) para que
+  // Playwright scrollee al tope del tablero y la miniatura muestre la mancha de la esquina.
+  "inundacion-neon": { steps: ["#btnStart", { canvas: [0.5, 0.01] }], wait: 1200 },
   "bombero-neon": { steps: ["#btnStart"], wait: 9000 },
   "pastor-neon": { steps: ["#btnStart"], wait: 1500 },
   "vias-neon": { steps: ["#btnStart"], wait: 4000 },

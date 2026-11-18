@@ -893,6 +893,13 @@
       desc: "Mantené apretado para estirar un puente de luz y soltalo para que caiga sobre el próximo pilar: si queda corto o largo, al vacío. Clavarlo en el centro rosa es PERFECTO y arma racha hasta x5. Mientras cruzás, saltá para juntar estrellas y esquivar chispas; los pilares se achican, se alejan y desde el nivel 3 se mueven. Pilares dorados dan vida extra. Récord guardado.",
       controles: "Mantené apretado (o espacio / ↑) para estirar y soltá para tirar el puente; tocá mientras cruzás para saltar. P pausa",
       fecha: "2026-11-16", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "inundacion-neon", titulo: "Inundación Neón", archivo: "inundacion-neon.html",
+      emoji: "🌊", categoria: "logica", tags: ["inundar", "colores", "flood", "mancha", "movidas", "estrategia", "un jugador"],
+      desc: "Tu mancha arranca en la esquina: elegí un color y se tiñe entera, absorbiendo las celdas vecinas de ese color. Cubrí todo el tablero antes de quedarte sin movidas. Estrellas que suman puntos, rayos que dan una movida extra, piedras desde el nivel 5 y OLAS cuando absorbés 12+ celdas de una. Terminar con la mínima cantidad de movidas es PERFECTO, con racha hasta x5. Récord guardado.",
+      controles: "Tocá un color de la paleta o una celda del tablero. Teclado: 1-6 elegís color, H pista",
+      fecha: "2026-11-18", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>INUNDACIÓN NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(24px,6.6vw,38px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:6px;margin:4px 0 10px;font-size:10px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 2px;min-width:0;}
+  .hud .box b{display:block;font-size:17px;font-weight:900;color:var(--cyan);margin-top:2px;white-space:nowrap;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .hud .box.m b{color:#fff;} .hud .box.m.low b{color:#ff4d5e;animation:blink .6s steps(2) infinite;}
+  @keyframes blink{50%{opacity:.35;}}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:manipulation;user-select:none;-webkit-user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;}
+  .palette{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:nowrap;}
+  .cbtn{position:relative;flex:1;max-width:72px;aspect-ratio:1;border-radius:16px;border:2px solid rgba(255,255,255,.15);cursor:pointer;
+    font-weight:900;font-size:13px;color:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;
+    transition:transform .12s,box-shadow .2s,opacity .2s;}
+  .cbtn:hover{transform:translateY(-3px);}
+  .cbtn:active{transform:scale(.92);}
+  .cbtn.cur{opacity:.25;cursor:not-allowed;transform:none;}
+  .cbtn.hint{animation:hintPulse .5s ease-in-out infinite alternate;}
+  @keyframes hintPulse{from{transform:scale(1);}to{transform:scale(1.12);box-shadow:0 0 30px #fff;}}
+  .cbtn.hidden{display:none;}
+  .tools{display:flex;gap:8px;justify-content:center;margin-top:10px;}
+  .tbtn{cursor:pointer;border:1px solid rgba(255,210,59,.5);background:rgba(255,210,59,.08);color:var(--gold);border-radius:999px;padding:8px 16px;font-size:12.5px;font-weight:800;letter-spacing:1px;}
+  .tbtn:disabled{opacity:.3;cursor:not-allowed;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:370px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">INUNDACIÓN NEÓN</div><div class="sub">TEÑÍ TODO EL TABLERO</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">NIVEL<b id="hLevel">1</b></div>
+    <div class="box m" id="boxMoves">MOVIDAS<b id="hMoves">0</b></div>
+    <div class="box">VIDAS<b id="hLives">❤❤❤</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="cv" width="480" height="480"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🌊</div><h2>INUNDACIÓN NEÓN</h2>
+      <p>Tu mancha arranca en la <b style="color:#27e8ff">esquina de arriba a la izquierda</b>. Elegí un color: toda tu mancha se tiñe y <b style="color:#27e8ff">absorbe las celdas vecinas</b> de ese color. Cubrí el tablero entero antes de quedarte sin movidas.<br>
+      Las <b style="color:#ffd23b">★ estrellas</b> suman puntos, los <b style="color:#fff">⚡ rayos</b> te dan una movida extra y desde el nivel 5 hay <b style="color:#9aa">piedras</b> que no se tiñen. Absorber 12+ celdas de una es una <b style="color:#ff2bd6">OLA</b>.</p>
+      <button class="btn" id="btnStart">EMPEZAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🏝️</div><h2>SE SECÓ LA MAREA</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="palette" id="palette"></div>
+  <div class="tools">
+    <button class="tbtn" id="btnHint">💡 PISTA (<span id="hHints">3</span>)</button>
+  </div>
+  <div class="hint">Tocá un color (o una celda del tablero) para inundar · pasá el mouse por un color para ver qué absorbe.<br>Teclado: <b>1</b>–<b>6</b> elegís color · <b>H</b> pista</div>
+</div>
+<script>
+(() => {
+  "use strict";
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height, PAD = 14;
+  const BEST_KEY = "inundacion-neon-best";
+  const COLORS = ["#27e8ff", "#ff2bd6", "#ffd23b", "#39ff9e", "#8a4bff", "#ff9838"];
+  const NAMES = ["Celeste", "Rosa", "Amarillo", "Verde", "Violeta", "Naranja"];
+  const STONE = -1;
+  const WAVE_MIN = 12;
+  const $ = id => document.getElementById(id);
+  const hScore = $("hScore"), hLevel = $("hLevel"), hMoves = $("hMoves"), hLives = $("hLives"), hBest = $("hBest"), hHints = $("hHints");
+  const boxMoves = $("boxMoves"), palette = $("palette"), btnHint = $("btnHint");
+  const ovStart = $("ovStart"), ovEnd = $("ovEnd"), endText = $("endText");
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  hBest.textContent = best;
+
+  // ---------- Audio ----------
+  let actx = null;
+  function audio() {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (actx && actx.state === "suspended") actx.resume();
+    return actx;
+  }
+  function tone(freq, dur, type = "sine", vol = 0.12, delay = 0, slide = 0) {
+    const a = audio(); if (!a) return;
+    const t = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  const sfx = {
+    pick(n) { tone(260 + Math.min(n, 30) * 14, 0.18, "triangle", 0.1, 0, 120); for (let i = 0; i < Math.min(n, 8); i++) tone(520 + i * 60, 0.06, "sine", 0.04, 0.03 * i); },
+    none() { tone(160, 0.15, "square", 0.05, 0, -40); },
+    star() { tone(1046, 0.1, "sine", 0.1); tone(1568, 0.14, "sine", 0.08, 0.07); },
+    bolt() { tone(700, 0.08, "sawtooth", 0.06, 0, 600); tone(1400, 0.1, "sine", 0.07, 0.06); },
+    wave() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.16, "triangle", 0.08, i * 0.06)); },
+    win() { [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.22, "triangle", 0.1, i * 0.08)); },
+    fail() { [392, 330, 262, 196].forEach((f, i) => tone(f, 0.25, "sawtooth", 0.06, i * 0.12)); },
+    hint() { tone(880, 0.1, "sine", 0.08); tone(1320, 0.12, "sine", 0.06, 0.08); }
+  };
+
+  // ---------- Estado ----------
+  let N = 8, K = 4;
+  let grid = [], marks = [];       // marks: 0 nada, 1 estrella, 2 rayo
+  let owned = [];                  // bool por celda
+  let anim = [];                   // {t0, from} por celda
+  let movesLeft = 0, movesUsed = 0, par = 0;
+  let score = 0, level = 1, lives = 3, hints = 3, streak = 0;
+  let state = "menu";              // menu | play | won | lost | over
+  let hover = -1, hintColor = -1;
+  let floats = [], particles = [];
+  let banner = null;               // {text, sub, color, t}
+  let shake = 0, now = 0, stateT = 0;
+
+  const idx = (x, y) => y * N + x;
+  function neighbors(i) {
+    const x = i % N, y = (i / N) | 0, r = [];
+    if (x > 0) r.push(i - 1); if (x < N - 1) r.push(i + 1);
+    if (y > 0) r.push(i - N); if (y < N - 1) r.push(i + N);
+    return r;
+  }
+
+  // Devuelve el set (array bool) de la región conectada desde 0 con el color actual de 0.
+  function regionOf(g) {
+    const c = g[0], seen = new Uint8Array(N * N), st = [0]; seen[0] = 1;
+    while (st.length) { const i = st.pop(); for (const j of neighbors(i)) if (!seen[j] && g[j] === c) { seen[j] = 1; st.push(j); } }
+    return seen;
+  }
+  // Simula elegir el color c sobre g (in place); devuelve el tamaño de la región.
+  function applyColor(g, c) {
+    const reg = regionOf(g);
+    for (let i = 0; i < g.length; i++) if (reg[i]) g[i] = c;
+    const r2 = regionOf(g); let n = 0;
+    for (let i = 0; i < r2.length; i++) n += r2[i];
+    return n;
+  }
+  function regionSize(g) { const r = regionOf(g); let n = 0; for (const v of r) n += v; return n; }
+  function playable(g) { let n = 0; for (const v of g) if (v !== STONE) n++; return n; }
+
+  // Greedy con dos pasos de anticipación (para fijar el límite y para las pistas).
+  function bestColor(g) {
+    const cur = g[0], base = regionSize(g);
+    let bestC = -1, bestV = -1;
+    for (let c = 0; c < K; c++) {
+      if (c === cur) continue;
+      const g1 = g.slice(); const s1 = applyColor(g1, c);
+      if (s1 === base) continue;
+      let v = s1 * 1000;
+      let la = s1;
+      for (let d = 0; d < K; d++) {
+        if (d === c) continue;
+        const g2 = g1.slice(); la = Math.max(la, applyColor(g2, d));
+      }
+      v = la * 1000 + s1;
+      // bonus si elimina un color del tablero (fuera de la mancha)
+      let rest = 0; const r = regionOf(g1);
+      for (let i = 0; i < g1.length; i++) if (!r[i] && g1[i] === c) rest++;
+      if (rest === 0) v += 50000;
+      if (v > bestV) { bestV = v; bestC = c; }
+    }
+    return bestC;
+  }
+  function solveGreedy(g0) {
+    const g = g0.slice(), total = playable(g); let moves = 0;
+    while (regionSize(g) < total && moves < 200) { const c = bestColor(g); if (c < 0) break; applyColor(g, c); moves++; }
+    return moves;
+  }
+
+  function config(lv) {
+    const sizes = [8, 9, 10, 11, 12, 12, 13, 13, 14];
+    const n = sizes[Math.min(lv - 1, sizes.length - 1)];
+    const k = lv <= 2 ? 4 : lv <= 4 ? 5 : 6;
+    const stones = lv < 5 ? 0 : Math.min(4 + (lv - 5) * 2, 16);
+    const stars = Math.min(2 + Math.floor(lv / 2), 6);
+    const bolts = lv < 2 ? 0 : Math.min(1 + Math.floor((lv - 2) / 3), 3);
+    const slack = lv <= 2 ? 3 : lv <= 5 ? 2 : 1;
+    return { n, k, stones, stars, bolts, slack };
+  }
+
+  function connectedNonStone(g) {
+    const total = playable(g), seen = new Uint8Array(N * N), st = [0]; seen[0] = 1; let n = 1;
+    while (st.length) { const i = st.pop(); for (const j of neighbors(i)) if (!seen[j] && g[j] !== STONE) { seen[j] = 1; n++; st.push(j); } }
+    return n === total;
+  }
+
+  function newBoard() {
+    const cf = config(level);
+    N = cf.n; K = cf.k;
+    let g;
+    for (let tries = 0; tries < 200; tries++) {
+      g = []; for (let i = 0; i < N * N; i++) g.push((Math.random() * K) | 0);
+      let placed = 0, guard = 0;
+      while (placed < cf.stones && guard++ < 500) {
+        // piedras en parejas simétricas para que quede lindo
+        const x = 1 + ((Math.random() * (N - 2)) | 0), y = 1 + ((Math.random() * (N - 2)) | 0);
+        const a = idx(x, y), b = idx(N - 1 - x, N - 1 - y);
+        if (a < 3 || g[a] === STONE) continue;
+        g[a] = STONE; placed++;
+        if (placed < cf.stones && b !== a && g[b] !== STONE && b > 2) { g[b] = STONE; placed++; }
+      }
+      if (connectedNonStone(g)) break;
+    }
+    grid = g;
+    marks = new Array(N * N).fill(0);
+    const free = []; for (let i = 0; i < N * N; i++) if (grid[i] !== STONE && i > N + 1) free.push(i);
+    for (let i = free.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [free[i], free[j]] = [free[j], free[i]]; }
+    let p = 0;
+    for (let s = 0; s < cf.stars && p < free.length; s++) marks[free[p++]] = 1;
+    // rayos lejos del origen
+    const far = free.slice(p).filter(i => (i % N) + ((i / N) | 0) > N * 0.7);
+    for (let s = 0; s < cf.bolts && s < far.length; s++) marks[far[s]] = 2;
+    par = solveGreedy(grid);
+    movesLeft = par + cf.slack;
+    movesUsed = 0;
+    owned = Array.from(regionOf(grid));
+    collectMarks(owned, true);
+    anim = grid.map((c, i) => ({ t0: now + (i % N + ((i / N) | 0)) * 22, from: -2 }));
+    hintColor = -1; hover = -1;
+    buildPalette();
+    updateHud();
+  }
+
+  function collectMarks(reg, silent) {
+    let stars = 0, bolts = 0;
+    for (let i = 0; i < reg.length; i++) {
+      if (!reg[i] || !marks[i]) continue;
+      if (marks[i] === 1) stars++; else bolts++;
+      const cx = cellX(i) + cellS() / 2, cy = cellY(i) + cellS() / 2;
+      if (!silent) {
+        if (marks[i] === 1) { addScore(50); floats.push({ x: cx, y: cy, text: "+50 ★", color: "#ffd23b", t: now }); burst(cx, cy, "#ffd23b", 14); }
+        else { movesLeft++; floats.push({ x: cx, y: cy, text: "+1 MOVIDA", color: "#fff", t: now }); burst(cx, cy, "#ffffff", 14); }
+      }
+      marks[i] = 0;
+    }
+    if (!silent) { if (stars) sfx.star(); if (bolts) setTimeout(() => sfx.bolt(), 90); }
+  }
+
+  // ---------- Geometría ----------
+  function cellS() { return (W - PAD * 2) / N; }
+  function cellX(i) { return PAD + (i % N) * cellS(); }
+  function cellY(i) { return PAD + ((i / N) | 0) * cellS(); }
+
+  // ---------- Juego ----------
+  function addScore(n) { score += n; hScore.textContent = score; }
+
+  function choose(c) {
+    if (state !== "play" || c < 0 || c >= K) return;
+    if (c === grid[0]) { sfx.none(); return; }
+    audio();
+    const before = regionOf(grid);
+    let beforeN = 0; for (const v of before) beforeN += v;
+    // distancias BFS desde el origen sobre la nueva región para la ola
+    const old = grid.slice();
+    for (let i = 0; i < grid.length; i++) if (before[i]) grid[i] = c;
+    const reg = regionOf(grid);
+    let afterN = 0; for (const v of reg) afterN += v;
+    const dist = new Int16Array(N * N).fill(-1); dist[0] = 0; const q = [0];
+    for (let h = 0; h < q.length; h++) { const i = q[h]; for (const j of neighbors(i)) if (reg[j] && dist[j] < 0) { dist[j] = dist[i] + 1; q.push(j); } }
+    for (let i = 0; i < grid.length; i++) if (reg[i]) anim[i] = { t0: now + dist[i] * 18, from: old[i], fresh: !before[i] };
+    owned = Array.from(reg);
+    movesLeft--; movesUsed++;
+    hintColor = -1;
+    const gained = afterN - beforeN;
+    addScore(gained * 2);
+    if (gained > 0) sfx.pick(gained); else sfx.none();
+    if (gained >= WAVE_MIN) {
+      const bonus = gained * 3;
+      addScore(bonus);
+      banner = { text: "¡OLA!", sub: "+" + bonus + " · " + gained + " celdas", color: "#ff2bd6", t: now };
+      setTimeout(() => sfx.wave(), 120);
+      shake = 6;
+    }
+    collectMarks(reg, false);
+    updateHud();
+    if (afterN >= playable(grid)) winLevel();
+    else if (movesLeft <= 0) loseLevel();
+  }
+
+  function winLevel() {
+    state = "won"; stateT = now;
+    const left = movesLeft;
+    const perfect = movesUsed <= par;
+    if (left >= 1) streak = Math.min(streak + 1, 5); else streak = 0;
+    const mult = Math.max(1, streak);
+    const pts = (100 * level + left * 40 + (perfect ? 150 : 0)) * mult;
+    addScore(pts);
+    banner = { text: perfect ? "¡PERFECTO!" : "¡TABLERO LLENO!", sub: "+" + pts + (mult > 1 ? "  (racha x" + mult + ")" : "") + (left ? "  · sobraron " + left : ""), color: perfect ? "#ffd23b" : "#39ff9e", t: now };
+    sfx.win();
+    for (let k = 0; k < 6; k++) setTimeout(() => burst(PAD + Math.random() * (W - PAD * 2), PAD + Math.random() * (H - PAD * 2), COLORS[(Math.random() * K) | 0], 18), k * 120);
+    if (level % 3 === 0 && hints < 5) { hints++; floats.push({ x: W / 2, y: H / 2 + 60, text: "+1 PISTA 💡", color: "#ffd23b", t: now }); }
+    updateHud();
+  }
+  function loseLevel() {
+    state = "lost"; stateT = now; streak = 0;
+    lives--;
+    sfx.fail(); shake = 10;
+    banner = lives > 0
+      ? { text: "SIN MOVIDAS", sub: "perdés una vida · nuevo tablero", color: "#ff4d5e", t: now }
+      : { text: "SIN MOVIDAS", sub: "", color: "#ff4d5e", t: now };
+    updateHud();
+  }
+  function advance() {
+    if (state === "won") { level++; state = "play"; newBoard(); }
+    else if (state === "lost") {
+      if (lives > 0) { state = "play"; newBoard(); }
+      else gameOver();
+    }
+  }
+  function gameOver() {
+    state = "over";
+    const record = score > best;
+    if (record) { best = score; try { localStorage.setItem(BEST_KEY, best); } catch (e) {} }
+    hBest.textContent = best;
+    endText.innerHTML = `Llegaste al <b style="color:#ff2bd6">nivel ${level}</b> con <b style="color:#27e8ff">${score}</b> puntos.` +
+      (record ? `<br><b style="color:#ffd23b">¡NUEVO RÉCORD!</b>` : `<br>Récord: <b style="color:#ffd23b">${best}</b>`);
+    ovEnd.classList.remove("hidden");
+  }
+  function start() {
+    audio();
+    score = 0; level = 1; lives = 3; hints = 3; streak = 0;
+    floats = []; particles = []; banner = null;
+    hScore.textContent = 0;
+    ovStart.classList.add("hidden"); ovEnd.classList.add("hidden");
+    state = "play";
+    newBoard();
+  }
+  function useHint() {
+    if (state !== "play" || hints <= 0) return;
+    const c = bestColor(grid);
+    if (c < 0) return;
+    hints--; hintColor = c; sfx.hint(); updateHud();
+  }
+
+  function burst(x, y, color, n) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 180;
+      particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.5 + Math.random() * 0.4, t: now, color });
+    }
+  }
+
+  // ---------- UI ----------
+  let btns = [];
+  function buildPalette() {
+    palette.innerHTML = ""; btns = [];
+    for (let c = 0; c < K; c++) {
+      const b = document.createElement("button");
+      b.className = "cbtn";
+      b.style.background = `linear-gradient(160deg, ${COLORS[c]} 0%, ${COLORS[c]} 55%, ${COLORS[c]}99 100%)`;
+      b.style.boxShadow = `0 0 16px ${COLORS[c]}66`;
+      b.title = NAMES[c] + " (" + (c + 1) + ")";
+      b.textContent = c + 1;
+      b.addEventListener("click", () => choose(c));
+      b.addEventListener("mouseenter", () => { hover = c; });
+      b.addEventListener("mouseleave", () => { if (hover === c) hover = -1; });
+      palette.appendChild(b); btns.push(b);
+    }
+  }
+  function updateHud() {
+    hLevel.textContent = level;
+    hMoves.textContent = movesLeft;
+    boxMoves.classList.toggle("low", state === "play" && movesLeft <= 2);
+    hLives.textContent = "❤".repeat(Math.max(0, lives)) || "—";
+    hHints.textContent = hints;
+    btnHint.disabled = hints <= 0 || state !== "play";
+    btns.forEach((b, c) => { b.classList.toggle("cur", c === grid[0]); b.classList.toggle("hint", c === hintColor); });
+  }
+
+  // ---------- Dibujo ----------
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function star(cx, cy, r) {
+    ctx.beginPath();
+    for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr2 = k % 2 ? r * 0.45 : r; ctx.lineTo(cx + Math.cos(a) * rr2, cy + Math.sin(a) * rr2); }
+    ctx.closePath();
+  }
+  function bolt(cx, cy, r) {
+    ctx.beginPath();
+    ctx.moveTo(cx + r * 0.2, cy - r); ctx.lineTo(cx - r * 0.55, cy + r * 0.12); ctx.lineTo(cx - r * 0.02, cy + r * 0.12);
+    ctx.lineTo(cx - r * 0.25, cy + r); ctx.lineTo(cx + r * 0.55, cy - r * 0.15); ctx.lineTo(cx + r * 0.02, cy - r * 0.15); ctx.closePath();
+  }
+
+  function previewSet(c) {
+    if (c < 0 || c === grid[0] || state !== "play") return null;
+    const g = grid.slice(); applyColor(g, c);
+    return regionOf(g);
+  }
+
+  function draw() {
+    ctx.save();
+    ctx.clearRect(0, 0, W, H);
+    if (shake > 0) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.85; if (shake < 0.3) shake = 0; }
+    // fondo
+    const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#0a0f24"); bg.addColorStop(1, "#04060f");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    if (state === "menu") { drawDemo(); ctx.restore(); return; }
+
+    const s = cellS(), gap = Math.max(1.5, s * 0.08), rad = s * 0.22;
+    const prev = hover >= 0 ? previewSet(hover) : null;
+    const pulse = 0.5 + 0.5 * Math.sin(now / 160);
+    for (let i = 0; i < grid.length; i++) {
+      const x = cellX(i), y = cellY(i);
+      if (grid[i] === STONE) {
+        ctx.fillStyle = "#1a2033"; rr(x + gap / 2, y + gap / 2, s - gap, s - gap, rad); ctx.fill();
+        ctx.strokeStyle = "#3a4560"; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.strokeStyle = "#2a3248"; ctx.beginPath(); ctx.moveTo(x + s * 0.3, y + s * 0.35); ctx.lineTo(x + s * 0.55, y + s * 0.6); ctx.lineTo(x + s * 0.7, y + s * 0.45); ctx.stroke();
+        continue;
+      }
+      const a = anim[i] || { t0: 0, from: -2 };
+      let k = Math.min(1, Math.max(0, (now - a.t0) / 220));
+      let col = COLORS[grid[i]];
+      let scale = 1;
+      if (a.from === -2) { scale = k < 1 ? 0.3 + 0.7 * easeOut(k) : 1; }
+      else if (k < 1) { col = k < 0.5 && a.from >= 0 ? COLORS[a.from] : col; scale = 1 - Math.sin(k * Math.PI) * (a.fresh ? 0.35 : 0.18); }
+      if (k <= 0 && a.from === -2) continue;
+      const own = owned[i];
+      const inner = (s - gap) * scale, off = (s - inner) / 2;
+      ctx.globalAlpha = own ? 1 : 0.78;
+      ctx.fillStyle = col;
+      if (own) { ctx.shadowColor = col; ctx.shadowBlur = 10; }
+      rr(x + off, y + off, inner, inner, rad * scale); ctx.fill();
+      ctx.shadowBlur = 0;
+      // brillo
+      ctx.globalAlpha = own ? 0.35 : 0.18;
+      ctx.fillStyle = "#fff"; rr(x + off + inner * 0.14, y + off + inner * 0.12, inner * 0.45, inner * 0.18, inner * 0.09); ctx.fill();
+      ctx.globalAlpha = 1;
+      if (prev && prev[i] && !own) {
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.globalAlpha = 0.5 + pulse * 0.5;
+        rr(x + gap / 2 + 1, y + gap / 2 + 1, s - gap - 2, s - gap - 2, rad); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      if (marks[i]) {
+        const cx = x + s / 2, cy = y + s / 2;
+        ctx.fillStyle = marks[i] === 1 ? "#fff6c2" : "#ffffff";
+        ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = 2;
+        ctx.shadowColor = marks[i] === 1 ? "#ffd23b" : "#fff"; ctx.shadowBlur = 8 + pulse * 6;
+        if (marks[i] === 1) star(cx, cy, s * 0.3); else bolt(cx, cy, s * 0.3);
+        ctx.stroke(); ctx.fill(); ctx.shadowBlur = 0;
+      }
+    }
+    // contorno de la mancha propia
+    ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 2.2; ctx.shadowColor = COLORS[grid[0]] || "#fff"; ctx.shadowBlur = 12;
+    ctx.beginPath();
+    for (let i = 0; i < grid.length; i++) {
+      if (!owned[i]) continue;
+      const x = cellX(i), y = cellY(i), cx = i % N, cy = (i / N) | 0;
+      if (cy === 0 || !owned[i - N]) { ctx.moveTo(x, y); ctx.lineTo(x + s, y); }
+      if (cy === N - 1 || !owned[i + N]) { ctx.moveTo(x, y + s); ctx.lineTo(x + s, y + s); }
+      if (cx === 0 || !owned[i - 1]) { ctx.moveTo(x, y); ctx.lineTo(x, y + s); }
+      if (cx === N - 1 || !owned[i + 1]) { ctx.moveTo(x + s, y); ctx.lineTo(x + s, y + s); }
+    }
+    ctx.stroke(); ctx.shadowBlur = 0;
+
+    // barra de progreso
+    let ownN = 0; for (const v of owned) ownN += v;
+    const total = playable(grid), frac = ownN / total;
+    ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.fillRect(PAD, H - 7, W - PAD * 2, 3);
+    const pg = ctx.createLinearGradient(PAD, 0, W - PAD, 0); pg.addColorStop(0, "#27e8ff"); pg.addColorStop(1, "#ff2bd6");
+    ctx.fillStyle = pg; ctx.fillRect(PAD, H - 7, (W - PAD * 2) * frac, 3);
+
+    drawFx();
+    ctx.restore();
+  }
+
+  function drawFx() {
+    particles = particles.filter(p => (now - p.t) / 1000 < p.life);
+    for (const p of particles) {
+      const t = (now - p.t) / 1000;
+      ctx.globalAlpha = 1 - t / p.life; ctx.fillStyle = p.color;
+      ctx.fillRect(p.x + p.vx * t - 2, p.y + p.vy * t + 120 * t * t - 2, 4, 4);
+    }
+    ctx.globalAlpha = 1;
+    floats = floats.filter(f => now - f.t < 1100);
+    ctx.textAlign = "center"; ctx.font = "900 16px 'Segoe UI', system-ui, sans-serif";
+    for (const f of floats) {
+      const t = (now - f.t) / 1100;
+      ctx.globalAlpha = 1 - t; ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.shadowBlur = 10;
+      ctx.fillText(f.text, f.x, f.y - t * 40);
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    if (banner) {
+      const t = (now - banner.t) / 1000;
+      const sticky = state === "won" || state === "lost";
+      if (!sticky && t > 1.3) banner = null;
+      else {
+        const a = sticky ? Math.min(1, t * 4) : Math.min(1, t * 6) * Math.min(1, (1.3 - t) * 4);
+        if (sticky) { ctx.fillStyle = `rgba(4,6,14,${0.6 * a})`; ctx.fillRect(0, 0, W, H); }
+        const sc = 1 + Math.max(0, 0.3 - t) * 1.5;
+        ctx.save(); ctx.translate(W / 2, H / 2 - 10); ctx.scale(sc, sc);
+        ctx.globalAlpha = a;
+        ctx.font = "900 44px 'Segoe UI', system-ui, sans-serif"; ctx.fillStyle = banner.color; ctx.shadowColor = banner.color; ctx.shadowBlur = 24;
+        ctx.fillText(banner.text, 0, 0);
+        ctx.shadowBlur = 0; ctx.font = "700 16px 'Segoe UI', system-ui, sans-serif"; ctx.fillStyle = "#e8f6ff";
+        if (banner.sub) ctx.fillText(banner.sub, 0, 32);
+        if (sticky && t > 0.6) {
+          ctx.globalAlpha = 0.5 + 0.5 * Math.sin(now / 200); ctx.fillStyle = "#7fa6c8"; ctx.font = "700 14px 'Segoe UI', system-ui, sans-serif";
+          ctx.fillText(state === "lost" && lives <= 0 ? "tocá para ver el resultado" : "tocá para seguir", 0, 66);
+        }
+        ctx.restore(); ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // Demo de portada: un tablero que se inunda solo.
+  let demo = null;
+  function drawDemo() {
+    const n = 10, s = (W - PAD * 2) / n;
+    if (!demo || now - demo.t > 260) {
+      if (!demo || demo.done) { demo = { g: Array.from({ length: n * n }, () => (Math.random() * 5) | 0), t: now, done: false, steps: 0 }; }
+      else {
+        // un paso de inundación con color al azar distinto
+        const g = demo.g, c0 = g[0]; let c; do { c = (Math.random() * 5) | 0; } while (c === c0);
+        const seen = new Uint8Array(n * n), st = [0]; seen[0] = 1;
+        while (st.length) { const i = st.pop(), x = i % n, y = (i / n) | 0; for (const j of [x > 0 ? i - 1 : -1, x < n - 1 ? i + 1 : -1, y > 0 ? i - n : -1, y < n - 1 ? i + n : -1]) if (j >= 0 && !seen[j] && g[j] === c0) { seen[j] = 1; st.push(j); } }
+        for (let i = 0; i < g.length; i++) if (seen[i]) g[i] = c;
+        demo.t = now; demo.steps++;
+        if (g.every(v => v === g[0]) || demo.steps > 40) demo.done = true;
+      }
+    }
+    for (let i = 0; i < n * n; i++) {
+      ctx.globalAlpha = 0.55; ctx.fillStyle = COLORS[demo.g[i]];
+      rr(PAD + (i % n) * s + 2, PAD + ((i / n) | 0) * s + 2, s - 4, s - 4, s * 0.2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+  function loop(t) {
+    now = t;
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ---------- Entrada ----------
+  $("btnStart").addEventListener("click", start);
+  $("btnAgain").addEventListener("click", start);
+  btnHint.addEventListener("click", useHint);
+  cv.addEventListener("pointerdown", e => {
+    if ((state === "won" || state === "lost") && now - stateT > 600) { advance(); return; }
+    if (state !== "play") return;
+    // tocar una celda del tablero elige su color
+    const r = cv.getBoundingClientRect();
+    const x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height;
+    const cx = Math.floor((x - PAD) / cellS()), cy = Math.floor((y - PAD) / cellS());
+    if (cx < 0 || cy < 0 || cx >= N || cy >= N) return;
+    const c = grid[idx(cx, cy)];
+    if (c !== STONE && !owned[idx(cx, cy)]) choose(c);
+  });
+  window.addEventListener("keydown", e => {
+    if (e.key >= "1" && e.key <= "6") { choose(+e.key - 1); e.preventDefault(); return; }
+    if (e.key === "h" || e.key === "H") { useHint(); return; }
+    if (e.key === " " || e.key === "Enter") {
+      if (state === "menu" || state === "over") { start(); e.preventDefault(); }
+      else if ((state === "won" || state === "lost") && now - stateT > 600) { advance(); e.preventDefault(); }
+    }
+  });
+})();
+</script>
+</body>
+</html>
