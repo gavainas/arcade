@@ -900,6 +900,13 @@
       desc: "Tu mancha arranca en la esquina: elegí un color y se tiñe entera, absorbiendo las celdas vecinas de ese color. Cubrí todo el tablero antes de quedarte sin movidas. Estrellas que suman puntos, rayos que dan una movida extra, piedras desde el nivel 5 y OLAS cuando absorbés 12+ celdas de una. Terminar con la mínima cantidad de movidas es PERFECTO, con racha hasta x5. Récord guardado.",
       controles: "Tocá un color de la paleta o una celda del tablero. Teclado: 1-6 elegís color, H pista",
       fecha: "2026-11-18", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "arpon-neon", titulo: "Arpón Neón", archivo: "arpon-neon.html",
+      emoji: "🔱", categoria: "accion", tags: ["arpón", "burbujas", "partir", "rebote", "disparar", "plataformas", "un jugador"],
+      desc: "Disparale el arpón a las burbujas que rebotan: cada una se parte en dos más chicas hasta que las más chiquitas revientan, y si una te toca perdés una vida. Reventar seguido arma racha hasta x5; premios de doble arpón, reloj que congela, escudo y ancla; burbujas doradas que valen oro, plataformas desde el nivel 4 y bonus por tiempo y por nivel PERFECTO. Récord guardado.",
+      controles: "Botones ◀ ▶ y 🔱 en pantalla, o arrastrá el dedo para moverte. Teclado: ← → / A D moverse, espacio / ↑ disparar, P pausa",
+      fecha: "2026-11-19", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
