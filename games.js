@@ -907,6 +907,13 @@
       desc: "Disparale el arpón a las burbujas que rebotan: cada una se parte en dos más chicas hasta que las más chiquitas revientan, y si una te toca perdés una vida. Reventar seguido arma racha hasta x5; premios de doble arpón, reloj que congela, escudo y ancla; burbujas doradas que valen oro, plataformas desde el nivel 4 y bonus por tiempo y por nivel PERFECTO. Récord guardado.",
       controles: "Botones ◀ ▶ y 🔱 en pantalla, o arrastrá el dedo para moverte. Teclado: ← → / A D moverse, espacio / ↑ disparar, P pausa",
       fecha: "2026-11-19", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "bumeran-neon", titulo: "Bumerán Neón", archivo: "bumeran-neon.html",
+      emoji: "🪃", categoria: "accion", tags: ["bumerán", "boomerang", "puntería", "invasores", "combo", "ida y vuelta", "un jugador"],
+      desc: "Tocá donde quieras tirar el bumerán: hace un rulo hasta ese punto y vuelve a tu mano, pegándole a todo lo que cruza a la ida y a la vuelta. Que ningún invasor toque el piso. Cada golpe del mismo tiro sube el combo hasta x5 y pegar a la ida y a la vuelta da bonus. Acorazados de 2 golpes, escudados que sólo caen desde arriba, zigzagueantes y dorados; premios de doble bumerán, fuego, cámara lenta y vida. Récord guardado.",
+      controles: "Tocá arriba para tirar al punto; arrastrá en la franja de abajo (o en cualquier lado mientras vuela) para moverte. Teclado: ← → / A D moverse, ↑ / espacio tirar a la mira, Q / E diagonal, P pausa",
+      fecha: "2026-11-20", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

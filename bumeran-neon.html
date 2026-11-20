@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BUMERÁN NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:crosshair;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:370px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 8px 24px rgba(138,75,255,.35);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">BUMERÁN NEÓN</div><div class="sub">IDA Y VUELTA</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">NIVEL<b id="hLevel">1</b></div>
+    <div class="box">VIDAS<b id="hLives">❤❤❤</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="cv" width="480" height="660"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🪃</div><h2>BUMERÁN NEÓN</h2>
+      <p>Tocá donde quieras tirar el <b style="color:#27e8ff">bumerán</b>: hace un rulo hasta ese punto y <b style="color:#ff2bd6">vuelve a tu mano</b>, pegándole a todo lo que cruza a la ida y a la vuelta. Si un invasor llega al piso, perdés una vida.<br>Cada golpe en el mismo tiro sube el <b style="color:#ff2bd6">combo hasta x5</b>. Los <b style="color:#27e8ff">escudados</b> sólo caen si les pegás desde arriba (¡a la vuelta!). Premios: <b style="color:#ffd23b">⚡ doble, 🔥 fuego, ⏳ lento, ❤ vida</b>.</p>
+      <button class="btn" id="btnStart">EMPEZAR</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🪃</div><h2>SE TE CAYÓ EL BUMERÁN</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Táctil / mouse: tocá arriba para tirar el bumerán al punto; arrastrá en la franja de abajo (o en cualquier lado mientras vuela) para moverte.<br>Teclado: <b>← →</b> / <b>A D</b> moverse · <b>↑</b> / <b>espacio</b> tirar a la mira · <b>Q</b> / <b>E</b> tiro en diagonal · <b>P</b> pausa</div>
+</div>
+<script>
+(() => {
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  const FLOOR = 592, PY = 622, PL_SPEED = 300, STRIP = 575;
+  const BEST_KEY = "bumeran-neon-best";
+  const $ = id => document.getElementById(id);
+  const hScore = $("hScore"), hLevel = $("hLevel"), hLives = $("hLives"), hBest = $("hBest");
+  const ovStart = $("ovStart"), ovEnd = $("ovEnd"), endText = $("endText");
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  hBest.textContent = best;
+
+  // ---------- audio ----------
+  let actx = null;
+  function beep(f, d = 0.08, type = "square", v = 0.05, slide = 0) {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } }
+    try {
+      const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), t + d);
+      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+
+  // ---------- estado ----------
+  let state = "menu", paused = false;
+  let score, level, lives, enemies, booms, items, parts, pops, stars;
+  let toSpawn, spawnT, levelHurt, levelDoneT, banner, shake, hurtFlash, throwId, catches, bestCombo;
+  let px, aim = { x: W / 2, y: 260 };
+  const power = { double: 0, fire: 0, slow: 0 };
+  const keys = {};
+  const ptrs = new Map();
+
+  stars = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * FLOOR, r: Math.random() * 1.4 + .3, s: Math.random() * 2 + 1 }));
+
+  const TYPES = {
+    basic:  { col: "#ff2bd6", hp: 1, pts: 50,  r: 15 },
+    armor:  { col: "#8a4bff", hp: 2, pts: 90,  r: 18 },
+    shield: { col: "#27e8ff", hp: 1, pts: 120, r: 16 },
+    zig:    { col: "#39ff9e", hp: 1, pts: 80,  r: 14 },
+    gold:   { col: "#ffd23b", hp: 1, pts: 300, r: 13 },
+  };
+
+  function levelCount() { return 7 + level * 3; }
+  function enemySpeed() { return 22 + level * 3; }
+
+  function pickType() {
+    const r = Math.random();
+    if (level >= 2 && r < 0.06) return "gold";
+    if (level >= 3 && r < 0.26) return "shield";
+    if (level >= 2 && r < 0.44) return "armor";
+    if (level >= 4 && r < 0.6) return "zig";
+    return "basic";
+  }
+
+  function spawnEnemy() {
+    const t = pickType(), T = TYPES[t];
+    const e = { t, x: 30 + Math.random() * (W - 60), y: -20, r: T.r, hp: T.hp, mark: -1, ph: Math.random() * 6, flash: 0, push: 0 };
+    e.vy = enemySpeed() * (t === "gold" ? 1.5 : t === "armor" ? 0.8 : 1) * (0.85 + Math.random() * 0.3);
+    e.vx = t === "zig" || t === "gold" ? (Math.random() < .5 ? -1 : 1) * (60 + level * 4) : 0;
+    enemies.push(e);
+  }
+
+  function start() {
+    score = 0; level = 1; lives = 3; bestCombo = 0; catches = 0;
+    px = W / 2; throwId = 0; shake = 0; hurtFlash = 0;
+    enemies = []; booms = []; items = []; parts = []; pops = [];
+    power.double = power.fire = power.slow = 0;
+    ovStart.classList.add("hidden"); ovEnd.classList.add("hidden");
+    state = "play"; paused = false;
+    startLevel();
+    hud();
+    beep(520, .1, "triangle", .06, 300);
+  }
+
+  function startLevel() {
+    toSpawn = levelCount(); spawnT = 0.6; levelHurt = false; levelDoneT = 0;
+    banner = { text: "NIVEL " + level, sub: level === 2 ? "Aparecen los acorazados (2 golpes)" : level === 3 ? "Escudados: pegales desde arriba" : level === 4 ? "Llegan los que zigzaguean" : "", t: 2.2 };
+  }
+
+  function hud() {
+    hScore.textContent = score; hLevel.textContent = level;
+    hLives.textContent = lives > 0 ? "❤".repeat(Math.min(lives, 5)) : "—";
+    hBest.textContent = Math.max(best, score);
+  }
+
+  function gameOver() {
+    state = "over";
+    if (score > best) { best = score; try { localStorage.setItem(BEST_KEY, best); } catch (e) {} }
+    hud();
+    endText.innerHTML = `Llegaste al <b style="color:#ff2bd6">nivel ${level}</b> con <b style="color:#27e8ff">${score}</b> puntos.<br>Mejor combo: x${bestCombo} · Bumeranes atrapados: ${catches}<br>Récord: <b style="color:#ffd23b">${best}</b>`;
+    setTimeout(() => ovEnd.classList.remove("hidden"), 700);
+    beep(200, .5, "sawtooth", .06, -150);
+  }
+
+  // ---------- bumerán ----------
+  function canThrow() { return state === "play" && booms.length === 0 && levelDoneT === 0; }
+
+  function throwAt(tx, ty) {
+    if (!canThrow()) return;
+    tx = Math.max(16, Math.min(W - 16, tx));
+    ty = Math.max(20, Math.min(FLOOR - 70, ty));
+    const dx = tx - px, dy = ty - PY, L = Math.hypot(dx, dy);
+    if (L < 60) return;
+    throwId++;
+    const side = dx >= 0 ? 1 : -1;
+    const sides = power.double > 0 ? [side, -side] : [side];
+    sides.forEach((s, i) => booms.push({
+      id: throwId, tx, ty, t: 0, dur: 0.5 + L / 680, s, w: Math.min(140, 0.32 * L),
+      x: px, y: PY, px: px, py: PY, ox: px, rot: 0, hitsOut: 0, hitsBack: 0, hits: 0, trail: [], main: i === 0
+    }));
+    beep(330, .12, "triangle", .05, 260);
+  }
+
+  function boomPos(b, t) {
+    // elipse que pasa por el origen (que sigue al jugador) y por el objetivo
+    const k = t * t * (3 - 2 * t);
+    const ox = b.ox + (px - b.ox) * k, oy = PY;
+    const fx = b.tx - ox, fy = b.ty - oy, L = Math.hypot(fx, fy) || 1;
+    const nx = -fy / L, ny = fx / L;
+    const th = Math.PI + 2 * Math.PI * t;
+    const c = Math.cos(th), s = Math.sin(th);
+    return { x: ox + fx / 2 + (fx / 2) * c - nx * b.w * s * b.s, y: oy + fy / 2 + (fy / 2) * c - ny * b.w * s * b.s };
+  }
+
+  function comboMult(n) { return Math.min(5, n); }
+
+  function hitEnemy(e, b) {
+    const phase = b.t < 0.5 ? 0 : 1;
+    const mark = b.id * 4 + phase * 2 + (b.main ? 0 : 1);
+    if (e.mark === mark) return;
+    e.mark = mark;
+    const vy = b.y - b.py;
+    if (e.t === "shield" && vy < 0 && power.fire <= 0) {
+      // golpe desde abajo: el escudo lo frena
+      e.push = 0.35; e.flash = 0.2;
+      pops.push({ x: e.x, y: e.y - 24, text: "¡CLANK! desde arriba", col: "#27e8ff", t: 1 });
+      spark(e.x, e.y + e.r, "#27e8ff", 8);
+      beep(900, .06, "square", .04, -400);
+      return;
+    }
+    e.hp -= power.fire > 0 ? 2 : 1;
+    e.flash = 0.15;
+    if (e.hp > 0) { spark(e.x, e.y, TYPES[e.t].col, 8); beep(400, .05, "square", .04); return; }
+    b.hits++;
+    if (phase === 0) b.hitsOut++; else b.hitsBack++;
+    const m = comboMult(b.hits);
+    bestCombo = Math.max(bestCombo, m);
+    const pts = TYPES[e.t].pts * m;
+    score += pts;
+    pops.push({ x: e.x, y: e.y, text: "+" + pts + (m > 1 ? "  x" + m : ""), col: m >= 3 ? "#ffd23b" : TYPES[e.t].col, t: 1 });
+    spark(e.x, e.y, TYPES[e.t].col, 18);
+    beep(500 + m * 120, .09, "triangle", .06, 200);
+    e.dead = true;
+    const chance = e.t === "gold" ? 1 : 0.09;
+    if (Math.random() < chance) dropItem(e.x, e.y);
+    hud();
+  }
+
+  function dropItem(x, y) {
+    const r = Math.random();
+    const k = lives < 5 && r < 0.18 ? "life" : r < 0.45 ? "double" : r < 0.72 ? "fire" : "slow";
+    items.push({ k, x, y, vy: 40, t: 0 });
+  }
+  const ITEM = { double: { e: "⚡", col: "#27e8ff", name: "DOBLE BUMERÁN" }, fire: { e: "🔥", col: "#ff7a2b", name: "BUMERÁN DE FUEGO" }, slow: { e: "⏳", col: "#8a4bff", name: "CÁMARA LENTA" }, life: { e: "❤", col: "#ff2bd6", name: "VIDA EXTRA" } };
+
+  function takeItem(it) {
+    it.dead = true;
+    if (it.k === "life") lives = Math.min(5, lives + 1);
+    else power[it.k] = it.k === "slow" ? 6 : 10;
+    pops.push({ x: it.x, y: it.y, text: ITEM[it.k].name, col: ITEM[it.k].col, t: 1.3 });
+    beep(780, .14, "sine", .06, 500);
+    hud();
+  }
+
+  function spark(x, y, col, n) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, v = 60 + Math.random() * 200;
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0.5 + Math.random() * 0.4, col });
+    }
+  }
+
+  function hurt(e) {
+    e.dead = true; levelHurt = true;
+    lives--; shake = 0.4; hurtFlash = 0.5;
+    spark(e.x, FLOOR, "#ff4d5e", 24);
+    beep(140, .3, "sawtooth", .07, -60);
+    hud();
+    if (lives <= 0) gameOver();
+  }
+
+  // ---------- update ----------
+  function update(dt) {
+    stars.forEach(s => { s.y += s.s * dt * 8; if (s.y > FLOOR) { s.y = 0; s.x = Math.random() * W; } });
+    if (banner) { banner.t -= dt; if (banner.t <= 0) banner = null; }
+    shake = Math.max(0, shake - dt); hurtFlash = Math.max(0, hurtFlash - dt);
+    parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.94; p.vy *= 0.94; p.t -= dt; });
+    parts = parts.filter(p => p.t > 0);
+    pops.forEach(p => { p.y -= 34 * dt; p.t -= dt; });
+    pops = pops.filter(p => p.t > 0);
+    if (state !== "play") return;
+
+    for (const k of ["double", "fire", "slow"]) power[k] = Math.max(0, power[k] - dt);
+
+    // jugador
+    let mv = 0;
+    if (keys.ArrowLeft || keys.a || keys.A) mv -= 1;
+    if (keys.ArrowRight || keys.d || keys.D) mv += 1;
+    px += mv * PL_SPEED * dt;
+    for (const p of ptrs.values()) if (p.move) px += Math.max(-PL_SPEED * 1.6 * dt, Math.min(PL_SPEED * 1.6 * dt, p.x - px));
+    px = Math.max(18, Math.min(W - 18, px));
+
+    // spawn
+    if (toSpawn > 0) {
+      spawnT -= dt;
+      if (spawnT <= 0) {
+        spawnEnemy(); toSpawn--;
+        spawnT = Math.max(0.5, 1.75 - level * 0.08) * (0.7 + Math.random() * 0.6);
+        if (level >= 3 && Math.random() < 0.15 && toSpawn > 0) { spawnEnemy(); toSpawn--; }
+      }
+    }
+
+    const slow = power.slow > 0 ? 0.4 : 1;
+    for (const e of enemies) {
+      e.ph += dt * 3; e.flash = Math.max(0, e.flash - dt);
+      if (e.push > 0) { e.push -= dt; e.y -= 90 * dt; }
+      else e.y += e.vy * dt * slow;
+      if (e.vx) { e.x += e.vx * dt * slow; if (e.x < e.r + 4 || e.x > W - e.r - 4) { e.vx *= -1; e.x = Math.max(e.r + 4, Math.min(W - e.r - 4, e.x)); } }
+      if (e.y + e.r >= FLOOR) hurt(e);
+    }
+
+    // bumeranes
+    for (const b of booms) {
+      b.px = b.x; b.py = b.y;
+      b.t += dt / b.dur;
+      const tt = Math.min(1, b.t);
+      const p = boomPos(b, tt);
+      b.x = p.x; b.y = p.y;
+      b.rot += dt * 22;
+      b.trail.push({ x: b.x, y: b.y }); if (b.trail.length > 14) b.trail.shift();
+      const R = power.fire > 0 ? 22 : 15;
+      // sub-pasos para no atravesar enemigos
+      const steps = 3;
+      for (let s = 1; s <= steps; s++) {
+        const sx = b.px + (b.x - b.px) * s / steps, sy = b.py + (b.y - b.py) * s / steps;
+        for (const e of enemies) if (!e.dead && Math.hypot(e.x - sx, e.y - sy) < e.r + R) hitEnemy(e, b);
+        for (const it of items) if (!it.dead && Math.hypot(it.x - sx, it.y - sy) < 22) takeItem(it);
+      }
+      if (b.t >= 1) {
+        b.done = true;
+        if (b.main) catches++;
+        const ret = booms.filter(o => o.id === b.id);
+        const hitsOut = ret.reduce((a, o) => a + o.hitsOut, 0), hitsBack = ret.reduce((a, o) => a + o.hitsBack, 0);
+        if (b.main && hitsOut > 0 && hitsBack > 0) {
+          score += 150; hud();
+          pops.push({ x: px, y: PY - 40, text: "IDA Y VUELTA +150", col: "#ffd23b", t: 1.3 });
+          beep(990, .12, "sine", .05, 300);
+        } else beep(620, .05, "sine", .04);
+      }
+    }
+    booms = booms.filter(b => !b.done);
+    enemies = enemies.filter(e => !e.dead);
+
+    for (const it of items) {
+      it.t += dt; it.y += it.vy * dt;
+      if (Math.abs(it.x - px) < 26 && Math.abs(it.y - PY) < 26) takeItem(it);
+      if (it.y > FLOOR + 10) it.dead = true;
+    }
+    items = items.filter(i => !i.dead);
+
+    // fin de nivel
+    if (toSpawn === 0 && enemies.length === 0 && state === "play") {
+      if (levelDoneT === 0) {
+        levelDoneT = 2.2;
+        const bonus = 100 + level * 25;
+        score += bonus;
+        let sub = "Bonus +" + bonus;
+        if (!levelHurt) { score += 300; sub += " · PERFECTO +300"; spark(W / 2, 260, "#ffd23b", 40); }
+        if (level % 3 === 0 && lives < 5) { lives++; sub += " · ❤ +1"; }
+        banner = { text: levelHurt ? "¡NIVEL LIMPIO!" : "¡PERFECTO!", sub, t: 2.2 };
+        beep(660, .12, "triangle", .06, 400); setTimeout(() => beep(880, .18, "triangle", .06, 400), 140);
+        hud();
+      }
+      if (booms.length === 0) {
+        levelDoneT -= dt;
+        if (levelDoneT <= 0) { levelDoneT = 0; level++; startLevel(); hud(); }
+      }
+    }
+  }
+
+  // ---------- draw ----------
+  function glow(col, b) { ctx.shadowColor = col; ctx.shadowBlur = b; }
+
+  function drawBoomerang(x, y, rot, col, scale = 1) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(scale, scale);
+    glow(col, 14); ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(-13, 9); ctx.quadraticCurveTo(0, -12, 13, 9); ctx.stroke();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.6; ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.moveTo(-11, 7); ctx.quadraticCurveTo(0, -9, 11, 7); ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate((Math.random() - .5) * 10 * shake / .4, (Math.random() - .5) * 10 * shake / .4);
+    ctx.fillStyle = "#050813"; ctx.fillRect(-10, -10, W + 20, H + 20);
+    // estrellas y grilla
+    stars.forEach(s => { ctx.fillStyle = `rgba(160,200,255,${0.25 + s.r * 0.3})`; ctx.fillRect(s.x, s.y, s.r, s.r); });
+    ctx.strokeStyle = "rgba(138,75,255,.07)"; ctx.lineWidth = 1;
+    for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, FLOOR); ctx.stroke(); }
+    if (power.slow > 0) { ctx.fillStyle = "rgba(138,75,255,.08)"; ctx.fillRect(0, 0, W, FLOOR); }
+
+    // piso
+    const fg = ctx.createLinearGradient(0, FLOOR, 0, H);
+    fg.addColorStop(0, "rgba(39,232,255,.16)"); fg.addColorStop(1, "rgba(5,8,19,1)");
+    ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
+    glow(hurtFlash > 0 ? "#ff4d5e" : "#27e8ff", 16);
+    ctx.strokeStyle = hurtFlash > 0 ? "#ff4d5e" : "#27e8ff"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(0, FLOOR); ctx.lineTo(W, FLOOR); ctx.stroke(); ctx.shadowBlur = 0;
+
+    // mira
+    if (state === "play" && booms.length === 0) {
+      ctx.save(); ctx.setLineDash([4, 7]); ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 1.5;
+      const fake = { ox: px, tx: aim.x, ty: Math.min(aim.y, FLOOR - 70), s: aim.x - px >= 0 ? 1 : -1, w: Math.min(140, 0.32 * Math.hypot(aim.x - px, aim.y - PY)) };
+      ctx.beginPath();
+      for (let i = 0; i <= 40; i++) { const p = boomPos(fake, i / 40); i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "rgba(255,43,214,.7)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(fake.tx, fake.ty, 10, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fake.tx - 15, fake.ty); ctx.lineTo(fake.tx - 6, fake.ty); ctx.moveTo(fake.tx + 6, fake.ty); ctx.lineTo(fake.tx + 15, fake.ty);
+      ctx.moveTo(fake.tx, fake.ty - 15); ctx.lineTo(fake.tx, fake.ty - 6); ctx.moveTo(fake.tx, fake.ty + 6); ctx.lineTo(fake.tx, fake.ty + 15); ctx.stroke();
+      ctx.restore();
+    }
+
+    // enemigos
+    for (const e of enemies) {
+      const T = TYPES[e.t], col = e.flash > 0 ? "#fff" : T.col;
+      const bob = Math.sin(e.ph) * 2;
+      ctx.save(); ctx.translate(e.x, e.y + bob);
+      glow(T.col, 16); ctx.fillStyle = "rgba(10,12,30,.85)"; ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+      if (e.t === "armor") {
+        ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + e.ph * .2; ctx.lineTo(Math.cos(a) * e.r, Math.sin(a) * e.r); } ctx.closePath(); ctx.fill(); ctx.stroke();
+        if (e.hp > 1) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + e.ph * .2; ctx.lineTo(Math.cos(a) * (e.r - 6), Math.sin(a) * (e.r - 6)); } ctx.closePath(); ctx.stroke(); }
+      } else if (e.t === "gold") {
+        ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2 + e.ph * .5, rr = i % 2 ? e.r * .5 : e.r; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (e.t === "zig") {
+        ctx.beginPath(); ctx.moveTo(0, -e.r); ctx.lineTo(e.r, 0); ctx.lineTo(0, e.r); ctx.lineTo(-e.r, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      if (e.t === "shield") {
+        ctx.strokeStyle = power.fire > 0 ? "rgba(39,232,255,.35)" : "#e8f6ff"; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, e.r + 6, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke();
+      }
+      // ojos
+      ctx.shadowBlur = 0; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(-e.r * .32, -2, 2.6, 0, 7); ctx.arc(e.r * .32, -2, 2.6, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+
+    // items
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (const it of items) {
+      const c = ITEM[it.k].col;
+      glow(c, 14); ctx.strokeStyle = c; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(it.x, it.y, 14 + Math.sin(it.t * 6) * 1.5, 0, 7); ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.font = "16px sans-serif"; ctx.fillText(ITEM[it.k].e, it.x, it.y + 1);
+    }
+
+    // bumeranes en vuelo
+    const bcol = power.fire > 0 ? "#ff7a2b" : "#27e8ff";
+    for (const b of booms) {
+      b.trail.forEach((p, i) => { ctx.fillStyle = power.fire > 0 ? `rgba(255,122,43,${i / 30})` : `rgba(39,232,255,${i / 34})`; ctx.beginPath(); ctx.arc(p.x, p.y, 2 + i * .35, 0, 7); ctx.fill(); });
+      drawBoomerang(b.x, b.y, b.rot, b.main ? bcol : "#ff2bd6", power.fire > 0 ? 1.35 : 1.1);
+    }
+
+    // jugador
+    ctx.save(); ctx.translate(px, PY);
+    glow("#ff2bd6", 18); ctx.fillStyle = "rgba(20,10,40,.9)"; ctx.strokeStyle = "#ff2bd6"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(-18, 16); ctx.lineTo(-12, -10); ctx.quadraticCurveTo(0, -22, 12, -10); ctx.lineTo(18, 16); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur = 0; ctx.fillStyle = "#ff2bd6"; ctx.fillRect(-7, -6, 4, 4); ctx.fillRect(3, -6, 4, 4);
+    ctx.restore();
+    if (booms.length === 0 && state === "play") drawBoomerang(px + 16, PY - 18, -0.6, bcol, 0.8);
+
+    // partículas y textos
+    parts.forEach(p => { ctx.globalAlpha = Math.min(1, p.t * 2); ctx.fillStyle = p.col; ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); });
+    ctx.globalAlpha = 1;
+    pops.forEach(p => { ctx.globalAlpha = Math.min(1, p.t * 1.5); glow(p.col, 10); ctx.fillStyle = p.col; ctx.font = "800 15px Segoe UI, sans-serif"; ctx.fillText(p.text, p.x, p.y); });
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+    // barra de poderes y progreso
+    if (state === "play") {
+      let y = 16; ctx.textAlign = "left"; ctx.font = "700 12px Segoe UI, sans-serif";
+      for (const k of ["double", "fire", "slow"]) if (power[k] > 0) {
+        const c = ITEM[k].col, max = k === "slow" ? 6 : 10;
+        ctx.fillStyle = c; ctx.fillText(ITEM[k].e + " " + power[k].toFixed(1) + "s", 10, y);
+        ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.fillRect(70, y - 3, 70, 5); ctx.fillStyle = c; ctx.fillRect(70, y - 3, 70 * power[k] / max, 5);
+        y += 18;
+      }
+      const total = levelCount(), done = total - toSpawn - enemies.length;
+      ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.fillRect(W - 110, 10, 100, 6);
+      ctx.fillStyle = "#ff2bd6"; ctx.fillRect(W - 110, 10, 100 * done / total, 6);
+      ctx.textAlign = "right"; ctx.fillStyle = "#7fa6c8"; ctx.font = "600 11px Segoe UI, sans-serif"; ctx.fillText("OLEADA", W - 114, 14);
+    }
+
+    if (banner) {
+      ctx.globalAlpha = Math.min(1, banner.t * 2); ctx.textAlign = "center";
+      glow("#ff2bd6", 20); ctx.fillStyle = "#fff"; ctx.font = "900 34px Segoe UI, sans-serif"; ctx.fillText(banner.text, W / 2, 230);
+      ctx.shadowBlur = 0;
+      if (banner.sub) { ctx.fillStyle = "#ffd23b"; ctx.font = "700 14px Segoe UI, sans-serif"; ctx.fillText(banner.sub, W / 2, 264); }
+      ctx.globalAlpha = 1;
+    }
+    if (paused && state === "play") {
+      ctx.fillStyle = "rgba(5,7,15,.7)"; ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = "center"; ctx.fillStyle = "#27e8ff"; ctx.font = "900 34px Segoe UI, sans-serif"; ctx.fillText("PAUSA", W / 2, H / 2);
+      ctx.font = "600 13px Segoe UI, sans-serif"; ctx.fillStyle = "#7fa6c8"; ctx.fillText("P o tocá para seguir", W / 2, H / 2 + 28);
+    }
+    ctx.restore();
+  }
+
+  // ---------- input ----------
+  function toCanvas(ev) {
+    const r = cv.getBoundingClientRect();
+    return { x: (ev.clientX - r.left) * W / r.width, y: (ev.clientY - r.top) * H / r.height };
+  }
+  cv.addEventListener("pointerdown", ev => {
+    ev.preventDefault();
+    if (state !== "play") return;
+    if (paused) { paused = false; return; }
+    const p = toCanvas(ev);
+    aim.x = p.x; aim.y = p.y;
+    const inStrip = p.y >= STRIP;
+    const move = inStrip || booms.length > 0;
+    ptrs.set(ev.pointerId, { x: p.x, move });
+    try { cv.setPointerCapture(ev.pointerId); } catch (e) {}
+    if (!move) throwAt(p.x, p.y);
+  });
+  cv.addEventListener("pointermove", ev => {
+    const p = toCanvas(ev);
+    const st = ptrs.get(ev.pointerId);
+    if (st) { st.x = p.x; }
+    if (p.y < STRIP) { aim.x = p.x; aim.y = p.y; }
+  });
+  const up = ev => ptrs.delete(ev.pointerId);
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+
+  addEventListener("keydown", ev => {
+    keys[ev.key] = true;
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " "].includes(ev.key)) ev.preventDefault();
+    if (state !== "play") { if ((ev.key === "Enter" || ev.key === " ") && !ev.repeat) start(); return; }
+    if (ev.key === "p" || ev.key === "P") { paused = !paused; return; }
+    if (paused || ev.repeat) return;
+    if (ev.key === " " || ev.key === "ArrowUp" || ev.key === "w" || ev.key === "W") throwAt(aim.x, aim.y);
+    if (ev.key === "q" || ev.key === "Q") throwAt(px - 220, PY - 330);
+    if (ev.key === "e" || ev.key === "E") throwAt(px + 220, PY - 330);
+  });
+  addEventListener("keyup", ev => { keys[ev.key] = false; });
+  addEventListener("blur", () => { for (const k in keys) keys[k] = false; if (state === "play") paused = true; });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && state === "play") paused = true; });
+
+  $("btnStart").addEventListener("click", start);
+  $("btnAgain").addEventListener("click", start);
+
+  // ---------- loop ----------
+  let last = performance.now();
+  px = W / 2; enemies = []; booms = []; items = []; parts = []; pops = [];
+  function loop(now) {
+    const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (!paused) update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
