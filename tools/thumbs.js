@@ -60,6 +60,7 @@ const OVERRIDES = {
   // Un toque en el borde de arriba del canvas (fuera de la grilla, no elige color) para que
   // Playwright scrollee al tope del tablero y la miniatura muestre la mancha de la esquina.
   "bumeran-neon": { steps: ["#btnStart", { canvas: [0.72, 0.3] }], wait: 4200 },
+  "sumo-neon": { steps: ["#btnStart"], wait: 2200 },
   "arpon-neon": { steps: ["#btnStart"], wait: 2500 },
   "inundacion-neon": { steps: ["#btnStart", { canvas: [0.5, 0.01] }], wait: 1200 },
   "bombero-neon": { steps: ["#btnStart"], wait: 9000 },

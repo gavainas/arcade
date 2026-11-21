@@ -914,6 +914,13 @@
       desc: "Tocá donde quieras tirar el bumerán: hace un rulo hasta ese punto y vuelve a tu mano, pegándole a todo lo que cruza a la ida y a la vuelta. Que ningún invasor toque el piso. Cada golpe del mismo tiro sube el combo hasta x5 y pegar a la ida y a la vuelta da bonus. Acorazados de 2 golpes, escudados que sólo caen desde arriba, zigzagueantes y dorados; premios de doble bumerán, fuego, cámara lenta y vida. Récord guardado.",
       controles: "Tocá arriba para tirar al punto; arrastrá en la franja de abajo (o en cualquier lado mientras vuela) para moverte. Teclado: ← → / A D moverse, ↑ / espacio tirar a la mira, Q / E diagonal, P pausa",
       fecha: "2026-11-20", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "sumo-neon", titulo: "Sumo Neón", archivo: "sumo-neon.html",
+      emoji: "🤼", categoria: "accion", tags: ["sumo", "empujar", "ring", "física", "embestida", "combo", "un jugador"],
+      desc: "Empujá a todos los rivales fuera del ring antes de que te saquen a vos. Tocá un punto para embestir hacia ahí y arrastrá para moverte; el ring se achica en cada oleada. Sacar varios seguidos sube el combo hasta x5. Pesados que casi no se mueven, embestidores que avisan antes de cargar, jefes cada 5 oleadas y dorados que sueltan premios: ancla, turbo, red de seguridad y vida. PERFECTO por oleada sin caerte y récord guardado.",
+      controles: "Tocá un punto para embestir hacia ahí; arrastrá para moverte como con un joystick (con un segundo dedo embestís). Teclado: flechas / WASD moverse, espacio embestir, P pausa",
+      fecha: "2026-11-21", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
