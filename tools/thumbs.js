@@ -61,6 +61,9 @@ const OVERRIDES = {
   // Playwright scrollee al tope del tablero y la miniatura muestre la mancha de la esquina.
   "bumeran-neon": { steps: ["#btnStart", { canvas: [0.72, 0.3] }], wait: 4200 },
   "sumo-neon": { steps: ["#btnStart"], wait: 2200 },
+  // Un toque cerca del tope del canvas (y apenas a la derecha del esquiador) para que
+  // Playwright scrollee arriba y la miniatura muestre al esquiador con su rastro.
+  "esqui-neon": { steps: ["#btnStart", { canvas: [0.6, 0.05] }], wait: 2600 },
   "arpon-neon": { steps: ["#btnStart"], wait: 2500 },
   "inundacion-neon": { steps: ["#btnStart", { canvas: [0.5, 0.01] }], wait: 1200 },
   "bombero-neon": { steps: ["#btnStart"], wait: 9000 },

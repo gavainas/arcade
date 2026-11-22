@@ -921,6 +921,13 @@
       desc: "Empujá a todos los rivales fuera del ring antes de que te saquen a vos. Tocá un punto para embestir hacia ahí y arrastrá para moverte; el ring se achica en cada oleada. Sacar varios seguidos sube el combo hasta x5. Pesados que casi no se mueven, embestidores que avisan antes de cargar, jefes cada 5 oleadas y dorados que sueltan premios: ancla, turbo, red de seguridad y vida. PERFECTO por oleada sin caerte y récord guardado.",
       controles: "Tocá un punto para embestir hacia ahí; arrastrá para moverte como con un joystick (con un segundo dedo embestís). Teclado: flechas / WASD moverse, espacio embestir, P pausa",
       fecha: "2026-11-21", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "esqui-neon", titulo: "Esquí Neón", archivo: "esqui-neon.html",
+      emoji: "🎿", categoria: "deportes", tags: ["esquí", "slalom", "nieve", "bajada", "puertas", "saltos", "combo", "un jugador"],
+      desc: "Slalom de luz: bajá la montaña pasando entre los dos banderines de cada puerta. Cuanto más derecho bajás, más rápido vas; doblar fuerte frena. Pasar por el centro es PERFECTO y la racha sube hasta x5; las puertas doradas valen doble. Esquivá pinos, rocas y bolas de nieve, cuidado con el hielo resbaloso y volá en las rampas haciendo giros de 360° (¡aterrizá derecho!). Premios: cámara lenta, escudo y vida. Bonus por tiempo, PERFECTO por pista y récord guardado.",
+      controles: "Mantené apretado a un costado del esquiador para doblar hacia ahí; en el aire, tocá para girar 360°. Teclado: ← → / A D doblar, espacio girar en el aire, P pausa",
+      fecha: "2026-11-22", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
