@@ -928,6 +928,13 @@
       desc: "Slalom de luz: bajá la montaña pasando entre los dos banderines de cada puerta. Cuanto más derecho bajás, más rápido vas; doblar fuerte frena. Pasar por el centro es PERFECTO y la racha sube hasta x5; las puertas doradas valen doble. Esquivá pinos, rocas y bolas de nieve, cuidado con el hielo resbaloso y volá en las rampas haciendo giros de 360° (¡aterrizá derecho!). Premios: cámara lenta, escudo y vida. Bonus por tiempo, PERFECTO por pista y récord guardado.",
       controles: "Mantené apretado a un costado del esquiador para doblar hacia ahí; en el aire, tocá para girar 360°. Teclado: ← → / A D doblar, espacio girar en el aire, P pausa",
       fecha: "2026-11-22", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "ascensor-neon", titulo: "Ascensor Neón", archivo: "ascensor-neon.html",
+      emoji: "🛗", categoria: "reflejos", tags: ["ascensor", "gestión", "pasajeros", "pisos", "paciencia", "combo", "un jugador"],
+      desc: "Sos el ascensorista de una torre de luz: tocá un piso y el ascensor va para allá. Al abrir las puertas bajan los que llegaron a destino y suben los que esperan (entran 6). Cada pasajero muestra a qué piso va y un anillo de paciencia: si se le acaba, se va enojado y perdés una vida. Entregá rápido para hacer PERFECTO y subir la racha hasta x5. VIP que valen doble, mudanzas que ocupan dos lugares, gente apurada y más pisos en cada turno. Premios: turbo, calma, vida y estrellas. Récord guardado.",
+      controles: "Tocá el piso al que querés mandar el ascensor (podés cambiar de idea en el camino). Teclado: ↑ ↓ / W S piso a piso, 0-9 ir directo (0 = PB), P pausa",
+      fecha: "2026-11-23", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

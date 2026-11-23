@@ -64,6 +64,8 @@ const OVERRIDES = {
   // Un toque cerca del tope del canvas (y apenas a la derecha del esquiador) para que
   // Playwright scrollee arriba y la miniatura muestre al esquiador con su rastro.
   "esqui-neon": { steps: ["#btnStart", { canvas: [0.6, 0.05] }], wait: 2600 },
+  // Un toque arriba del canvas (manda el ascensor al piso 5) para que Playwright scrollee arriba y la miniatura muestre la torre con el ascensor subiendo.
+  "ascensor-neon": { steps: ["#btnStart", { canvas: [0.6, 0.16] }], wait: 7000 },
   "arpon-neon": { steps: ["#btnStart"], wait: 2500 },
   "inundacion-neon": { steps: ["#btnStart", { canvas: [0.5, 0.01] }], wait: 1200 },
   "bombero-neon": { steps: ["#btnStart"], wait: 9000 },
