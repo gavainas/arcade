@@ -935,6 +935,13 @@
       desc: "Sos el ascensorista de una torre de luz: tocá un piso y el ascensor va para allá. Al abrir las puertas bajan los que llegaron a destino y suben los que esperan (entran 6). Cada pasajero muestra a qué piso va y un anillo de paciencia: si se le acaba, se va enojado y perdés una vida. Entregá rápido para hacer PERFECTO y subir la racha hasta x5. VIP que valen doble, mudanzas que ocupan dos lugares, gente apurada y más pisos en cada turno. Premios: turbo, calma, vida y estrellas. Récord guardado.",
       controles: "Tocá el piso al que querés mandar el ascensor (podés cambiar de idea en el camino). Teclado: ↑ ↓ / W S piso a piso, 0-9 ir directo (0 = PB), P pausa",
       fecha: "2026-11-23", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "parrilla-neon", titulo: "Parrilla Neón", archivo: "parrilla-neon.html",
+      emoji: "🥩", categoria: "reflejos", tags: ["parrilla", "asado", "cocina", "timing", "gestión", "pedidos", "combo", "un jugador"],
+      desc: "Sos el parrillero de un asado de luz: elegí un corte de la tabla (chorizo, morcilla, provoleta, vacío, molleja) y tiralo en la parrilla. Cuando la barra de cocción llega a la zona verde, dalo vuelta; cuando el otro lado también está, servilo al comensal que lo pidió. Clavar los dos lados en la franja dorada es PERFECTO y la racha sube hasta x5. Atrás el fuego es fuerte y adelante suave, desde la mesa 3 hay llamaradas y clientes VIP. Si algo se quema o alguien se cansa de esperar, perdés una vida. Premios: chimichurri x2, brasas bajas, picada y vida. Récord guardado.",
+      controles: "Tocá un corte de la tabla y después un lugar libre de la parrilla; tocá lo que se está cocinando para darlo vuelta y otra vez para servirlo. Teclado: Q W E R T elegir corte, 1-6 lugar de la parrilla, espacio agarrar premio, P pausa",
+      fecha: "2026-11-24", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

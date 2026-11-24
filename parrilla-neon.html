@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PARRILLA NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--gold),var(--pink),var(--cyan),var(--gold));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:pointer;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--gold),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:380px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--gold),var(--pink));box-shadow:0 8px 24px rgba(255,43,214,.3);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">PARRILLA NEÓN</div><div class="sub">ASADO DE LUZ</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">MESA<b id="hLevel">1</b></div>
+    <div class="box">VIDAS<b id="hLives">❤❤❤</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="cv" width="480" height="640"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">🥩</div><h2>PARRILLA NEÓN</h2>
+      <p>Sos el parrillero. Elegí un corte de la tabla y <b style="color:#27e8ff">tocá un lugar libre</b> de la parrilla para tirarlo.<br>
+      Mirá la barra de cocción: cuando llega a la <b style="color:#5dff9e">zona verde</b>, tocalo para <b style="color:#27e8ff">darlo vuelta</b>; cuando el otro lado también está, tocalo de nuevo para <b style="color:#27e8ff">servirlo</b>. En la franja dorada es <b style="color:#ff2bd6">PERFECTO</b> y la racha sube hasta <b style="color:#ff2bd6">x5</b>.<br>
+      Atrás el <b style="color:#ff9a3b">fuego es fuerte</b>, adelante suave. Si algo se quema o un comensal se cansa de esperar, perdés una vida.</p>
+      <button class="btn" id="btnStart">PRENDER EL FUEGO</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">🔥</div><h2>¡SE APAGARON LAS BRASAS!</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRO ASADO</button>
+    </div>
+  </div>
+  <div class="hint">Táctil / mouse: tocá un <b>corte de la tabla</b> y después un <b>lugar libre</b>; tocá lo que está en la parrilla para <b>darlo vuelta</b> y otra vez para <b>servirlo</b>.<br>Teclado: <b>Q W E R T</b> elegir corte · <b>1-6</b> lugar de la parrilla · <b>espacio</b> agarrar premio · <b>P</b> pausa</div>
+</div>
+<script>
+(() => {
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  const TOP = 44;
+  const OY = 50, OH = 128;                 // tickets de pedidos
+  const GY = 188, GH = 326;                // parrilla
+  const SY = 524, SH = 108;                // tabla de cortes
+  const SPOT_W = 140, SPOT_H = 140;
+  const BEST_KEY = "parrilla-neon-best";
+  const TAU = Math.PI * 2;
+  const RAW = 0.7, OKMAX = 1.18, PF0 = 0.86, PF1 = 1.02, BURN = 1.4;
+  const $ = id => document.getElementById(id);
+  const hScore = $("hScore"), hLevel = $("hLevel"), hLives = $("hLives"), hBest = $("hBest");
+  const ovStart = $("ovStart"), ovEnd = $("ovEnd"), endText = $("endText");
+
+  // tipos de corte: tiempo por lado (a calor 1), puntos, colores crudo/hecho/quemado, neón
+  const TYPES = [
+    { id: "chorizo",   name: "CHORIZO",   key: "Q", t: 6.0, pts: 10, raw: [255, 120, 150], done: [196, 86, 46],  burnt: [40, 18, 14], neon: "#ff2bd6", from: 1 },
+    { id: "morcilla",  name: "MORCILLA",  key: "W", t: 4.6, pts: 10, raw: [150, 60, 110],  done: [80, 26, 40],   burnt: [22, 10, 12], neon: "#8a4bff", from: 1 },
+    { id: "provoleta", name: "PROVOLETA", key: "E", t: 4.0, pts: 15, raw: [255, 244, 200], done: [236, 170, 60], burnt: [50, 30, 10], neon: "#ffd23b", from: 2 },
+    { id: "vacio",     name: "VACÍO",     key: "R", t: 8.5, pts: 25, raw: [255, 95, 110],  done: [170, 80, 50],  burnt: [36, 16, 12], neon: "#27e8ff", from: 3 },
+    { id: "molleja",   name: "MOLLEJA",   key: "T", t: 3.4, pts: 20, raw: [255, 200, 190], done: [214, 150, 80], burnt: [44, 26, 14], neon: "#5dff9e", from: 4 }
+  ];
+  const FACES = ["🧔", "👩", "🧑", "👴", "👵", "🤠", "👨‍🦱", "👩‍🦰", "🧕", "👱"];
+  const POWERS = [
+    { id: "chimi", icon: "🌿", name: "CHIMICHURRI x2", c: "#5dff9e" },
+    { id: "calma", icon: "❄", name: "BRASAS BAJAS", c: "#9fe8ff" },
+    { id: "picada", icon: "🧀", name: "PICADA: +PACIENCIA", c: "#ffd23b" },
+    { id: "vida", icon: "❤", name: "+1 VIDA", c: "#ff5a7a" }
+  ];
+
+  // lugares: 3 atrás (fuego fuerte) y 3 adelante (fuego suave)
+  const spots = [];
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) {
+    spots.push({ x: 90 + c * 150, y: GY + 86 + r * 158, heat: r === 0 ? 1.35 : 0.85, cut: null, flare: 0, warn: 0, row: r });
+  }
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  hBest.textContent = best;
+
+  // ---------- audio ----------
+  let actx = null;
+  function beep(f, d = 0.08, type = "square", v = 0.05, slide = 0) {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } }
+    try {
+      const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  function sizzle(v = 0.04, d = 0.25) {
+    if (!actx) return;
+    try {
+      const t = actx.currentTime, len = Math.floor(actx.sampleRate * d);
+      const buf = actx.createBuffer(1, len, actx.sampleRate), data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+      f.type = "highpass"; f.frequency.value = 2500; g.gain.value = v;
+      src.buffer = buf; src.connect(f); f.connect(g); g.connect(actx.destination); src.start(t);
+    } catch (e) {}
+  }
+  const sfx = {
+    select: () => beep(640, 0.05, "triangle", 0.04),
+    place: () => { beep(300, 0.06, "triangle", 0.04, -80); sizzle(0.05, 0.35); },
+    flip: () => { beep(480, 0.06, "triangle", 0.05, 260); sizzle(0.04, 0.2); },
+    serve: (m) => beep(620 + m * 70, 0.1, "triangle", 0.06),
+    perfect: (m) => { beep(760 + m * 80, 0.08, "triangle", 0.06); setTimeout(() => beep(1140 + m * 80, 0.12, "triangle", 0.05), 70); },
+    reject: () => { beep(240, 0.18, "square", 0.05, -60); },
+    burn: () => { beep(160, 0.4, "sawtooth", 0.07, -90); sizzle(0.07, 0.5); },
+    angry: () => { beep(220, 0.3, "sawtooth", 0.06, -120); },
+    order: () => { [784, 988, 1318].forEach((f, i) => setTimeout(() => beep(f, 0.1, "triangle", 0.05), i * 70)); },
+    bell: () => beep(1500, 0.12, "sine", 0.04),
+    power: () => { beep(660, 0.08, "sine", 0.07); setTimeout(() => beep(990, 0.12, "sine", 0.06), 80); },
+    flare: () => { sizzle(0.08, 0.6); beep(120, 0.3, "sawtooth", 0.03, 80); },
+    level: () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.14, "triangle", 0.06), i * 100)); }
+  };
+
+  // ---------- estado ----------
+  let state = "menu";
+  let score, level, lives, orders, parts, texts, sel, power, powerT;
+  let streak, servedOrders, goal, spawnT, flareT, between, levelHurt, shake, banner, bannerT, calmT, chimi, time, totalCuts, maxStreak, totalPerf;
+  parts = []; texts = []; shake = 0; bannerT = 0; time = 0; sel = 0; orders = []; power = null;
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function mult() { return Math.min(5, 1 + Math.floor(streak / 3)); }
+  function avail() { return TYPES.filter(t => t.from <= level); }
+  function mix(a, b, k) { k = clamp(k, 0, 1); return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]; }
+  function rgb(c, a = 1) { return `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`; }
+  function doneColor(T, d) { return d <= 1 ? mix(T.raw, T.done, d / 0.95) : mix(T.done, T.burnt, (d - 1) / (BURN - 1)); }
+  function quality(d) { return d < RAW ? "crudo" : d > OKMAX ? "pasado" : (d >= PF0 && d <= PF1) ? "perfecto" : "ok"; }
+
+  function reset() {
+    score = 0; level = 0; lives = 3; shake = 0; time = 0; streak = 0; totalCuts = 0; maxStreak = 0; totalPerf = 0;
+    orders = []; parts = []; texts = []; power = null; powerT = 6; calmT = 0; chimi = 0; sel = 0;
+    spots.forEach(s => { s.cut = null; s.flare = 0; s.warn = 0; });
+    nextLevel();
+    updHud();
+  }
+
+  function nextLevel() {
+    if (level > 0) {
+      let bonus = 60 * level;
+      if (!levelHurt) { bonus += 120 * level; addText(W / 2, H / 2 + 34, "MESA PERFECTA +" + (120 * level), "#ff2bd6", 20); }
+      score += bonus;
+      if (level % 2 === 0 && lives < 5) { lives++; addText(W / 2, H / 2 + 62, "+1 VIDA", "#5dff9e", 18); }
+      sfx.level();
+    }
+    level++;
+    servedOrders = 0; goal = 3 + level * 2; levelHurt = false;
+    spawnT = 0.8; flareT = rnd(8, 12); between = 2.2;
+    const nu = TYPES.find(t => t.from === level);
+    showBanner(nu ? "MESA " + level + " · ¡LLEGÓ " + nu.name + "!" : "MESA " + level);
+    if (nu) sel = TYPES.indexOf(nu);
+    updHud();
+  }
+
+  function showBanner(t) { banner = t; bannerT = 2.2; }
+  function addText(x, y, t, c, size = 16) { texts.push({ x, y, t, c, size, life: 1.3 }); }
+  function burst(x, y, c, n = 14, sp = 160) {
+    for (let i = 0; i < n; i++) {
+      const a = rnd(0, TAU), v = rnd(sp * 0.3, sp);
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(0.4, 0.9), max: 0.9, c, r: rnd(1.5, 3.5), g: 200 });
+    }
+  }
+  function smoke(x, y, dark) {
+    parts.push({ x: x + rnd(-24, 24), y, vx: rnd(-10, 10), vy: rnd(-50, -30), life: rnd(0.8, 1.4), max: 1.4, c: dark ? "#2a2a33" : "#9aa7bd", r: rnd(4, 9), g: -10, smoke: true });
+  }
+  function updHud() {
+    hScore.textContent = score; hLevel.textContent = level;
+    hLives.textContent = lives > 0 ? "❤".repeat(lives) : "—";
+    hBest.textContent = Math.max(best, score);
+  }
+
+  function newOrder() {
+    const av = avail();
+    const maxItems = level <= 1 ? 2 : level <= 3 ? 3 : 3;
+    const n = Math.random() < 0.45 ? 1 : (Math.random() < 0.6 || maxItems < 3 ? 2 : 3);
+    const items = [];
+    for (let i = 0; i < Math.min(n, maxItems); i++) {
+      // los cortes nuevos aparecen más seguido
+      let T = av[Math.floor(Math.random() * av.length)];
+      if (Math.random() < 0.3) T = av[av.length - 1];
+      items.push({ type: TYPES.indexOf(T), done: false, perf: false });
+    }
+    let pat = 10;
+    items.forEach(it => { pat += TYPES[it.type].t * 2 / 1.1 + 4; });
+    pat *= Math.max(0.68, 1.12 - level * 0.06);
+    orders.push({ face: FACES[Math.floor(Math.random() * FACES.length)], items, pat, max: pat, vip: level >= 3 && Math.random() < 0.18, pop: 0, leave: 0 });
+    sfx.bell();
+  }
+
+  function maxOrders() { return level <= 1 ? 2 : 3; }
+
+  // ---------- acciones ----------
+  function selectType(i) {
+    if (state !== "play") return;
+    const T = TYPES[i];
+    if (!T || T.from > level) return;
+    sel = i; sfx.select();
+  }
+
+  function tapSpot(i) {
+    const s = spots[i];
+    if (!s) return;
+    if (!s.cut) {
+      const T = TYPES[sel];
+      if (!T || T.from > level) return;
+      s.cut = { type: sel, side: 0, d: [0, 0], flip: 0, burnT: 0, drop: 1 };
+      sfx.place();
+      for (let k = 0; k < 4; k++) smoke(s.x, s.y);
+      return;
+    }
+    const c = s.cut;
+    if (c.burnT > 0) return;
+    if (c.side === 0) {
+      c.side = 1; c.flip = 1; sfx.flip();
+      const q = quality(c.d[0]);
+      addText(s.x, s.y - 52, q === "perfecto" ? "¡JUSTO!" : q === "ok" ? "VUELTA" : q === "crudo" ? "CRUDO..." : "PASADO...",
+        q === "perfecto" ? "#ffd23b" : q === "ok" ? "#5dff9e" : "#ff5a7a", 14);
+      return;
+    }
+    serve(s);
+  }
+
+  function serve(s) {
+    const c = s.cut, T = TYPES[c.type];
+    const q0 = quality(c.d[0]), q1 = quality(c.d[1]);
+    s.cut = null;
+    totalCuts++;
+    if (q0 === "crudo" || q1 === "crudo" || q0 === "pasado" || q1 === "pasado") {
+      const why = (q0 === "crudo" || q1 === "crudo") ? "¡ESTÁ CRUDO!" : "¡ESTÁ PASADO!";
+      addText(s.x, s.y - 30, why, "#ff5a7a", 18);
+      streak = 0; sfx.reject(); shake = 0.2;
+      burst(s.x, s.y, "#ff5a7a", 10, 120);
+      return;
+    }
+    // ¿quién lo pidió? el que hace más que espera
+    let target = null, slot = null;
+    for (const o of orders) {
+      if (o.leave) continue;
+      const it = o.items.find(it => !it.done && it.type === c.type);
+      if (it) { target = o; slot = it; break; }
+    }
+    if (!target) {
+      addText(s.x, s.y - 30, "NADIE PIDIÓ " + T.name, "#ff9a3b", 15);
+      streak = 0; sfx.reject();
+      return;
+    }
+    const perf = q0 === "perfecto" && q1 === "perfecto";
+    slot.done = true; slot.perf = perf;
+    if (perf) { streak++; totalPerf++; maxStreak = Math.max(maxStreak, streak); }
+    const m = mult();
+    let pts = Math.round(T.pts * (1 + 0.5 * ((q0 === "perfecto") + (q1 === "perfecto"))) * m * (chimi > 0 ? 2 : 1) * (target.vip ? 2 : 1));
+    if (chimi > 0) chimi--;
+    score += pts;
+    if (perf) { sfx.perfect(m); addText(s.x, s.y - 34, "¡PERFECTO! +" + pts, "#ff2bd6", 18); burst(s.x, s.y, "#ffd23b", 22, 200); }
+    else { sfx.serve(m); addText(s.x, s.y - 34, "+" + pts, "#27e8ff", 16); burst(s.x, s.y, T.neon, 12, 150); }
+    target.pop = 1;
+    if (target.items.every(it => it.done)) completeOrder(target);
+    updHud();
+  }
+
+  function completeOrder(o) {
+    const allPerf = o.items.every(it => it.perf);
+    let bonus = 20 * o.items.length * mult();
+    if (allPerf) bonus += 50;
+    bonus += Math.round(30 * (o.pat / o.max));
+    if (o.vip) bonus *= 2;
+    score += bonus;
+    o.leave = 1; o.happy = true;
+    const ox = orderX(orders.indexOf(o));
+    addText(ox, OY + OH / 2, (allPerf ? "¡MANJAR! +" : "¡QUÉ RICO! +") + bonus, allPerf ? "#ff2bd6" : "#5dff9e", 16);
+    burst(ox, OY + 40, allPerf ? "#ff2bd6" : "#5dff9e", 18, 180);
+    sfx.order();
+    servedOrders++;
+    spawnT = Math.min(spawnT, rnd(1.2, 2.5));
+    if (servedOrders >= goal) { between = 0; nextLevel(); }
+  }
+
+  function loseLife(x, y, why) {
+    lives--; levelHurt = true; streak = 0; shake = 0.45;
+    addText(x, y, why, "#ff5a7a", 18);
+    burst(x, y, "#ff5a7a", 18, 180);
+    updHud();
+    if (lives <= 0) gameOver();
+  }
+
+  function collectPower() {
+    if (!power || state !== "play") return false;
+    const P = POWERS[power.type];
+    if (P.id === "chimi") chimi += 4;
+    else if (P.id === "calma") calmT = 7;
+    else if (P.id === "picada") orders.forEach(o => { if (!o.leave) o.pat = Math.min(o.max, o.pat + o.max * 0.5); });
+    else if (P.id === "vida") { if (lives < 5) lives++; updHud(); }
+    addText(power.x, power.y - 26, P.name, P.c, 16);
+    burst(power.x, power.y, P.c, 20, 170);
+    sfx.power();
+    power = null; powerT = rnd(10, 16);
+    return true;
+  }
+
+  // ---------- update ----------
+  function orderX(i) { const w = (W - 24 - 16) / 3; return 12 + w / 2 + i * (w + 8); }
+
+  function update(dt) {
+    time += dt;
+    if (shake > 0) shake -= dt;
+    if (bannerT > 0) bannerT -= dt;
+    parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g || 0) * dt; p.life -= dt; if (p.smoke) p.r += dt * 6; });
+    parts = parts.filter(p => p.life > 0);
+    texts.forEach(t => { t.y -= 26 * dt; t.life -= dt * 0.8; });
+    texts = texts.filter(t => t.life > 0);
+    // brasas que saltan
+    if (Math.random() < dt * 6) {
+      const s = spots[Math.floor(Math.random() * 3)];
+      parts.push({ x: s.x + rnd(-60, 60), y: s.y + 50, vx: rnd(-15, 15), vy: rnd(-90, -40), life: rnd(0.4, 0.9), max: 0.9, c: "#ff9a3b", r: rnd(1, 2), g: 30 });
+    }
+    if (state !== "play") return;
+
+    if (calmT > 0) calmT -= dt;
+    const heatMul = calmT > 0 ? 0.5 : 1;
+
+    // pedidos
+    if (between > 0) between -= dt;
+    const active = orders.filter(o => !o.leave).length;
+    spawnT -= dt;
+    if (spawnT <= 0 && active < maxOrders() && orders.length < 3) {
+      newOrder();
+      spawnT = rnd(3.5, 6.5) * Math.max(0.6, 1 - level * 0.05);
+    }
+    for (const o of orders) {
+      if (o.pop > 0) o.pop -= dt * 3;
+      if (o.leave) { o.leave += dt * 1.6; continue; }
+      o.pat -= dt * (o.vip ? 1.2 : 1);
+      if (o.pat <= 0) {
+        o.leave = 1; o.happy = false;
+        sfx.angry();
+        loseLife(orderX(orders.indexOf(o)), OY + OH / 2, "¡SE FUE CON HAMBRE!");
+        if (state !== "play") return;
+      }
+    }
+    orders = orders.filter(o => !o.leave || o.leave < 2);
+
+    // parrilla
+    for (const s of spots) {
+      if (s.warn > 0) { s.warn -= dt; if (s.warn <= 0) { s.flare = 2.6; sfx.flare(); } }
+      if (s.flare > 0) {
+        s.flare -= dt;
+        if (Math.random() < dt * 30) parts.push({ x: s.x + rnd(-50, 50), y: s.y + 40, vx: rnd(-20, 20), vy: rnd(-170, -90), life: rnd(0.3, 0.6), max: 0.6, c: Math.random() < 0.5 ? "#ff9a3b" : "#ffd23b", r: rnd(2, 5), g: -40 });
+      }
+      const c = s.cut;
+      if (!c) continue;
+      if (c.flip > 0) c.flip -= dt * 4;
+      if (c.drop > 0) c.drop -= dt * 5;
+      if (c.burnT > 0) {
+        c.burnT -= dt;
+        if (Math.random() < dt * 20) smoke(s.x, s.y - 10, true);
+        if (c.burnT <= 0) s.cut = null;
+        continue;
+      }
+      const T = TYPES[c.type];
+      const h = s.heat * heatMul * (s.flare > 0 ? 2.6 : 1);
+      c.d[c.side] += dt * h / T.t;
+      if (Math.random() < dt * (2 + c.d[c.side] * 4)) smoke(s.x, s.y - 10, c.d[c.side] > OKMAX);
+      if (c.d[c.side] >= BURN) {
+        c.burnT = 1.1;
+        sfx.burn();
+        loseLife(s.x, s.y - 30, "¡SE QUEMÓ!");
+        if (state !== "play") return;
+      }
+    }
+
+    // llamaradas desde la mesa 3
+    if (level >= 3) {
+      flareT -= dt;
+      if (flareT <= 0) {
+        const s = spots[Math.floor(Math.random() * 6)];
+        if (s.flare <= 0 && s.warn <= 0) s.warn = 1.2;
+        flareT = rnd(6, 11) * Math.max(0.55, 1 - (level - 3) * 0.08);
+      }
+    }
+
+    // premios
+    if (power) {
+      power.t -= dt; power.bob += dt;
+      if (power.t <= 0) power = null;
+    } else {
+      powerT -= dt;
+      if (powerT <= 0) {
+        let r = Math.random(), type = r < 0.38 ? 0 : r < 0.66 ? 1 : r < 0.9 ? 2 : 3;
+        if (type === 3 && lives >= 5) type = 2;
+        power = { type, x: rnd(60, W - 60), y: GY + 165 + rnd(-8, 8), t: 6, bob: 0 };
+        powerT = rnd(10, 16);
+      }
+    }
+  }
+
+  // ---------- dibujo ----------
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function drawCutShape(T, x, y, s, fill, glow) {
+    ctx.save();
+    ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = T.neon; ctx.lineWidth = 2.5;
+    ctx.shadowColor = T.neon; ctx.shadowBlur = glow;
+    ctx.beginPath();
+    if (T.id === "chorizo") { rr(-40, -13, 80, 26, 13); }
+    else if (T.id === "morcilla") { ctx.ellipse(0, 0, 40, 13, -0.12, 0, TAU); }
+    else if (T.id === "provoleta") { ctx.arc(0, 0, 27, 0, TAU); }
+    else if (T.id === "vacio") {
+      ctx.moveTo(-44, -16); ctx.quadraticCurveTo(0, -30, 44, -14); ctx.quadraticCurveTo(52, 8, 38, 20);
+      ctx.quadraticCurveTo(0, 30, -40, 18); ctx.quadraticCurveTo(-54, 0, -44, -16); ctx.closePath();
+    } else { ctx.moveTo(-18, -4); ctx.bezierCurveTo(-20, -22, 10, -24, 18, -8); ctx.bezierCurveTo(28, 10, 4, 22, -10, 16); ctx.bezierCurveTo(-24, 12, -20, 4, -18, -4); ctx.closePath(); }
+    ctx.fill(); ctx.shadowBlur = 0; ctx.stroke();
+    // detalles
+    ctx.globalAlpha = 0.35; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (T.id === "chorizo") { ctx.moveTo(-30, -6); ctx.lineTo(20, -6); }
+    else if (T.id === "vacio") { ctx.moveTo(-30, 8); ctx.quadraticCurveTo(0, 16, 32, 6); }
+    else if (T.id === "provoleta") { ctx.arc(-6, -6, 8, 3.6, 5.4); }
+    else if (T.id === "morcilla") { ctx.moveTo(-26, -4); ctx.lineTo(16, -6); }
+    else { ctx.arc(0, 0, 6, 0, 3); }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawGrillMarks(x, y, a) {
+    ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = "rgba(20,8,4,.8)"; ctx.lineWidth = 3;
+    for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(x + i * 14 - 8, y - 10); ctx.lineTo(x + i * 14 + 8, y + 10); ctx.stroke(); }
+    ctx.restore();
+  }
+
+  function drawBar(x, y, w, d, side) {
+    const sc = v => x + w * Math.min(v, BURN) / BURN;
+    ctx.fillStyle = "rgba(255,90,122,.25)"; rr(x, y, w, 9, 4); ctx.fill();
+    ctx.fillStyle = "rgba(93,255,158,.45)"; ctx.fillRect(sc(RAW), y, sc(OKMAX) - sc(RAW), 9);
+    ctx.fillStyle = "rgba(255,210,59,.85)"; ctx.fillRect(sc(PF0), y, sc(PF1) - sc(PF0), 9);
+    ctx.fillStyle = "rgba(40,20,20,.9)"; ctx.fillRect(sc(OKMAX), y, sc(BURN) - sc(OKMAX), 9);
+    const px = sc(d);
+    ctx.fillStyle = "#fff"; ctx.shadowColor = "#fff"; ctx.shadowBlur = 8;
+    ctx.fillRect(px - 1.5, y - 4, 3, 17); ctx.shadowBlur = 0;
+    ctx.fillStyle = "#7fa6c8"; ctx.font = "800 10px Segoe UI, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText(side === 0 ? "LADO 1" : "LADO 2", x, y + 19);
+    ctx.textAlign = "right";
+    const q = quality(d);
+    ctx.fillStyle = q === "perfecto" ? "#ffd23b" : q === "ok" ? "#5dff9e" : q === "crudo" ? "#7fa6c8" : "#ff5a7a";
+    ctx.fillText(q === "perfecto" ? "¡AHORA!" : q === "ok" ? "A PUNTO" : q === "crudo" ? "CRUDO" : "¡SE QUEMA!", x + w, y + 19);
+  }
+
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate(rnd(-5, 5) * shake * 2, rnd(-5, 5) * shake * 2);
+    ctx.fillStyle = "#050813"; ctx.fillRect(-10, -10, W + 20, H + 20);
+
+    // ---- pedidos ----
+    const ow = (W - 24 - 16) / 3;
+    for (let i = 0; i < 3; i++) {
+      const x = 12 + i * (ow + 8);
+      ctx.strokeStyle = "rgba(127,166,200,.18)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
+      rr(x, OY, ow, OH, 12); ctx.stroke(); ctx.setLineDash([]);
+    }
+    orders.forEach((o, i) => {
+      const x = 12 + i * (ow + 8);
+      ctx.save();
+      if (o.leave) { ctx.globalAlpha = clamp(2 - o.leave, 0, 1); ctx.translate(0, -(o.leave - 1) * 30); }
+      const sc = 1 + Math.max(0, o.pop) * 0.06;
+      ctx.translate(x + ow / 2, OY + OH / 2); ctx.scale(sc, sc); ctx.translate(-(x + ow / 2), -(OY + OH / 2));
+      const pr = clamp(o.pat / o.max, 0, 1);
+      const urgent = pr < 0.3 && !o.leave;
+      ctx.fillStyle = o.vip ? "rgba(60,46,10,.85)" : "rgba(16,22,48,.9)";
+      rr(x, OY, ow, OH, 12); ctx.fill();
+      ctx.strokeStyle = o.vip ? "#ffd23b" : urgent && Math.sin(time * 14) > 0 ? "#ff5a7a" : "rgba(138,75,255,.6)";
+      ctx.lineWidth = 2; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.font = "26px Segoe UI Emoji, Apple Color Emoji, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(o.leave ? (o.happy ? "😋" : "😠") : urgent ? "😤" : o.face, x + 8, OY + 22);
+      if (o.vip) { ctx.fillStyle = "#ffd23b"; ctx.font = "900 11px Segoe UI, sans-serif"; ctx.textAlign = "right"; ctx.fillText("VIP x2", x + ow - 10, OY + 22); }
+      // ítems
+      o.items.forEach((it, k) => {
+        const T = TYPES[it.type];
+        const iy = OY + 50 + k * 24;
+        ctx.globalAlpha = it.done ? 0.45 : 1;
+        drawCutShape(T, x + 26, iy, 0.36, rgb(T.done), 6);
+        ctx.fillStyle = it.done ? "#5dff9e" : "#e8f6ff"; ctx.font = "800 11px Segoe UI, sans-serif"; ctx.textAlign = "left";
+        ctx.fillText(T.name, x + 46, iy);
+        if (it.done) { ctx.fillStyle = it.perf ? "#ffd23b" : "#5dff9e"; ctx.font = "900 13px Segoe UI, sans-serif"; ctx.textAlign = "right"; ctx.fillText(it.perf ? "★" : "✔", x + ow - 10, iy); }
+        ctx.globalAlpha = o.leave ? clamp(2 - o.leave, 0, 1) : 1;
+      });
+      // paciencia
+      ctx.fillStyle = "rgba(127,166,200,.2)"; rr(x + 8, OY + OH - 14, ow - 16, 7, 3.5); ctx.fill();
+      ctx.fillStyle = pr > 0.55 ? "#5dff9e" : pr > 0.3 ? "#ffd23b" : "#ff5a7a";
+      rr(x + 8, OY + OH - 14, Math.max(7, (ow - 16) * pr), 7, 3.5); ctx.fill();
+      ctx.restore();
+    });
+
+    // ---- parrilla ----
+    ctx.fillStyle = "#0b0d18"; rr(8, GY, W - 16, GH, 16); ctx.fill();
+    ctx.strokeStyle = "rgba(138,75,255,.5)"; ctx.lineWidth = 2; ctx.stroke();
+    // brasas
+    for (let r = 0; r < 2; r++) {
+      const y0 = GY + 8 + r * 158, hgt = 152;
+      const g = ctx.createLinearGradient(0, y0, 0, y0 + hgt);
+      const hot = r === 0;
+      const pulse = 0.75 + 0.25 * Math.sin(time * 2 + r);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(1, hot ? `rgba(255,90,30,${0.35 * pulse})` : `rgba(255,140,40,${0.16 * pulse})`);
+      ctx.fillStyle = g; ctx.fillRect(14, y0, W - 28, hgt);
+      ctx.fillStyle = hot ? "rgba(255,120,50,.85)" : "rgba(255,180,80,.55)";
+      ctx.font = "800 10px Segoe UI, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(hot ? "🔥 FUEGO FUERTE" : "FUEGO SUAVE", 18, y0 + 10);
+    }
+    // varillas
+    ctx.strokeStyle = "rgba(180,190,220,.13)"; ctx.lineWidth = 3;
+    for (let x = 22; x < W - 14; x += 16) { ctx.beginPath(); ctx.moveTo(x, GY + 22); ctx.lineTo(x, GY + GH - 8); ctx.stroke(); }
+
+    spots.forEach((s, i) => {
+      const x0 = s.x - SPOT_W / 2, y0 = s.y - SPOT_H / 2 + 4;
+      if (s.warn > 0 && Math.sin(time * 30) > 0) { ctx.fillStyle = "rgba(255,90,30,.18)"; rr(x0, y0, SPOT_W, SPOT_H, 12); ctx.fill(); }
+      ctx.strokeStyle = s.cut ? "rgba(39,232,255,.25)" : "rgba(127,166,200,.22)";
+      ctx.lineWidth = 1.5; ctx.setLineDash(s.cut ? [] : [6, 6]);
+      rr(x0, y0, SPOT_W, SPOT_H, 12); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(127,166,200,.45)"; ctx.font = "800 11px Segoe UI, sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "top";
+      ctx.fillText(String(i + 1), x0 + SPOT_W - 8, y0 + 6);
+      if (s.flare > 0) {
+        const a = clamp(s.flare, 0, 1);
+        const g = ctx.createRadialGradient(s.x, s.y + 40, 4, s.x, s.y + 10, 80);
+        g.addColorStop(0, `rgba(255,220,80,${0.6 * a})`); g.addColorStop(1, "rgba(255,80,20,0)");
+        ctx.fillStyle = g; ctx.fillRect(x0, y0, SPOT_W, SPOT_H);
+        ctx.fillStyle = "#ffd23b"; ctx.font = "900 11px Segoe UI, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+        ctx.fillText("¡LLAMARADA!", x0 + 8, y0 + 6);
+      } else if (s.warn > 0) {
+        ctx.fillStyle = "#ff9a3b"; ctx.font = "900 11px Segoe UI, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+        ctx.fillText("⚠ CHISPORROTEA", x0 + 8, y0 + 6);
+      }
+      const c = s.cut;
+      if (!c) {
+        if (state === "play" && TYPES[sel] && TYPES[sel].from <= level) {
+          ctx.globalAlpha = 0.14 + 0.06 * Math.sin(time * 3 + i);
+          drawCutShape(TYPES[sel], s.x, s.y - 6, 0.9, "rgba(255,255,255,.1)", 0);
+          ctx.globalAlpha = 1;
+        }
+        return;
+      }
+      const T = TYPES[c.type];
+      const topD = c.side === 0 ? c.d[1] : c.d[0];
+      let fill = c.burnT > 0 ? T.burnt : doneColor(T, topD);
+      const flipS = c.flip > 0 ? Math.abs(Math.cos((1 - c.flip) * Math.PI)) : 1;
+      const dropY = c.drop > 0 ? -c.drop * 30 : 0;
+      ctx.save();
+      ctx.translate(s.x, s.y - 8 + dropY); ctx.scale(1, Math.max(0.08, flipS)); ctx.translate(-s.x, -(s.y - 8));
+      ctx.globalAlpha = c.burnT > 0 ? clamp(c.burnT, 0, 1) : 1;
+      drawCutShape(T, s.x, s.y - 8, 1.15, rgb(fill), 14);
+      if (c.side === 1 && c.d[0] > 0.5) drawGrillMarks(s.x, s.y - 8, clamp((c.d[0] - 0.5) * 1.4, 0, 0.8));
+      ctx.restore();
+      ctx.fillStyle = "#e8f6ff"; ctx.font = "800 10px Segoe UI, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(T.name, s.x, s.y - 50);
+      if (c.burnT <= 0) drawBar(s.x - 58, s.y + 30, 116, c.d[c.side], c.side);
+      else { ctx.fillStyle = "#ff5a7a"; ctx.font = "900 13px Segoe UI, sans-serif"; ctx.fillText("CARBÓN", s.x, s.y + 36); }
+    });
+
+    // premio
+    if (power) {
+      const P = POWERS[power.type];
+      const y = power.y + Math.sin(power.bob * 4) * 5;
+      ctx.globalAlpha = power.t < 1.5 && Math.sin(time * 20) > 0 ? 0.4 : 1;
+      ctx.fillStyle = "rgba(10,14,30,.85)"; ctx.beginPath(); ctx.arc(power.x, y, 22, 0, TAU); ctx.fill();
+      ctx.strokeStyle = P.c; ctx.lineWidth = 2.5; ctx.shadowColor = P.c; ctx.shadowBlur = 14; ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.font = "22px Segoe UI Emoji, Apple Color Emoji, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = P.c; ctx.fillText(P.icon, power.x, y + 1);
+      ctx.globalAlpha = 1;
+    }
+
+    // ---- tabla de cortes ----
+    ctx.fillStyle = "rgba(30,18,10,.9)"; rr(8, SY, W - 16, SH, 14); ctx.fill();
+    ctx.strokeStyle = "rgba(255,210,59,.35)"; ctx.lineWidth = 1.5; ctx.stroke();
+    const bw = (W - 16 - 12) / 5;
+    TYPES.forEach((T, i) => {
+      const x = 14 + i * bw, y = SY + 6, w = bw - 4, h = SH - 12;
+      const ok = T.from <= level || state === "menu";
+      const on = i === sel && state !== "menu";
+      ctx.fillStyle = on ? "rgba(39,232,255,.14)" : "rgba(10,14,30,.55)";
+      rr(x, y, w, h, 10); ctx.fill();
+      if (on) { ctx.strokeStyle = T.neon; ctx.lineWidth = 2.5; ctx.shadowColor = T.neon; ctx.shadowBlur = 12; ctx.stroke(); ctx.shadowBlur = 0; }
+      ctx.globalAlpha = ok ? 1 : 0.25;
+      drawCutShape(T, x + w / 2, y + 34, 0.62, rgb(T.raw), on ? 12 : 4);
+      ctx.fillStyle = on ? "#fff" : "#c9dcf0"; ctx.font = "800 10px Segoe UI, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(ok ? T.name : "MESA " + T.from, x + w / 2, y + 66);
+      ctx.fillStyle = "#7fa6c8"; ctx.font = "700 9px Segoe UI, sans-serif";
+      ctx.fillText("[" + T.key + "] " + T.pts + " pts", x + w / 2, y + 82);
+      ctx.globalAlpha = 1;
+    });
+
+    // ---- barra superior ----
+    if (state !== "menu") {
+      ctx.fillStyle = "rgba(5,8,20,.92)"; ctx.fillRect(0, 0, W, TOP);
+      ctx.fillStyle = "#7fa6c8"; ctx.font = "700 11px Segoe UI, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText("PEDIDOS " + servedOrders + " / " + goal, 12, 13);
+      ctx.fillStyle = "rgba(127,166,200,.2)"; rr(12, 24, 200, 10, 5); ctx.fill();
+      const gr = ctx.createLinearGradient(12, 0, 212, 0); gr.addColorStop(0, "#ffd23b"); gr.addColorStop(1, "#ff2bd6");
+      ctx.fillStyle = gr; rr(12, 24, Math.max(10, 200 * Math.min(1, servedOrders / goal)), 10, 5); ctx.fill();
+      ctx.textAlign = "right";
+      const m = mult();
+      ctx.fillStyle = m > 1 ? "#ff2bd6" : "#7fa6c8"; ctx.font = "900 15px Segoe UI, sans-serif";
+      ctx.fillText("RACHA x" + m, W - 12, 14);
+      let px2 = W - 12; ctx.font = "800 12px Segoe UI, sans-serif";
+      if (calmT > 0) { ctx.fillStyle = "#9fe8ff"; ctx.fillText("❄ " + Math.ceil(calmT), px2, 33); px2 -= 50; }
+      if (chimi > 0) { ctx.fillStyle = "#5dff9e"; ctx.fillText("🌿 x2 ·" + chimi, px2, 33); }
+      ctx.strokeStyle = "rgba(138,75,255,.45)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, TOP); ctx.lineTo(W, TOP); ctx.stroke();
+      if (calmT > 0) { ctx.fillStyle = "rgba(120,200,255,.05)"; ctx.fillRect(8, GY, W - 16, GH); }
+    }
+
+    // partículas y textos
+    parts.forEach(p => {
+      ctx.globalAlpha = clamp(p.life / p.max, 0, 1) * (p.smoke ? 0.35 : 1);
+      ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    texts.forEach(t => {
+      ctx.globalAlpha = clamp(t.life, 0, 1);
+      ctx.fillStyle = t.c; ctx.font = `900 ${t.size}px Segoe UI, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.shadowColor = t.c; ctx.shadowBlur = 8; ctx.fillText(t.t, clamp(t.x, 80, W - 80), t.y); ctx.shadowBlur = 0;
+    });
+    ctx.globalAlpha = 1;
+
+    if (bannerT > 0 && state !== "menu") {
+      ctx.globalAlpha = clamp(bannerT, 0, 1);
+      ctx.fillStyle = "rgba(5,7,15,.78)"; ctx.fillRect(0, H / 2 - 34, W, 52);
+      ctx.fillStyle = "#ffd23b"; ctx.font = "900 20px Segoe UI, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.shadowColor = "#ffd23b"; ctx.shadowBlur = 12; ctx.fillText(banner, W / 2, H / 2 - 8); ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+    if (state === "pause") {
+      ctx.fillStyle = "rgba(5,7,15,.7)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#27e8ff"; ctx.font = "900 30px Segoe UI, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("PAUSA", W / 2, H / 2 - 6);
+      ctx.fillStyle = "#7fa6c8"; ctx.font = "600 13px Segoe UI, sans-serif";
+      ctx.fillText("Tocá o apretá P para seguir", W / 2, H / 2 + 22);
+    }
+    ctx.restore();
+  }
+
+  let last = 0;
+  function loop(t) {
+    const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
+    if (state !== "pause") update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- flujo ----------
+  function start() {
+    reset(); state = "play";
+    ovStart.classList.add("hidden"); ovEnd.classList.add("hidden");
+    beep(1, 0.001, "sine", 0.0001);
+  }
+  function gameOver() {
+    state = "over";
+    const isBest = score > best;
+    if (isBest) { best = score; try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {} }
+    updHud();
+    endText.innerHTML = `Llegaste a la <b style="color:#ff2bd6">mesa ${level}</b> con <b style="color:#27e8ff">${score}</b> puntos.<br>` +
+      `Cortes servidos: <b>${totalCuts}</b> · PERFECTOS: <b>${totalPerf}</b> · mejor racha: <b>${maxStreak}</b>` +
+      (isBest ? `<br><b style="color:#ffd23b">¡NUEVO RÉCORD!</b>` : `<br>Récord: ${best}`);
+    setTimeout(() => ovEnd.classList.remove("hidden"), 800);
+  }
+  function togglePause() {
+    if (state === "play") state = "pause";
+    else if (state === "pause") state = "play";
+  }
+
+  $("btnStart").addEventListener("click", start);
+  $("btnAgain").addEventListener("click", start);
+
+  cv.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    if (state === "pause") { togglePause(); return; }
+    if (state !== "play") return;
+    const r = cv.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (W / r.width), y = (e.clientY - r.top) * (H / r.height);
+    if (power && Math.hypot(x - power.x, y - (power.y + Math.sin(power.bob * 4) * 5)) < 32) { collectPower(); return; }
+    if (y >= SY) {
+      const bw = (W - 16 - 12) / 5;
+      const i = Math.floor((x - 14) / bw);
+      if (i >= 0 && i < TYPES.length) selectType(i);
+      return;
+    }
+    for (let i = 0; i < spots.length; i++) {
+      const s = spots[i];
+      if (Math.abs(x - s.x) <= 75 && Math.abs(y - (s.y + 4)) <= 79) { tapSpot(i); return; }
+    }
+  });
+
+  window.addEventListener("keydown", e => {
+    const k = e.key;
+    if (k === "p" || k === "P" || k === "Escape") { togglePause(); e.preventDefault(); return; }
+    if (state === "menu" || state === "over") {
+      if (k === "Enter" || k === " ") { start(); e.preventDefault(); }
+      return;
+    }
+    if (state !== "play") return;
+    const ti = "qwert".indexOf(k.toLowerCase());
+    if (ti >= 0 && k.length === 1) { selectType(ti); return; }
+    if (/^[1-6]$/.test(k)) { tapSpot(parseInt(k) - 1); e.preventDefault(); return; }
+    if (k === " ") { collectPower(); e.preventDefault(); }
+  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && state === "play") togglePause(); });
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
