@@ -63,6 +63,7 @@ const OVERRIDES = {
   "sumo-neon": { steps: ["#btnStart"], wait: 2200 },
   // Un toque cerca del tope del canvas (y apenas a la derecha del esquiador) para que
   // Playwright scrollee arriba y la miniatura muestre al esquiador con su rastro.
+  "barrilete-neon": { steps: ["#btnStart"], wait: 2400 },
   "esqui-neon": { steps: ["#btnStart", { canvas: [0.6, 0.05] }], wait: 2600 },
   // Un toque arriba del canvas (manda el ascensor al piso 5) para que Playwright scrollee arriba y la miniatura muestre la torre con el ascensor subiendo.
   // Tira tres chorizos (con el corte por defecto) en la parrilla y toca arriba (pedidos, no hace nada) para que Playwright scrollee arriba y la miniatura muestre cortes cocinándose con sus barras.

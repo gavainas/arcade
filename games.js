@@ -942,6 +942,13 @@
       desc: "Sos el parrillero de un asado de luz: elegí un corte de la tabla (chorizo, morcilla, provoleta, vacío, molleja) y tiralo en la parrilla. Cuando la barra de cocción llega a la zona verde, dalo vuelta; cuando el otro lado también está, servilo al comensal que lo pidió. Clavar los dos lados en la franja dorada es PERFECTO y la racha sube hasta x5. Atrás el fuego es fuerte y adelante suave, desde la mesa 3 hay llamaradas y clientes VIP. Si algo se quema o alguien se cansa de esperar, perdés una vida. Premios: chimichurri x2, brasas bajas, picada y vida. Récord guardado.",
       controles: "Tocá un corte de la tabla y después un lugar libre de la parrilla; tocá lo que se está cocinando para darlo vuelta y otra vez para servirlo. Teclado: Q W E R T elegir corte, 1-6 lugar de la parrilla, espacio agarrar premio, P pausa",
       fecha: "2026-11-24", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "barrilete-neon", titulo: "Barrilete Neón", archivo: "barrilete-neon.html",
+      emoji: "🪁", categoria: "reflejos", tags: ["barrilete", "cometa", "viento", "tensión", "física", "combo", "un jugador"],
+      desc: "Remontá un barrilete de luz sobre la ciudad: mantené apretado para tirar del hilo y que suba hacia donde apuntás, soltá para que baje planeando con el viento. Cuanto más alto, más puntos por segundo, pero arriba sopla más fuerte y la tensión sube más rápido: si te quedás en la zona roja, el hilo se corta. Juntá estrellas para la racha hasta x5, esquivá pájaros (si chocan el hilo te dan un tirón), y desde la ronda 2 cruzá tu hilo con el de los barriletes rivales tirando fuerte para cortarlos antes de que te corten a vos. Ráfagas, bandadas y rayos desde la ronda 4. Premios: hilo de vidrio, brisa suave, puntos x2 y vida. Récord guardado.",
+      controles: "Mantené apretado (táctil/mouse) para tirar del hilo y movete para apuntar; con mouse apuntás también sin apretar. Teclado: espacio / ↑ / W tirar, ← → / A D mover, P pausa",
+      fecha: "2026-11-25", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
