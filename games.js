@@ -949,6 +949,13 @@
       desc: "Remontá un barrilete de luz sobre la ciudad: mantené apretado para tirar del hilo y que suba hacia donde apuntás, soltá para que baje planeando con el viento. Cuanto más alto, más puntos por segundo, pero arriba sopla más fuerte y la tensión sube más rápido: si te quedás en la zona roja, el hilo se corta. Juntá estrellas para la racha hasta x5, esquivá pájaros (si chocan el hilo te dan un tirón), y desde la ronda 2 cruzá tu hilo con el de los barriletes rivales tirando fuerte para cortarlos antes de que te corten a vos. Ráfagas, bandadas y rayos desde la ronda 4. Premios: hilo de vidrio, brisa suave, puntos x2 y vida. Récord guardado.",
       controles: "Mantené apretado (táctil/mouse) para tirar del hilo y movete para apuntar; con mouse apuntás también sin apretar. Teclado: espacio / ↑ / W tirar, ← → / A D mover, P pausa",
       fecha: "2026-11-25", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "globo-neon", titulo: "Globo Neón", archivo: "globo-neon.html",
+      emoji: "🎈", categoria: "reflejos", tags: ["globo", "aerostático", "viento", "altura", "aterrizaje", "física", "combo", "un jugador"],
+      desc: "Pilotá un globo aerostático sobre la ciudad de noche: sólo controlás la altura. Mantené apretado para prender el quemador y que el aire se caliente (subís con retardo), soltá para que se enfríe o abrí la válvula para bajar rápido. Cada capa de altura tiene su propio viento, así que para avanzar tenés que buscar la que sopla para tu lado. Aterrizá suave en la pista dorada al final de cada etapa (al centro es PERFECTO). Cuidá el gas, juntá estrellas para la racha hasta x5 y esquivá edificios, antenas, pájaros, tormentas con rayos y drones. Los vientos cambian desde la etapa 3. Premios: gas, escudo, puntos x2 y vida. Récord guardado.",
+      controles: "Mantené apretado en cualquier lado para el quemador; botón VÁLVULA abajo a la izquierda para bajar rápido. Teclado: espacio / ↑ / W quemador, ↓ / S válvula, P pausa",
+      fecha: "2026-11-26", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
