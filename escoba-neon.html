@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ESCOBA NEÓN · NEON ARCADE</title>
+<style>
+  :root{
+    --bg:#070a16; --cyan:#27e8ff; --pink:#ff2bd6; --purple:#8a4bff;
+    --green:#39ff9e; --gold:#ffd23b; --red:#ff5470; --ink:#e8f6ff; --muted:#7fa6c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(120% 70% at 50% -10%, #16204a 0%, var(--bg) 55%, #03040a 100%) fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif;
+    min-height:100vh; padding:20px 12px 40px; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center; user-select:none; -webkit-user-select:none;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background:
+      linear-gradient(rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(39,232,255,.06) 1px, transparent 1px) 0 0/40px 40px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  }
+  #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:50;}
+  .stage{position:relative; z-index:1; width:100%; max-width:480px;}
+  .back{display:inline-block; color:var(--muted); text-decoration:none; font-size:13px; margin-bottom:10px; letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center; margin-bottom:12px;}
+  .logo{
+    font-size:clamp(26px,7vw,40px); font-weight:900; letter-spacing:2px; line-height:1;
+    background:linear-gradient(90deg,var(--gold),var(--pink),var(--cyan),var(--gold));
+    background-size:300% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 6s linear infinite; filter:drop-shadow(0 0 22px rgba(255,210,59,.35));
+  }
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:7px; color:var(--cyan); font-weight:600; letter-spacing:4px; font-size:11px;}
+
+  .hud{display:flex; gap:8px; margin:2px 0 10px; font-size:10.5px; letter-spacing:1px; color:var(--muted);}
+  .hud .box{flex:1; text-align:center; background:linear-gradient(180deg, rgba(20,28,58,.7), rgba(10,14,30,.7)); border:1px solid rgba(138,75,255,.25); border-radius:12px; padding:7px 4px;}
+  .hud .box b{display:block; font-size:19px; font-weight:900; color:var(--cyan); margin-top:2px;}
+  .hud .box.cpu b{color:var(--pink);}
+  .hud .box.rec b{color:var(--gold);}
+  .hud .box small{font-size:10px; color:var(--muted); font-weight:600;}
+
+  .panel{
+    position:relative; border-radius:20px; padding:12px 10px;
+    background:linear-gradient(180deg, rgba(20,28,58,.72), rgba(10,14,30,.72));
+    border:1px solid rgba(138,75,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.5);
+    min-height:540px; display:flex; flex-direction:column; gap:8px;
+  }
+  .row-label{display:flex; justify-content:space-between; align-items:center; font-size:10.5px; letter-spacing:1.5px; color:var(--muted); font-weight:700; padding:0 4px;}
+  .row-label b{color:var(--ink);}
+  .stats{display:flex; gap:7px; font-size:10.5px; letter-spacing:.3px; font-weight:700;}
+  .stats span{background:rgba(138,75,255,.14); border:1px solid rgba(138,75,255,.3); border-radius:8px; padding:2px 6px; color:var(--ink);}
+  .stats span.esc{border-color:rgba(255,210,59,.5); color:var(--gold);}
+
+  .hand{display:flex; gap:10px; justify-content:center; min-height:92px; align-items:center;}
+  .felt{position:relative; border-radius:16px; padding:10px 6px; min-height:196px;
+    background:radial-gradient(120% 100% at 50% 40%, rgba(57,255,158,.10), rgba(10,40,40,.15) 60%, rgba(0,0,0,.1));
+    border:1px dashed rgba(57,255,158,.28);
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-content:center;}
+  .felt.empty::after{content:"MESA VACÍA"; color:rgba(127,166,200,.4); font-weight:800; letter-spacing:4px; font-size:12px;}
+  .deck{position:absolute; left:8px; top:8px; font-size:10px; color:var(--muted); letter-spacing:1px; font-weight:700; text-align:center;}
+  .deck .mini-back{width:28px; height:40px; border-radius:5px; margin:0 auto 3px;
+    background:repeating-linear-gradient(135deg, rgba(138,75,255,.55) 0 4px, rgba(39,232,255,.3) 4px 8px); border:1px solid rgba(138,75,255,.6);}
+
+  .card{position:relative; width:58px; height:84px; border-radius:9px; flex:none; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-weight:900; cursor:pointer;
+    background:linear-gradient(165deg,#111b3c,#0a0f22); border:1.5px solid currentColor;
+    box-shadow:0 3px 10px rgba(0,0,0,.5), 0 0 10px -2px currentColor, inset 0 0 12px -6px currentColor;
+    transition:transform .15s ease, box-shadow .15s ease, opacity .3s ease; animation:dealIn .25s ease;}
+  @keyframes dealIn{from{transform:translateY(-16px) scale(.85); opacity:0;} to{transform:none; opacity:1;}}
+  .card .rk{font-size:24px; line-height:1; text-shadow:0 0 10px currentColor;}
+  .card .st{font-size:22px; line-height:1.15;}
+  .card .nm{font-size:8.5px; letter-spacing:1px; opacity:.85; text-transform:uppercase; font-weight:800;}
+  .card .val{position:absolute; top:3px; right:4px; font-size:9.5px; background:currentColor; border-radius:6px; padding:0 4px; line-height:14px;}
+  .card .val i{font-style:normal; color:#071022;}
+  .card .key{position:absolute; bottom:3px; left:5px; font-size:9px; opacity:.55; font-weight:800; color:var(--ink);}
+  .card.s0{color:var(--gold);}
+  .card.s1{color:var(--pink);}
+  .card.s2{color:var(--cyan);}
+  .card.s3{color:var(--green);}
+  .card.sel{transform:translateY(-10px) scale(1.04); box-shadow:0 0 0 2px #fff, 0 0 22px currentColor, 0 10px 18px rgba(0,0,0,.5);}
+  .felt .card.sel{transform:translateY(-4px) scale(1.06);}
+  .card.hint{animation:hintPulse .7s ease-in-out infinite alternate;}
+  @keyframes hintPulse{to{box-shadow:0 0 0 2px var(--gold), 0 0 26px var(--gold);}}
+  .card.take{animation:take .7s ease forwards;}
+  @keyframes take{0%{transform:scale(1.08); box-shadow:0 0 0 3px #fff, 0 0 30px currentColor;} 70%{transform:scale(1.12); opacity:1;} 100%{transform:scale(.4) translateY(var(--ty,60px)); opacity:0;}}
+  .card.played{box-shadow:0 0 0 2px var(--pink), 0 0 24px var(--pink);}
+  .card.back{cursor:default; color:var(--purple);
+    background:repeating-linear-gradient(135deg, rgba(138,75,255,.5) 0 5px, rgba(39,232,255,.28) 5px 10px);}
+  .hand.cpu .card{width:44px; height:64px;}
+  .hand.off .card{cursor:default; filter:saturate(.6) brightness(.8);}
+
+  .meter{display:flex; align-items:center; gap:10px; padding:0 4px;}
+  .bar{flex:1; height:12px; border-radius:99px; background:rgba(255,255,255,.07); overflow:hidden; border:1px solid rgba(138,75,255,.3);}
+  .bar i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--cyan),var(--purple)); transition:width .2s ease, background .2s;}
+  .bar.ok i{background:linear-gradient(90deg,var(--gold),var(--green)); box-shadow:0 0 14px var(--gold);}
+  .bar.over i{background:linear-gradient(90deg,var(--pink),var(--red));}
+  .sum{min-width:62px; text-align:right; font-weight:900; font-size:18px; color:var(--cyan);}
+  .sum.ok{color:var(--gold); text-shadow:0 0 12px var(--gold);}
+  .sum.over{color:var(--red);}
+
+  .msg{text-align:center; min-height:20px; font-weight:800; font-size:13.5px; letter-spacing:.3px; color:var(--muted);}
+  .msg.good{color:var(--gold);} .msg.bad{color:var(--pink);}
+
+  .actions{display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
+  .btn{cursor:pointer; border:none; border-radius:999px; padding:11px 20px; font-size:13.5px; font-weight:900; letter-spacing:1px;
+    color:#031018; background:linear-gradient(90deg,var(--pink),var(--cyan)); box-shadow:0 8px 24px rgba(255,43,214,.35);
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn:disabled{opacity:.3; cursor:default; transform:none; box-shadow:none;}
+  .btn.gold{background:linear-gradient(90deg,var(--gold),var(--green)); box-shadow:0 8px 24px rgba(255,210,59,.35);}
+  .btn.ghost{background:rgba(138,75,255,.16); color:var(--ink); border:1px solid rgba(138,75,255,.45); box-shadow:none;}
+
+  .banner{position:absolute; left:0; right:0; top:42%; text-align:center; pointer-events:none; z-index:5;
+    font-size:clamp(34px,11vw,56px); font-weight:900; letter-spacing:4px; opacity:0;
+    background:linear-gradient(90deg,var(--gold),var(--pink),var(--gold)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 22px rgba(255,210,59,.7));}
+  .banner.show{animation:bannerIn 1.4s ease forwards;}
+  .banner.cpu{background:linear-gradient(90deg,var(--pink),var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text;}
+  @keyframes bannerIn{0%{opacity:0; transform:scale(.4) rotate(-8deg);} 20%{opacity:1; transform:scale(1.15) rotate(2deg);} 35%{transform:scale(1) rotate(0);} 80%{opacity:1;} 100%{opacity:0; transform:scale(1.05) translateY(-20px);}}
+
+  .overlay{position:absolute; inset:0; border-radius:20px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:22px 18px;
+    background:rgba(5,7,15,.95); backdrop-filter:blur(3px); gap:12px; overflow-y:auto; z-index:10;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px); font-weight:900; letter-spacing:1px;
+    background:linear-gradient(90deg,var(--gold),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,210,59,.4));}
+  .overlay p{font-size:13px; color:var(--muted); line-height:1.5; max-width:360px;}
+  .overlay p b{color:var(--ink);}
+  .rules{font-size:12.5px; color:var(--ink); text-align:left; max-width:360px; line-height:1.5; display:grid; gap:5px;}
+  .rules div{display:flex; gap:8px;} .rules em{font-style:normal; flex:none;}
+  .opts{display:flex; gap:6px; justify-content:center; flex-wrap:wrap;}
+  .opt{cursor:pointer; background:rgba(138,75,255,.14); border:1px solid rgba(138,75,255,.4); color:var(--ink);
+    border-radius:10px; padding:7px 12px; font-size:12px; font-weight:800; letter-spacing:.5px;}
+  .opt.on{border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 12px rgba(39,232,255,.35);}
+  .optlabel{font-size:10.5px; letter-spacing:2px; color:var(--muted); font-weight:700;}
+  table.sc{border-collapse:collapse; font-size:13px; min-width:260px;}
+  table.sc th, table.sc td{padding:6px 10px; border-bottom:1px solid rgba(138,75,255,.2);}
+  table.sc th{font-size:10.5px; letter-spacing:1.5px; color:var(--muted);}
+  table.sc td:first-child{text-align:left; color:var(--ink);}
+  table.sc td.pt{font-weight:900;}
+  table.sc td.p{color:var(--cyan);} table.sc td.c{color:var(--pink);}
+  table.sc tr.tot td{font-weight:900; font-size:15px; border-bottom:none;}
+  table.sc .det{font-size:11px; color:var(--muted); font-weight:600;}
+  .hint-txt{font-size:11.5px; color:var(--muted); line-height:1.5; text-align:center; margin-top:10px;}
+  .hint-txt kbd{background:rgba(138,75,255,.2); border:1px solid rgba(138,75,255,.4); border-radius:4px; padding:0 4px; font-size:10.5px; color:var(--ink);}
+  @media (max-width:400px){
+    .card{width:50px; height:74px;} .card .rk{font-size:21px;} .card .st{font-size:19px;}
+    .hand.cpu .card{width:38px; height:56px;}
+    .btn{padding:10px 15px; font-size:12.5px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="stage">
+  <a class="back" href="index.html">◄ Volver al arcade</a>
+  <header>
+    <div class="logo">ESCOBA NEÓN</div>
+    <div class="sub">L A &nbsp; E S C O B A &nbsp; D E &nbsp; 1 5</div>
+  </header>
+
+  <div class="hud">
+    <div class="box"><span>VOS</span><b id="hudP">0</b></div>
+    <div class="box cpu"><span>CPU</span><b id="hudC">0</b></div>
+    <div class="box"><span>A</span><b id="hudT">15</b></div>
+    <div class="box rec"><span>RACHA <small id="hudWins"></small></span><b id="hudBest">0</b></div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="row-label"><span>CPU</span><div class="stats" id="statsC"></div></div>
+    <div class="hand cpu" id="cpuHand"></div>
+
+    <div class="felt" id="table">
+      <div class="deck" id="deck"><div class="mini-back"></div><span id="deckN">40</span></div>
+    </div>
+
+    <div class="meter">
+      <div class="bar" id="bar"><i id="barFill"></i></div>
+      <div class="sum" id="sum">0 / 15</div>
+    </div>
+    <div class="msg" id="msg">Elegí una carta de tu mano.</div>
+
+    <div class="hand" id="playerHand"></div>
+    <div class="row-label"><span>VOS</span><div class="stats" id="statsP"></div></div>
+
+    <div class="actions">
+      <button class="btn gold" id="btnTake" disabled>LEVANTAR</button>
+      <button class="btn" id="btnDrop" disabled>TIRAR A LA MESA</button>
+      <button class="btn ghost" id="btnHint">PISTA (3)</button>
+    </div>
+
+    <div class="banner" id="banner">¡ESCOBA!</div>
+
+    <div class="overlay" id="ovStart">
+      <h2>🧹 ESCOBA NEÓN</h2>
+      <p>El clásico de cartas españolas contra la CPU. Sumá <b>15</b> con una carta de tu mano y las que quieras de la mesa para levantarlas.</p>
+      <div class="rules">
+        <div><em>🃏</em><span>Del 1 al 7 valen lo que dicen. Sota (10) vale <b>8</b>, caballo (11) <b>9</b> y rey (12) <b>10</b>.</span></div>
+        <div><em>🧹</em><span>Si dejás la mesa vacía es <b>ESCOBA</b>: un punto al toque.</span></div>
+        <div><em>🏆</em><span>Al final de cada mano: +1 por más cartas, más oros, el <b>7 de oro</b> y más sietes.</span></div>
+        <div><em>⚠️</em><span>Ojo con lo que tirás: si la mesa queda sumando entre 5 y 14, la CPU te puede barrer.</span></div>
+      </div>
+      <div class="optlabel">DIFICULTAD</div>
+      <div class="opts" id="optDiff">
+        <button class="opt" data-v="0">FÁCIL</button>
+        <button class="opt on" data-v="1">NORMAL</button>
+        <button class="opt" data-v="2">DIFÍCIL</button>
+      </div>
+      <div class="optlabel">PARTIDA A</div>
+      <div class="opts" id="optTarget">
+        <button class="opt on" data-v="15">15 PUNTOS</button>
+        <button class="opt" data-v="21">21 PUNTOS</button>
+        <button class="opt" data-v="30">30 PUNTOS</button>
+      </div>
+      <button class="btn" id="startBtn">A JUGAR</button>
+    </div>
+
+    <div class="overlay hidden" id="ovRound">
+      <h2 id="roundTitle">FIN DE LA MANO</h2>
+      <table class="sc" id="scoreTable"></table>
+      <p id="roundNote"></p>
+      <button class="btn" id="nextBtn">SIGUIENTE MANO</button>
+    </div>
+  </div>
+
+  <div class="hint-txt">
+    Tocá una carta de tu mano y después las de la mesa hasta sumar 15.<br>
+    Teclado: <kbd>1</kbd>-<kbd>3</kbd> tu mano · <kbd>A</kbd>-<kbd>Z</kbd> cartas de la mesa · <kbd>Enter</kbd> levantar · <kbd>T</kbd> tirar · <kbd>H</kbd> pista · <kbd>Esc</kbd> limpiar
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var SUITS = [
+    {n:"oro",    e:"🪙"},
+    {n:"copa",   e:"🍷"},
+    {n:"espada", e:"⚔️"},
+    {n:"basto",  e:"🪵"}
+  ];
+  var RANKS = [1,2,3,4,5,6,7,10,11,12];
+  var FIG = {10:"sota", 11:"caballo", 12:"rey"};
+  function val(r){ return r <= 7 ? r : r - 2; }
+
+  var $ = function(id){ return document.getElementById(id); };
+  var el = {
+    cpuHand:$("cpuHand"), playerHand:$("playerHand"), table:$("table"), deckN:$("deckN"), deck:$("deck"),
+    bar:$("bar"), barFill:$("barFill"), sum:$("sum"), msg:$("msg"),
+    btnTake:$("btnTake"), btnDrop:$("btnDrop"), btnHint:$("btnHint"),
+    hudP:$("hudP"), hudC:$("hudC"), hudT:$("hudT"), hudBest:$("hudBest"), hudWins:$("hudWins"),
+    statsP:$("statsP"), statsC:$("statsC"), banner:$("banner"),
+    ovStart:$("ovStart"), ovRound:$("ovRound"), scoreTable:$("scoreTable"), roundTitle:$("roundTitle"),
+    roundNote:$("roundNote"), nextBtn:$("nextBtn"), startBtn:$("startBtn")
+  };
+
+  // ---------- récord ----------
+  var KEY = "escoba-neon-stats";
+  var stats = {wins:0, losses:0, streak:0, best:0, maxEsc:0};
+  try { var s = JSON.parse(localStorage.getItem(KEY)); if (s) for (var k in stats) if (typeof s[k] === "number") stats[k] = s[k]; } catch(e){}
+  function saveStats(){ try { localStorage.setItem(KEY, JSON.stringify(stats)); } catch(e){} }
+
+  // ---------- sonido ----------
+  var actx = null;
+  function tone(f, d, type, vol, delay){
+    try{
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      var t = actx.currentTime + (delay || 0);
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || "triangle"; o.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(vol || .08, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + .02);
+    }catch(e){}
+  }
+  var sfx = {
+    tap:function(){ tone(660,.06,"square",.04); },
+    deal:function(){ tone(420,.05,"triangle",.05); },
+    drop:function(){ tone(240,.12,"sine",.08); },
+    take:function(){ tone(523,.1); tone(784,.14,"triangle",.08,.08); },
+    escoba:function(){ [523,659,784,1047,1319].forEach(function(f,i){ tone(f,.18,"square",.06,i*.07); }); },
+    bad:function(){ tone(200,.2,"sawtooth",.05); tone(150,.25,"sawtooth",.05,.1); },
+    win:function(){ [392,523,659,784,1047].forEach(function(f,i){ tone(f,.25,"triangle",.08,i*.11); }); },
+    lose:function(){ [392,330,262,196].forEach(function(f,i){ tone(f,.3,"sine",.08,i*.14); }); }
+  };
+
+  // ---------- partículas ----------
+  var fx = $("fx"), fctx = fx.getContext("2d"), parts = [];
+  function resizeFx(){ var d = window.devicePixelRatio || 1; fx.width = innerWidth * d; fx.height = innerHeight * d; fctx.setTransform(d,0,0,d,0,0); }
+  addEventListener("resize", resizeFx); resizeFx();
+  function burst(x, y, n, colors){
+    for (var i = 0; i < n; i++){
+      var a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6;
+      parts.push({x:x, y:y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 2, life:1, c:colors[i % colors.length], s:2 + Math.random()*4, r:Math.random()*6});
+    }
+    if (!fxRunning){ fxRunning = true; requestAnimationFrame(fxLoop); }
+  }
+  var fxRunning = false;
+  function fxLoop(){
+    fctx.clearRect(0,0,innerWidth,innerHeight);
+    for (var i = parts.length - 1; i >= 0; i--){
+      var p = parts[i];
+      p.x += p.vx; p.y += p.vy; p.vy += .14; p.vx *= .985; p.life -= .014; p.r += .1;
+      if (p.life <= 0){ parts.splice(i,1); continue; }
+      fctx.save(); fctx.globalAlpha = p.life; fctx.fillStyle = p.c; fctx.shadowColor = p.c; fctx.shadowBlur = 10;
+      fctx.translate(p.x, p.y); fctx.rotate(p.r); fctx.fillRect(-p.s, -p.s/2, p.s*2, p.s); fctx.restore();
+    }
+    if (parts.length) requestAnimationFrame(fxLoop); else { fxRunning = false; fctx.clearRect(0,0,innerWidth,innerHeight); }
+  }
+  function burstAt(node, n, colors){
+    var r = node.getBoundingClientRect();
+    burst(r.left + r.width/2, r.top + r.height/2, n, colors);
+  }
+
+  // ---------- estado ----------
+  var G = null;
+  var diff = 1, target = 15;
+  var selHand = -1, selTable = [], hintsLeft = 3, busy = false, hintIds = [];
+
+  function newDeck(){
+    var d = [], id = 0;
+    for (var s = 0; s < 4; s++) for (var i = 0; i < RANKS.length; i++) d.push({id:id++, s:s, r:RANKS[i], v:val(RANKS[i])});
+    for (var j = d.length - 1; j > 0; j--){ var k = Math.floor(Math.random() * (j+1)); var t = d[j]; d[j] = d[k]; d[k] = t; }
+    return d;
+  }
+
+  function newMatch(){
+    G = {score:{p:0,c:0}, dealer: Math.random() < .5 ? "p" : "c", matchEsc:0};
+    hintsLeft = 3;
+    newRound();
+  }
+
+  function newRound(){
+    G.deck = newDeck();
+    G.hand = {p:[], c:[]};
+    G.caps = {p:[], c:[]};
+    G.esc = {p:0, c:0};
+    G.table = [];
+    G.last = null;
+    G.dealer = G.dealer === "p" ? "c" : "p";
+    G.turn = G.dealer === "p" ? "c" : "p";
+    G.over = false;
+    clearSel();
+    for (var i = 0; i < 4; i++) G.table.push(G.deck.pop());
+    dealHands();
+    render();
+    var tsum = sumOf(G.table);
+    if (tsum === 15 || tsum === 30){
+      // el que reparte levanta la mesa entera
+      var who = G.dealer, n = tsum / 15;
+      busy = true;
+      setMsg((who === "p" ? "¡Repartiste y la mesa suma " : "La CPU repartió y la mesa suma ") + tsum + "! " + (who === "p" ? "Levantás" : "Levanta") + " todo.", who === "p" ? "good" : "bad");
+      markTake(G.table.map(function(c){ return c.id; }), who);
+      setTimeout(function(){
+        G.caps[who] = G.caps[who].concat(G.table); G.table = [];
+        G.esc[who] += n; G.last = who;
+        if (who === "p") G.matchEsc += n;
+        showBanner(n === 2 ? "¡DOBLE ESCOBA!" : "¡ESCOBA!", who);
+        busy = false; render(); startTurn();
+      }, 900);
+      return;
+    }
+    startTurn();
+  }
+
+  function dealHands(){
+    var first = G.dealer === "p" ? "c" : "p", second = G.dealer;
+    for (var i = 0; i < 3; i++){
+      if (G.deck.length) G.hand[first].push(G.deck.pop());
+      if (G.deck.length) G.hand[second].push(G.deck.pop());
+    }
+    sfx.deal();
+  }
+
+  function sumOf(arr){ var s = 0; for (var i = 0; i < arr.length; i++) s += arr[i].v; return s; }
+
+  // ---------- capturas ----------
+  function captures(card, table){
+    var res = [], n = table.length, need = 15 - card.v;
+    if (need <= 0) return res;
+    for (var m = 1; m < (1 << n); m++){
+      var s = 0, set = [];
+      for (var i = 0; i < n; i++) if (m & (1 << i)){ s += table[i].v; if (s > need) break; set.push(table[i]); }
+      if (s === need && set.length === popcount(m)) res.push(set);
+    }
+    return res;
+  }
+  function popcount(m){ var c = 0; while (m){ c += m & 1; m >>= 1; } return c; }
+
+  // ¿puede el rival barrer una mesa que suma s? (necesita una carta de valor 15-s entre 1 y 10)
+  function sweepRisk(s){ return s >= 5 && s <= 14 ? 1 : 0; }
+  function cardWorth(c){
+    var w = 0;
+    if (c.s === 0) w += 1;
+    if (c.r === 7) w += 2.2;
+    if (c.r === 7 && c.s === 0) w += 4;
+    return w;
+  }
+
+  function evalCapture(card, set, tableAfter, level){
+    var all = set.concat([card]);
+    var sc = 2 + all.length * 0.9;
+    for (var i = 0; i < all.length; i++) sc += cardWorth(all[i]);
+    if (!tableAfter.length) sc += 14;
+    else if (level >= 1){
+      var s = sumOf(tableAfter);
+      sc -= sweepRisk(s) * (level >= 2 ? 6 : 3);
+    }
+    return sc;
+  }
+  function evalDrop(card, table, level){
+    var after = table.concat([card]);
+    var sc = -cardWorth(card) * 1.6;
+    if (level >= 1) sc -= sweepRisk(sumOf(after)) * (level >= 2 ? 9 : 5);
+    if (level >= 2){
+      // cartas valiosas que quedan expuestas
+      for (var i = 0; i < after.length; i++) sc -= cardWorth(after[i]) * 0.4;
+      sc -= card.v * 0.05; // preferir tirar cartas altas no, bajas sí? leve
+    }
+    return sc;
+  }
+
+  function bestMove(who, level){
+    var hand = G.hand[who], moves = [];
+    for (var i = 0; i < hand.length; i++){
+      var card = hand[i], caps = captures(card, G.table);
+      for (var j = 0; j < caps.length; j++){
+        var set = caps[j];
+        var after = G.table.filter(function(c){ return set.indexOf(c) < 0; });
+        moves.push({type:"take", card:card, set:set, sc:evalCapture(card, set, after, level)});
+      }
+      moves.push({type:"drop", card:card, sc:evalDrop(card, G.table, level)});
+    }
+    if (level === 0){
+      // en fácil a veces juega cualquiera, y a veces no ve la jugada
+      if (Math.random() < .35) return moves[Math.floor(Math.random() * moves.length)];
+      moves.forEach(function(m){ m.sc += Math.random() * 6; });
+    } else if (level === 1){
+      moves.forEach(function(m){ m.sc += Math.random() * 1.5; });
+    }
+    moves.sort(function(a,b){ return b.sc - a.sc; });
+    return moves[0];
+  }
+
+  // ---------- turnos ----------
+  function startTurn(){
+    if (G.over) return;
+    if (!G.hand.p.length && !G.hand.c.length){
+      if (G.deck.length){ dealHands(); render(); setMsg("Nueva repartija · quedan " + G.deck.length + " en el mazo"); }
+      else { endRound(); return; }
+    }
+    busy = G.turn === "c";
+    render();
+    if (G.turn === "c"){
+      setMsg("Piensa la CPU…");
+      setTimeout(cpuPlay, 750 + Math.random() * 450);
+    } else {
+      if (!G.table.length) setMsg("Mesa vacía: tirá una carta.");
+      else if (selHand < 0) setMsg("Tu turno: elegí una carta de tu mano.");
+    }
+  }
+
+  function endTurn(){
+    G.turn = G.turn === "p" ? "c" : "p";
+    startTurn();
+  }
+
+  function cpuPlay(){
+    var m = bestMove("c", diff);
+    var hand = G.hand.c;
+    hand.splice(hand.indexOf(m.card), 1);
+    m.card.cpu = true;
+    G.table.push(m.card);
+    render();
+    var node = el.table.querySelector('[data-id="' + m.card.id + '"]');
+    if (node) node.classList.add("played");
+    if (m.type === "take"){
+      setTimeout(function(){
+        var ids = m.set.map(function(c){ return c.id; }).concat([m.card.id]);
+        setMsg("La CPU levanta " + describe(m.set.concat([m.card])), "bad");
+        markTake(ids, "c");
+        sfx.take();
+        setTimeout(function(){
+          G.table = G.table.filter(function(c){ return ids.indexOf(c.id) < 0; });
+          delete m.card.cpu;
+          finishCapture("c", m.set.concat([m.card]));
+        }, 750);
+      }, 650);
+    } else {
+      delete m.card.cpu;
+      sfx.drop();
+      setMsg("La CPU tira " + nameOf(m.card) + ".");
+      setTimeout(endTurn, 450);
+    }
+  }
+
+  function finishCapture(who, cards){
+    G.caps[who] = G.caps[who].concat(cards);
+    G.last = who;
+    if (!G.table.length){
+      G.esc[who]++;
+      if (who === "p"){ G.matchEsc++; sfx.escoba(); }
+      else sfx.bad();
+      showBanner("¡ESCOBA!", who);
+    }
+    render();
+    setTimeout(endTurn, G.table.length ? 250 : 900);
+  }
+
+  function playerTake(){
+    if (busy || G.turn !== "p" || selHand < 0) return;
+    var card = G.hand.p[selHand];
+    var set = G.table.filter(function(c){ return selTable.indexOf(c.id) >= 0; });
+    if (card.v + sumOf(set) !== 15 || !set.length){ sfx.bad(); setMsg("Tiene que sumar 15 justo.", "bad"); return; }
+    busy = true;
+    G.hand.p.splice(selHand, 1);
+    G.table.push(card);
+    var ids = selTable.concat([card.id]);
+    clearSel(); render();
+    markTake(ids, "p");
+    sfx.take();
+    setMsg("Levantás " + describe(set.concat([card])), "good");
+    setTimeout(function(){
+      G.table = G.table.filter(function(c){ return ids.indexOf(c.id) < 0; });
+      finishCapture("p", set.concat([card]));
+    }, 700);
+  }
+
+  function playerDrop(){
+    if (busy || G.turn !== "p" || selHand < 0) return;
+    var card = G.hand.p[selHand];
+    var could = captures(card, G.table).length > 0;
+    busy = true;
+    G.hand.p.splice(selHand, 1);
+    G.table.push(card);
+    clearSel();
+    sfx.drop();
+    setMsg(could ? "Tiraste " + nameOf(card) + "… ¡y podías levantar con esa!" : "Tiraste " + nameOf(card) + ".", could ? "bad" : "");
+    render();
+    setTimeout(endTurn, 350);
+  }
+
+  function showHint(){
+    if (busy || G.turn !== "p" || hintsLeft <= 0) return;
+    var m = bestMove("p", 2);
+    hintsLeft--;
+    clearSel();
+    selHand = G.hand.p.indexOf(m.card);
+    if (m.type === "take"){
+      selTable = m.set.map(function(c){ return c.id; });
+      setMsg("Pista: levantá con " + nameOf(m.card) + ".", "good");
+    } else {
+      setMsg("Pista: no hay buena levantada. Tirá " + nameOf(m.card) + ".", "good");
+    }
+    hintIds = selTable.concat([m.card.id]);
+    sfx.tap();
+    render();
+  }
+
+  // ---------- fin de mano ----------
+  function endRound(){
+    G.over = true; busy = true;
+    if (G.table.length && G.last){
+      G.caps[G.last] = G.caps[G.last].concat(G.table);
+      setMsg("Lo que quedó en la mesa se lo lleva " + (G.last === "p" ? "vos" : "la CPU") + ".");
+      markTake(G.table.map(function(c){ return c.id; }), G.last);
+      setTimeout(function(){ G.table = []; render(); setTimeout(showRound, 500); }, 800);
+    } else setTimeout(showRound, 600);
+  }
+
+  function count(arr, f){ var n = 0; for (var i = 0; i < arr.length; i++) if (f(arr[i])) n++; return n; }
+
+  function showRound(){
+    var P = G.caps.p, C = G.caps.c;
+    var rows = [];
+    var pts = {p:0, c:0};
+    function row(label, pv, cv, wp, wc, det){
+      pts.p += wp; pts.c += wc;
+      rows.push("<tr><td>" + label + (det ? "<div class='det'>" + det + "</div>" : "") + "</td><td class='pt p'>" + (wp ? "+" + wp : "·") + "</td><td class='pt c'>" + (wc ? "+" + wc : "·") + "</td></tr>");
+    }
+    row("🧹 Escobas", 0, 0, G.esc.p, G.esc.c, G.esc.p + " vs " + G.esc.c);
+    var cp = P.length, cc = C.length;
+    row("🃏 Más cartas", 0, 0, cp > 20 ? 1 : 0, cc > 20 ? 1 : 0, cp + " vs " + cc + (cp === 20 ? " · empate" : ""));
+    var op = count(P, function(c){ return c.s === 0; }), oc = count(C, function(c){ return c.s === 0; });
+    row("🪙 Más oros", 0, 0, op > 5 ? 1 : 0, oc > 5 ? 1 : 0, op + " vs " + oc + (op === 5 ? " · empate" : ""));
+    var sp = count(P, function(c){ return c.r === 7 && c.s === 0; });
+    row("✨ 7 de oro", 0, 0, sp, 1 - sp, sp ? "lo tenés vos" : "lo tiene la CPU");
+    var vp = count(P, function(c){ return c.r === 7; }), vc = 4 - vp;
+    row("7️⃣ Más sietes", 0, 0, vp > 2 ? 1 : 0, vc > 2 ? 1 : 0, vp + " vs " + vc + (vp === 2 ? " · empate" : ""));
+    G.score.p += pts.p; G.score.c += pts.c;
+    rows.unshift("<tr><th></th><th>VOS</th><th>CPU</th></tr>");
+    rows.push("<tr class='tot'><td>Esta mano</td><td class='p'>+" + pts.p + "</td><td class='c'>+" + pts.c + "</td></tr>");
+    rows.push("<tr class='tot'><td>Total (a " + target + ")</td><td class='p'>" + G.score.p + "</td><td class='c'>" + G.score.c + "</td></tr>");
+    el.scoreTable.innerHTML = rows.join("");
+    render();
+
+    var done = (G.score.p >= target || G.score.c >= target) && G.score.p !== G.score.c;
+    if (done){
+      var win = G.score.p > G.score.c;
+      if (win){ stats.wins++; stats.streak++; if (stats.streak > stats.best) stats.best = stats.streak; sfx.win(); burst(innerWidth/2, innerHeight/3, 120, ["#ffd23b","#27e8ff","#ff2bd6","#39ff9e"]); }
+      else { stats.losses++; stats.streak = 0; sfx.lose(); }
+      if (G.matchEsc > stats.maxEsc) stats.maxEsc = G.matchEsc;
+      saveStats();
+      el.roundTitle.textContent = win ? "¡GANASTE LA PARTIDA!" : "GANÓ LA CPU";
+      el.roundNote.innerHTML = (win ? "Racha actual: <b>" + stats.streak + "</b> · Mejor racha: <b>" + stats.best + "</b>" : "Se cortó la racha. Mejor racha: <b>" + stats.best + "</b>") +
+        "<br>Escobas en la partida: <b>" + G.matchEsc + "</b> (récord " + stats.maxEsc + ") · Partidas: " + stats.wins + "G / " + stats.losses + "P";
+      el.nextBtn.textContent = "JUGAR DE NUEVO";
+      el.nextBtn.dataset.mode = "new";
+    } else {
+      var tie = G.score.p === G.score.c && G.score.p >= target;
+      el.roundTitle.textContent = "FIN DE LA MANO";
+      el.roundNote.innerHTML = tie ? "¡Empatados pasando los " + target + "! Se juega otra mano para desempatar." :
+        (G.score.p > G.score.c ? "Vas ganando. " : G.score.p < G.score.c ? "Vas abajo, ¡a remontar! " : "Parejito. ") +
+        "Te faltan <b>" + Math.max(0, target - G.score.p) + "</b> para ganar.";
+      el.nextBtn.textContent = "SIGUIENTE MANO";
+      el.nextBtn.dataset.mode = "next";
+    }
+    el.ovRound.classList.remove("hidden");
+    renderHud();
+  }
+
+  // ---------- render ----------
+  function nameOf(c){ return (FIG[c.r] ? FIG[c.r] : c.r) + " de " + SUITS[c.s].n; }
+  function describe(cards){
+    var n = cards.length, extra = [];
+    if (cards.some(function(c){ return c.r === 7 && c.s === 0; })) extra.push("¡con el 7 de oro!");
+    else if (cards.some(function(c){ return c.r === 7; })) extra.push("con un siete");
+    return n + " cartas" + (extra.length ? " " + extra.join(" ") : "") + ".";
+  }
+
+  function cardHTML(c, key){
+    return '<div class="card s' + c.s + '" data-id="' + c.id + '">' +
+      (c.r >= 10 ? '<span class="val"><i>' + c.v + '</i></span>' : '') +
+      '<span class="rk">' + c.r + '</span><span class="st">' + SUITS[c.s].e + '</span>' +
+      '<span class="nm">' + (FIG[c.r] || SUITS[c.s].n) + '</span>' +
+      (key ? '<span class="key">' + key + '</span>' : '') + '</div>';
+  }
+
+  var lastRender = {p:"", c:"", t:""};
+  function render(){
+    if (!G) return;
+    // mano CPU
+    var ch = "";
+    for (var i = 0; i < G.hand.c.length; i++) ch += '<div class="card back"></div>';
+    if (ch !== lastRender.c){ el.cpuHand.innerHTML = ch; lastRender.c = ch; }
+    // mesa
+    var th = "";
+    for (var j = 0; j < G.table.length; j++) th += cardHTML(G.table[j], G.table[j].cpu ? "" : String.fromCharCode(65 + j));
+    if (th !== lastRender.t){
+      var deckNode = el.deck;
+      el.table.innerHTML = th; el.table.appendChild(deckNode); lastRender.t = th;
+    }
+    el.table.classList.toggle("empty", !G.table.length);
+    el.deckN.textContent = G.deck.length;
+    el.deck.style.visibility = G.deck.length ? "visible" : "hidden";
+    // mi mano
+    var ph = "";
+    for (var k = 0; k < G.hand.p.length; k++) ph += cardHTML(G.hand.p[k], String(k + 1));
+    if (ph !== lastRender.p){ el.playerHand.innerHTML = ph; lastRender.p = ph; }
+    el.playerHand.classList.toggle("off", G.turn !== "p" || busy);
+    // selección
+    Array.prototype.forEach.call(el.playerHand.children, function(n, idx){ n.classList.toggle("sel", idx === selHand); });
+    Array.prototype.forEach.call(el.table.querySelectorAll(".card"), function(n){
+      var id = +n.dataset.id;
+      n.classList.toggle("sel", selTable.indexOf(id) >= 0);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".card"), function(n){
+      n.classList.toggle("hint", hintIds.indexOf(+n.dataset.id) >= 0 && n.dataset.id !== undefined);
+    });
+    renderStats("p"); renderStats("c");
+    renderHud();
+    updateMeter();
+  }
+
+  function renderStats(who){
+    var caps = G.caps[who];
+    var o = count(caps, function(c){ return c.s === 0; }), s = count(caps, function(c){ return c.r === 7; });
+    var g = caps.some(function(c){ return c.r === 7 && c.s === 0; });
+    (who === "p" ? el.statsP : el.statsC).innerHTML =
+      "<span>🃏 " + caps.length + "</span><span>🪙 " + o + "</span><span>7️⃣ " + s + (g ? "✨" : "") + "</span><span class='esc'>🧹 " + G.esc[who] + "</span>";
+  }
+
+  function renderHud(){
+    el.hudP.textContent = G ? G.score.p : 0;
+    el.hudC.textContent = G ? G.score.c : 0;
+    el.hudT.textContent = target;
+    el.hudBest.textContent = stats.best;
+    el.hudWins.textContent = stats.streak ? "(" + stats.streak + ")" : "";
+  }
+
+  function updateMeter(){
+    var s = 0;
+    if (G && selHand >= 0 && G.hand.p[selHand]) s += G.hand.p[selHand].v;
+    if (G) G.table.forEach(function(c){ if (selTable.indexOf(c.id) >= 0) s += c.v; });
+    var ok = s === 15 && selHand >= 0 && selTable.length > 0;
+    el.barFill.style.width = Math.min(100, s / 15 * 100) + "%";
+    el.bar.className = "bar" + (ok ? " ok" : s > 15 ? " over" : "");
+    el.sum.className = "sum" + (ok ? " ok" : s > 15 ? " over" : "");
+    el.sum.textContent = s + " / 15";
+    var myTurn = G && G.turn === "p" && !busy;
+    el.btnTake.disabled = !(myTurn && ok);
+    el.btnDrop.disabled = !(myTurn && selHand >= 0);
+    el.btnHint.disabled = !(myTurn && hintsLeft > 0);
+    el.btnHint.textContent = "PISTA (" + hintsLeft + ")";
+  }
+
+  function clearSel(){ selHand = -1; selTable = []; hintIds = []; }
+
+  function setMsg(t, cls){ el.msg.textContent = t; el.msg.className = "msg" + (cls ? " " + cls : ""); }
+
+  function markTake(ids, who){
+    Array.prototype.forEach.call(el.table.querySelectorAll(".card"), function(n){
+      if (ids.indexOf(+n.dataset.id) >= 0){
+        n.style.setProperty("--ty", who === "p" ? "120px" : "-120px");
+        n.classList.add("take");
+      }
+    });
+    var first = el.table.querySelector(".card.take");
+    if (first) burstAt(first, 18, who === "p" ? ["#ffd23b","#27e8ff"] : ["#ff2bd6","#8a4bff"]);
+  }
+
+  function showBanner(text, who){
+    el.banner.textContent = text;
+    el.banner.className = "banner" + (who === "c" ? " cpu" : "");
+    void el.banner.offsetWidth;
+    el.banner.classList.add("show");
+    burstAt(el.table, who === "p" ? 90 : 40, who === "p" ? ["#ffd23b","#27e8ff","#39ff9e","#ff2bd6"] : ["#ff2bd6","#8a4bff"]);
+  }
+
+  // ---------- input ----------
+  function selectHand(i){
+    if (busy || !G || G.turn !== "p" || i < 0 || i >= G.hand.p.length) return;
+    hintIds = [];
+    selHand = selHand === i ? -1 : i;
+    sfx.tap();
+    if (selHand >= 0){
+      var c = G.hand.p[selHand];
+      var caps = captures(c, G.table);
+      if (!G.table.length) setMsg("Mesa vacía: tirá " + nameOf(c) + ".");
+      else if (!selTable.length) setMsg(nameOf(c) + " vale " + c.v + ": buscá " + (15 - c.v) + " en la mesa." + (caps.length ? "" : " (Con esta no se puede levantar.)"));
+    }
+    render();
+  }
+  function toggleTable(id){
+    if (busy || !G || G.turn !== "p") return;
+    hintIds = [];
+    var k = selTable.indexOf(id);
+    if (k >= 0) selTable.splice(k, 1); else selTable.push(id);
+    sfx.tap();
+    if (selHand < 0) setMsg("Ahora elegí una carta de tu mano.");
+    render();
+    if (selHand >= 0){
+      var s = G.hand.p[selHand].v + sumOf(G.table.filter(function(c){ return selTable.indexOf(c.id) >= 0; }));
+      if (s === 15) setMsg("¡Suma 15! Tocá LEVANTAR (o Enter).", "good");
+      else if (s > 15) setMsg("Te pasaste: " + s + ".", "bad");
+      else setMsg("Llevás " + s + ", faltan " + (15 - s) + ".");
+    }
+  }
+
+  el.playerHand.addEventListener("click", function(e){
+    var n = e.target.closest(".card"); if (!n) return;
+    selectHand(Array.prototype.indexOf.call(el.playerHand.children, n));
+  });
+  el.table.addEventListener("click", function(e){
+    var n = e.target.closest(".card"); if (!n || n.dataset.id === undefined) return;
+    toggleTable(+n.dataset.id);
+  });
+  el.btnTake.addEventListener("click", playerTake);
+  el.btnDrop.addEventListener("click", playerDrop);
+  el.btnHint.addEventListener("click", showHint);
+
+  document.addEventListener("keydown", function(e){
+    if (!el.ovStart.classList.contains("hidden")){ if (e.key === "Enter"){ e.preventDefault(); start(); } return; }
+    if (!el.ovRound.classList.contains("hidden")){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); el.nextBtn.click(); } return; }
+    if (!G) return;
+    var k = e.key;
+    if (k >= "1" && k <= "3"){ selectHand(+k - 1); return; }
+    if (k === "Enter" || k === " "){ e.preventDefault(); playerTake(); return; }
+    if (k === "Escape"){ clearSel(); render(); return; }
+    var lk = k.toLowerCase();
+    if (lk === "t" && !e.ctrlKey){ playerDrop(); return; }
+    if (lk === "h"){ showHint(); return; }
+    if (/^[a-z]$/.test(lk)){
+      var idx = lk.charCodeAt(0) - 97;
+      if (G.table[idx]) toggleTable(G.table[idx].id);
+    }
+  });
+
+  function bindOpts(id, cb){
+    var box = $(id);
+    box.addEventListener("click", function(e){
+      var b = e.target.closest(".opt"); if (!b) return;
+      Array.prototype.forEach.call(box.children, function(x){ x.classList.toggle("on", x === b); });
+      cb(+b.dataset.v); sfx.tap();
+    });
+  }
+  bindOpts("optDiff", function(v){ diff = v; });
+  bindOpts("optTarget", function(v){ target = v; renderHud(); });
+
+  function start(){
+    el.ovStart.classList.add("hidden");
+    lastRender = {p:"", c:"", t:""};
+    newMatch();
+  }
+  el.startBtn.addEventListener("click", start);
+  el.nextBtn.addEventListener("click", function(){
+    el.ovRound.classList.add("hidden");
+    if (el.nextBtn.dataset.mode === "new"){ el.ovStart.classList.remove("hidden"); G = null; el.playerHand.innerHTML = ""; el.cpuHand.innerHTML = ""; lastRender = {p:"", c:"", t:""}; renderHud(); return; }
+    newRound();
+  });
+
+  renderHud();
+})();
+</script>
+</body>
+</html>

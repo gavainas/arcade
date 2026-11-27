@@ -956,6 +956,13 @@
       desc: "Pilotá un globo aerostático sobre la ciudad de noche: sólo controlás la altura. Mantené apretado para prender el quemador y que el aire se caliente (subís con retardo), soltá para que se enfríe o abrí la válvula para bajar rápido. Cada capa de altura tiene su propio viento, así que para avanzar tenés que buscar la que sopla para tu lado. Aterrizá suave en la pista dorada al final de cada etapa (al centro es PERFECTO). Cuidá el gas, juntá estrellas para la racha hasta x5 y esquivá edificios, antenas, pájaros, tormentas con rayos y drones. Los vientos cambian desde la etapa 3. Premios: gas, escudo, puntos x2 y vida. Récord guardado.",
       controles: "Mantené apretado en cualquier lado para el quemador; botón VÁLVULA abajo a la izquierda para bajar rápido. Teclado: espacio / ↑ / W quemador, ↓ / S válvula, P pausa",
       fecha: "2026-11-26", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "escoba-neon", titulo: "Escoba Neón", archivo: "escoba-neon.html",
+      emoji: "🧹", categoria: "logica", tags: ["escoba", "escoba de 15", "cartas", "naipes", "cartas españolas", "suma", "vs cpu", "un jugador"],
+      desc: "El clásico de cartas españolas contra la CPU: tocá una carta de tu mano y las de la mesa hasta sumar 15 justo para levantarlas (sota 8, caballo 9, rey 10). Si dejás la mesa vacía es ESCOBA y sumás un punto al toque. Al final de cada mano se cuentan más cartas, más oros, el 7 de oro y más sietes. Cuidado con lo que tirás: si la mesa queda sumando entre 5 y 14, la CPU te barre. Tres dificultades, partidas a 15, 21 o 30, 3 pistas por partida y racha de victorias guardada.",
+      controles: "Tocá una carta de tu mano, después las de la mesa, y LEVANTAR (o TIRAR A LA MESA). Teclado: 1-3 tu mano, A-Z cartas de la mesa, Enter levantar, T tirar, H pista, Esc limpiar",
+      fecha: "2026-11-27", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 
