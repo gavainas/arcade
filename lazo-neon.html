@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LAZO NEÓN · NEON ARCADE</title>
+<style>
+  :root{--bg:#070a16;--cyan:#27e8ff;--pink:#ff2bd6;--purple:#8a4bff;--gold:#ffd23b;--ink:#e8f6ff;--muted:#7fa6c8;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:radial-gradient(120% 70% at 50% -10%,#16204a 0%,var(--bg) 55%,#03040a 100%) fixed;color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:20px 14px 40px;display:flex;flex-direction:column;align-items:center;}
+  .stage{position:relative;width:100%;max-width:480px;}
+  .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:10px;letter-spacing:.5px;}
+  .back:hover{color:var(--cyan);}
+  header{text-align:center;margin-bottom:10px;}
+  .logo{font-size:clamp(26px,7vw,40px);font-weight:900;letter-spacing:2px;line-height:1;
+    background:linear-gradient(90deg,var(--cyan),var(--pink),var(--gold),var(--cyan));background-size:300% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:300% center;}}
+  .sub{margin-top:6px;color:var(--cyan);font-weight:600;letter-spacing:5px;font-size:12px;}
+  .hud{display:flex;gap:8px;margin:4px 0 10px;font-size:11px;letter-spacing:1px;color:var(--muted);}
+  .hud .box{flex:1;text-align:center;background:linear-gradient(180deg,rgba(20,28,58,.7),rgba(10,14,30,.7));border:1px solid rgba(138,75,255,.25);border-radius:12px;padding:7px 4px;}
+  .hud .box b{display:block;font-size:18px;font-weight:900;color:var(--cyan);margin-top:2px;}
+  .hud .box.p b{color:var(--pink);} .hud .box.g b{color:var(--gold);}
+  .wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(138,75,255,.35);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;user-select:none;-webkit-user-select:none;}
+  canvas{display:block;width:100%;height:auto;background:#050813;cursor:crosshair;touch-action:none;}
+  .hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+    background:rgba(5,7,15,.9);backdrop-filter:blur(3px);gap:12px;z-index:5;}
+  .overlay.hidden{display:none;}
+  .overlay h2{font-size:clamp(22px,6vw,30px);font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:390px;}
+  .overlay .big{font-size:52px;}
+  .btn{cursor:pointer;border:none;border-radius:999px;padding:13px 32px;font-size:15px;font-weight:800;letter-spacing:1px;color:#031018;
+    background:linear-gradient(90deg,var(--cyan),var(--pink));box-shadow:0 8px 24px rgba(255,43,214,.3);}
+  .btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← Volver al arcade</a>
+  <header><div class="logo">LAZO NEÓN</div><div class="sub">ENCERRÁ LA LUZ</div></header>
+  <div class="hud">
+    <div class="box">PUNTOS<b id="hScore">0</b></div>
+    <div class="box p">NIVEL<b id="hLevel">1</b></div>
+    <div class="box">VIDAS<b id="hLives">❤❤❤</b></div>
+    <div class="box g">RÉCORD<b id="hBest">0</b></div>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="cv" width="960" height="1280"></canvas>
+    <div class="overlay" id="ovStart">
+      <div class="big">➰</div><h2>LAZO NEÓN</h2>
+      <p>Arrastrá el dedo para dibujar un <b style="color:#27e8ff">lazo de luz</b>. Cuando la línea <b>se cruza con sí misma</b> (o volvés cerca de donde empezaste) el lazo se cierra y <b>atrapás todo lo que quedó adentro</b>.<br>
+      Varias luces en un mismo lazo multiplican los puntos y suben la <b style="color:#ff2bd6">racha hasta x5</b>; 5 o más es <b style="color:#ffd23b">PERFECTO</b>.<br>
+      Ojo con las <b style="color:#ff4d5e">chispas rojas</b>: si tocan tu línea la cortan y si las encerrás <b>perdés una vida</b>. Las <b style="color:#b07bff">moradas</b> tienen cáscara (hay que enlazarlas dos veces) y las <b style="color:#ffd23b">doradas</b> dan tiempo.<br>
+      La línea tiene largo limitado: cerrá rápido. Llegá a la meta de cada nivel antes de que se acabe el tiempo.</p>
+      <button class="btn" id="btnStart">¡A ENLAZAR!</button>
+    </div>
+    <div class="overlay hidden" id="ovEnd">
+      <div class="big">💫</div><h2>¡SE APAGÓ EL LAZO!</h2>
+      <p id="endText"></p>
+      <button class="btn" id="btnAgain">OTRA VEZ</button>
+    </div>
+  </div>
+  <div class="hint">Táctil / mouse: <b>arrastrá</b> para dibujar y <b>cruzá tu propia línea</b> para cerrar el lazo.<br>Teclado: <b>flechas / WASD</b> mueven el lápiz, <b>mantené espacio</b> para dibujar, <b>P</b> pausa.</div>
+</div>
+<script>
+(() => {
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const W = 480, H = 640, TOP = 58;
+  ctx.scale(cv.width / W, cv.height / H);
+  const BEST_KEY = "lazo-neon-best";
+  const TAU = Math.PI * 2;
+  const $ = id => document.getElementById(id);
+  const hScore = $("hScore"), hLevel = $("hLevel"), hLives = $("hLives"), hBest = $("hBest");
+  const ovStart = $("ovStart"), ovEnd = $("ovEnd"), endText = $("endText");
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  hBest.textContent = best;
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  // ---------- audio ----------
+  let actx = null;
+  function ensureAudio() {
+    if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } }
+    if (actx && actx.state === "suspended") actx.resume();
+  }
+  function beep(f, d = 0.08, type = "square", v = 0.05, slide = 0, delay = 0) {
+    if (!actx) return;
+    try {
+      const t = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  function noise(v = 0.05, d = 0.3, freq = 1200) {
+    if (!actx) return;
+    try {
+      const t = actx.currentTime, len = Math.floor(actx.sampleRate * d);
+      const buf = actx.createBuffer(1, len, actx.sampleRate), data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+      f.type = "bandpass"; f.frequency.value = freq; g.gain.value = v;
+      src.buffer = buf; src.connect(f); f.connect(g); g.connect(actx.destination); src.start(t);
+    } catch (e) {}
+  }
+  const sCapture = n => { for (let i = 0; i < Math.min(n, 6); i++) beep(520 + i * 120, 0.09, "triangle", 0.05, 200, i * 0.05); };
+  const sCut = () => { noise(0.08, 0.22, 2400); beep(200, 0.2, "sawtooth", 0.04, -120); };
+  const sBurn = () => { noise(0.12, 0.5, 600); beep(160, 0.4, "sawtooth", 0.06, -110); };
+  const sShell = () => beep(880, 0.07, "square", 0.04, -300);
+  const sPower = () => { beep(660, 0.1, "triangle", 0.05, 0); beep(990, 0.14, "triangle", 0.05, 300, 0.08); };
+  const sLevel = () => [523, 659, 784, 1046].forEach((f, i) => beep(f, 0.16, "triangle", 0.06, 0, i * 0.1));
+
+  // ---------- estado ----------
+  let state = "menu"; // menu | play | clear | over
+  let paused = false;
+  let score, level, lives, mult, goal, got, timeLeft, timeMax, levelLost;
+  let orbs, parts, texts, flashes, trail, drawing, invul, cutStun, clearT, powerT, lifeLostMsgT;
+  let pw; // timers de premios
+  let stats;
+  const pen = { x: W / 2, y: H / 2, kb: false };
+  const keys = {};
+
+  const TYPES = {
+    normal: { r: 9, col: "#27e8ff", val: 10 },
+    pink:   { r: 8, col: "#ff2bd6", val: 20 },
+    gold:   { r: 10, col: "#ffd23b", val: 50 },
+    shell:  { r: 11, col: "#b07bff", val: 35 },
+    spark:  { r: 8, col: "#ff4d5e", val: 0 },
+    power:  { r: 13, col: "#39ff9e", val: 15 }
+  };
+  const POWERS = {
+    slow: { ic: "⏳", name: "CÁMARA LENTA", dur: 7 },
+    long: { ic: "➰", name: "LAZO LARGO", dur: 10 },
+    x2:   { ic: "x2", name: "PUNTOS x2", dur: 10 },
+    life: { ic: "❤", name: "¡VIDA EXTRA!", dur: 0 }
+  };
+
+  function updHud() {
+    hScore.textContent = score; hLevel.textContent = level;
+    hLives.textContent = lives > 0 ? "❤".repeat(Math.min(lives, 5)) : "—";
+  }
+
+  function startGame() {
+    ensureAudio();
+    score = 0; level = 1; lives = 3; mult = 1;
+    stats = { loops: 0, caught: 0, bestLoop: 0, perfects: 0 };
+    orbs = []; parts = []; texts = []; flashes = [];
+    trail = []; drawing = false;
+    pw = { slow: 0, long: 0, x2: 0 };
+    ovStart.classList.add("hidden"); ovEnd.classList.add("hidden");
+    startLevel();
+    updHud();
+    state = "play";
+  }
+
+  function startLevel() {
+    goal = 10 + (level - 1) * 4;
+    got = 0;
+    timeMax = 45; timeLeft = timeMax;
+    levelLost = false;
+    invul = 1; cutStun = 0; powerT = rand(7, 11);
+    trail = [];
+    orbs = orbs.filter(o => o.kind !== "spark");
+    fillOrbs(true);
+    texts.push({ x: W / 2, y: H / 2 - 30, s: "NIVEL " + level, sub: "Meta: " + goal + " luces", t: 2, big: true, col: "#27e8ff" });
+  }
+
+  function targetNormals() { return 7 + Math.min(level, 8); }
+  function targetSparks() { return Math.min(1 + Math.floor((level - 1) / 2), 5); }
+
+  function spawn(kind, instant) {
+    const T = TYPES[kind];
+    let x, y, tries = 0;
+    do {
+      x = rand(30, W - 30); y = rand(TOP + 30, H - 30); tries++;
+    } while (tries < 30 && (Math.hypot(x - pen.x, y - pen.y) < 110 || (kind === "spark" && trailNear(x, y, 60))));
+    const spBase = kind === "spark" ? 55 + level * 6 : 28 + level * 3.5;
+    const sp = spBase * (kind === "pink" ? 1.75 : kind === "gold" ? 1.4 : kind === "power" ? 0.7 : 1) * rand(0.8, 1.2);
+    const a = rand(0, TAU);
+    const o = { kind, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: T.r, born: instant ? 1 : 0, ph: rand(0, TAU), shell: kind === "shell" };
+    if (kind === "power") {
+      const opts = ["slow", "long", "x2", "x2", "long", "slow"];
+      if (lives < 3) opts.push("life", "life");
+      o.pw = opts[Math.floor(Math.random() * opts.length)];
+      o.life = 9;
+    }
+    if (kind === "gold") o.life = 8;
+    orbs.push(o);
+    return o;
+  }
+
+  function trailNear(x, y, d) {
+    for (const p of trail) if (Math.hypot(p.x - x, p.y - y) < d) return true;
+    return false;
+  }
+
+  function fillOrbs(instant) {
+    const n = orbs.filter(o => o.kind !== "spark" && o.kind !== "power" && o.kind !== "gold").length;
+    for (let i = n; i < targetNormals(); i++) {
+      let k = "normal";
+      const r = Math.random();
+      if (level >= 3 && r < 0.22) k = "shell";
+      else if (level >= 2 && r < 0.5) k = "pink";
+      spawn(k, instant);
+    }
+    const s = orbs.filter(o => o.kind === "spark").length;
+    for (let i = s; i < targetSparks(); i++) spawn("spark", instant);
+  }
+
+  // ---------- geometría ----------
+  function segInter(a, b, c, d) {
+    const rx = b.x - a.x, ry = b.y - a.y, sx = d.x - c.x, sy = d.y - c.y;
+    const den = rx * sy - ry * sx;
+    if (Math.abs(den) < 1e-9) return null;
+    const qx = c.x - a.x, qy = c.y - a.y;
+    const t = (qx * sy - qy * sx) / den, u = (qx * ry - qy * rx) / den;
+    if (t > 0 && t <= 1 && u >= 0 && u <= 1) return { x: a.x + t * rx, y: a.y + t * ry };
+    return null;
+  }
+  function pip(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const a = poly[i], b = poly[j];
+      if ((a.y > y) !== (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    return inside;
+  }
+  function area(poly) {
+    let s = 0;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) s += (poly[j].x + poly[i].x) * (poly[j].y - poly[i].y);
+    return Math.abs(s / 2);
+  }
+  function segDist(p, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+    let t = l2 ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2 : 0;
+    t = clamp(t, 0, 1);
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  }
+  function maxLen() { return pw.long > 0 ? 1700 : 950; }
+  function trailLen() {
+    let l = 0;
+    for (let i = 1; i < trail.length; i++) l += dist(trail[i - 1], trail[i]);
+    return l;
+  }
+
+  // ---------- dibujo del lazo ----------
+  function beginDraw(x, y) {
+    if (state !== "play" || paused) return;
+    drawing = true;
+    trail = cutStun > 0 ? [] : [{ x, y }];
+  }
+  function endDraw() { drawing = false; trail = []; }
+
+  function addPoint(x, y) {
+    if (!drawing || state !== "play" || paused) return;
+    x = clamp(x, 2, W - 2); y = clamp(y, TOP + 2, H - 2);
+    const p = { x, y };
+    if (cutStun > 0) return;
+    if (!trail.length) { trail.push(p); return; }
+    const last = trail[trail.length - 1];
+    const d = dist(last, p);
+    if (d < 5) return;
+    // subdividir saltos largos para que la detección sea pareja
+    if (d > 18) {
+      const n = Math.ceil(d / 14);
+      for (let i = 1; i < n; i++) {
+        if (!drawing || !trail.length) return;
+        if (pushPoint({ x: last.x + (p.x - last.x) * i / n, y: last.y + (p.y - last.y) * i / n })) return;
+      }
+    }
+    pushPoint(p);
+  }
+
+  // devuelve true si cerró un lazo
+  function pushPoint(p) {
+    const n = trail.length, last = trail[n - 1];
+    // cruce con la propia línea: el cruce más reciente da el lazo recién cerrado
+    for (let j = n - 3; j >= 0; j--) {
+      const X = segInter(last, p, trail[j], trail[j + 1]);
+      if (X) {
+        const poly = [X].concat(trail.slice(j + 1));
+        trail = [X, p];
+        closeLoop(poly);
+        return true;
+      }
+    }
+    // volver cerca de un punto viejo también cierra (más amable con el dedo)
+    if (n > 12) {
+      let bj = -1, bd = 17;
+      let run = 0;
+      for (let j = n - 1; j > 0; j--) {
+        run += dist(trail[j], trail[j - 1]);
+        if (run > 130) {
+          const dd = dist(trail[j - 1], p);
+          if (dd < bd) { bd = dd; bj = j - 1; }
+        }
+      }
+      if (bj >= 0) {
+        const poly = trail.slice(bj).concat([p]);
+        trail = [p];
+        closeLoop(poly);
+        return true;
+      }
+    }
+    trail.push(p);
+    // largo limitado: la cola se va borrando
+    let L = trailLen();
+    const M = maxLen();
+    while (L > M && trail.length > 2) { L -= dist(trail[0], trail[1]); trail.shift(); }
+    return false;
+  }
+
+  function closeLoop(poly) {
+    if (poly.length < 3 || area(poly) < 380) return;
+    stats.loops++;
+    const inside = orbs.filter(o => o.born > 0.4 && pip(o.x, o.y, poly));
+    const sparks = inside.filter(o => o.kind === "spark");
+    if (sparks.length) {
+      flashes.push({ poly, t: 0.7, col: "#ff4d5e" });
+      for (const s of sparks) { burst(s.x, s.y, "#ff4d5e", 26, 200); s.dead = true; }
+      sBurn();
+      mult = 1;
+      loseLife("¡ENCERRASTE UNA CHISPA!");
+      trail = []; cutStun = 0.35;
+      return;
+    }
+    let count = 0, sum = 0, shells = 0, cx = 0, cy = 0;
+    for (const o of inside) {
+      cx += o.x; cy += o.y;
+      if (o.kind === "shell" && o.shell) {
+        o.shell = false; shells++;
+        burst(o.x, o.y, "#b07bff", 10, 120);
+        o.vx *= 1.4; o.vy *= 1.4;
+        continue;
+      }
+      o.dead = true;
+      const T = TYPES[o.kind];
+      burst(o.x, o.y, o.kind === "power" ? "#39ff9e" : T.col, 14, 170);
+      if (o.kind === "power") { applyPower(o.pw, o.x, o.y); sum += T.val; continue; }
+      count++; sum += T.val;
+      if (o.kind === "gold") { timeLeft = Math.min(timeMax + 10, timeLeft + 3); texts.push({ x: o.x, y: o.y - 18, s: "+3s", t: 1, col: "#ffd23b" }); }
+    }
+    if (inside.length) { cx /= inside.length; cy /= inside.length; } else { cx = poly[0].x; cy = poly[0].y; }
+    flashes.push({ poly, t: 0.55, col: count >= 5 ? "#ffd23b" : count >= 2 ? "#ff2bd6" : "#27e8ff" });
+
+    if (count === 0) {
+      if (shells) { sShell(); texts.push({ x: cx, y: cy, s: "¡CÁSCARA ROTA!", t: 1, col: "#b07bff" }); }
+      else if (!inside.length) { mult = 1; texts.push({ x: cx, y: cy, s: "vacío", t: 0.8, col: "#7fa6c8" }); beep(180, 0.08, "sine", 0.03); }
+      if (sum) { score += sum * (pw.x2 > 0 ? 2 : 1); updHud(); }
+      return;
+    }
+    const factor = 1 + 0.5 * (count - 1);
+    let pts = Math.round(sum * factor * mult * (pw.x2 > 0 ? 2 : 1));
+    let label = count >= 5 ? "¡PERFECTO!" : count === 4 ? "¡CUÁDRUPLE!" : count === 3 ? "¡TRIPLE!" : count === 2 ? "¡DOBLE!" : "";
+    if (count >= 5) { pts += 100 * mult; stats.perfects++; }
+    score += pts;
+    got += count;
+    stats.caught += count;
+    stats.bestLoop = Math.max(stats.bestLoop, count);
+    texts.push({ x: cx, y: cy, s: "+" + pts, sub: label ? label + (mult > 1 ? "  x" + mult : "") : (mult > 1 ? "x" + mult : ""), t: 1.2, col: count >= 5 ? "#ffd23b" : "#e8f6ff" });
+    if (count >= 2) mult = Math.min(5, mult + 1);
+    sCapture(count);
+    updHud();
+    checkBest();
+    if (got >= goal) levelClear();
+  }
+
+  function applyPower(k, x, y) {
+    sPower();
+    const P = POWERS[k];
+    if (k === "life") { lives = Math.min(5, lives + 1); updHud(); }
+    else pw[k] = P.dur;
+    texts.push({ x, y: y - 20, s: P.name, t: 1.3, col: "#39ff9e" });
+  }
+
+  function loseLife(msg) {
+    if (invul > 0 && msg !== "¡SE ACABÓ EL TIEMPO!") return;
+    lives--; levelLost = true; invul = 1.5;
+    texts.push({ x: W / 2, y: H / 2, s: msg, t: 1.6, col: "#ff4d5e", big: true });
+    updHud();
+    if (lives <= 0) gameOver();
+  }
+
+  function levelClear() {
+    state = "clear"; clearT = 2.6;
+    endDraw();
+    const tb = Math.ceil(timeLeft) * 10;
+    let s = "Tiempo: +" + tb;
+    score += tb;
+    if (!levelLost) { score += 300; s += " · PERFECTO +300"; }
+    if (level % 3 === 0 && lives < 5) { lives++; s += " · ❤ +1"; }
+    texts.push({ x: W / 2, y: H / 2 - 20, s: "¡NIVEL SUPERADO!", sub: s, t: 2.5, big: true, col: "#39ff9e" });
+    sLevel();
+    updHud(); checkBest();
+  }
+
+  function checkBest() {
+    if (score > best) { best = score; hBest.textContent = best; try { localStorage.setItem(BEST_KEY, best); } catch (e) {} }
+  }
+
+  function gameOver() {
+    state = "over"; endDraw();
+    checkBest();
+    setTimeout(() => {
+      endText.innerHTML = "Puntos: <b style='color:#27e8ff'>" + score + "</b> · Nivel " + level +
+        "<br>Luces atrapadas: " + stats.caught + " · Mejor lazo: " + stats.bestLoop + " luces · Perfectos: " + stats.perfects +
+        "<br>Récord: <b style='color:#ffd23b'>" + best + "</b>";
+      ovEnd.classList.remove("hidden");
+    }, 900);
+  }
+
+  function burst(x, y, col, n, sp) {
+    for (let i = 0; i < n; i++) {
+      const a = rand(0, TAU), s = rand(0.3, 1) * sp;
+      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: rand(0.4, 0.9), col });
+    }
+  }
+
+  // ---------- update ----------
+  function update(dt) {
+    for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.94; p.vy *= 0.94; p.t -= dt; }
+    parts = parts.filter(p => p.t > 0);
+    for (const t of texts) { t.t -= dt; if (!t.big) t.y -= 26 * dt; }
+    texts = texts.filter(t => t.t > 0);
+    for (const f of flashes) f.t -= dt;
+    flashes = flashes.filter(f => f.t > 0);
+
+    if (state === "clear") {
+      clearT -= dt;
+      moveOrbs(dt * 0.4);
+      if (clearT <= 0) { level++; updHud(); startLevel(); state = "play"; }
+      return;
+    }
+    if (state !== "play") { if (orbs) moveOrbs(dt * 0.3); return; }
+
+    invul = Math.max(0, invul - dt);
+    cutStun = Math.max(0, cutStun - dt);
+    for (const k in pw) pw[k] = Math.max(0, pw[k] - dt);
+
+    // lápiz por teclado
+    let kx = (keys.ArrowRight || keys.d ? 1 : 0) - (keys.ArrowLeft || keys.a ? 1 : 0);
+    let ky = (keys.ArrowDown || keys.s ? 1 : 0) - (keys.ArrowUp || keys.w ? 1 : 0);
+    if (kx || ky) {
+      const l = Math.hypot(kx, ky), sp = 290;
+      pen.kb = true;
+      pen.x = clamp(pen.x + kx / l * sp * dt, 2, W - 2);
+      pen.y = clamp(pen.y + ky / l * sp * dt, TOP + 2, H - 2);
+      if (keys[" "]) {
+        if (!drawing) beginDraw(pen.x, pen.y);
+        addPoint(pen.x, pen.y);
+      }
+    }
+    if (keys[" "] && drawing && cutStun <= 0 && !trail.length) trail = [{ x: pen.x, y: pen.y }];
+
+    const slow = pw.slow > 0 ? 0.4 : 1;
+    moveOrbs(dt * slow);
+
+    // chispas que cortan la línea
+    if (trail.length > 1 && invul <= 0) {
+      for (const o of orbs) {
+        if (o.kind !== "spark" || o.born < 0.6) continue;
+        let hit = false;
+        for (let i = 1; i < trail.length; i++) if (segDist(o, trail[i - 1], trail[i]) < o.r + 2) { hit = true; break; }
+        if (hit) {
+          burst(o.x, o.y, "#ff4d5e", 12, 150);
+          for (let i = 0; i < trail.length; i += 3) burst(trail[i].x, trail[i].y, "#ff8a95", 1, 60);
+          texts.push({ x: o.x, y: o.y - 20, s: "¡CORTADO!", t: 0.9, col: "#ff4d5e" });
+          trail = []; cutStun = 0.45; mult = 1;
+          sCut();
+          break;
+        }
+      }
+    }
+
+    // timers de vida de dorados y premios
+    for (const o of orbs) if (o.life !== undefined) { o.life -= dt; if (o.life <= 0) { o.dead = true; burst(o.x, o.y, "#555", 6, 60); } }
+    orbs = orbs.filter(o => !o.dead);
+
+    powerT -= dt;
+    if (powerT <= 0) {
+      powerT = rand(9, 14);
+      if (!orbs.some(o => o.kind === "power")) spawn("power");
+      if (Math.random() < 0.6) spawn("gold");
+    }
+    fillOrbs(false);
+
+    timeLeft -= dt;
+    if (timeLeft <= 0) {
+      timeLeft = 25; mult = 1;
+      sBurn();
+      loseLife("¡SE ACABÓ EL TIEMPO!");
+    }
+  }
+
+  function moveOrbs(dt) {
+    for (const o of orbs) {
+      o.born = Math.min(1, o.born + dt * 2.2);
+      o.ph += dt * 3;
+      if (o.kind === "spark" && level >= 5 && drawing && trail.length && state === "play") {
+        // desde el nivel 5 las chispas persiguen el lápiz
+        const t = trail[trail.length - 1], dx = t.x - o.x, dy = t.y - o.y, l = Math.hypot(dx, dy) || 1;
+        const sp = Math.hypot(o.vx, o.vy);
+        o.vx += dx / l * 40 * dt; o.vy += dy / l * 40 * dt;
+        const ns = Math.hypot(o.vx, o.vy) || 1;
+        o.vx *= sp / ns; o.vy *= sp / ns;
+      }
+      if (o.kind === "pink") { // zigzag suave
+        const a = Math.sin(o.ph * 0.7) * 0.9 * dt;
+        const c = Math.cos(a), s = Math.sin(a);
+        const vx = o.vx * c - o.vy * s; o.vy = o.vx * s + o.vy * c; o.vx = vx;
+      }
+      o.x += o.vx * dt; o.y += o.vy * dt;
+      if (o.x < o.r) { o.x = o.r; o.vx = Math.abs(o.vx); }
+      if (o.x > W - o.r) { o.x = W - o.r; o.vx = -Math.abs(o.vx); }
+      if (o.y < TOP + o.r) { o.y = TOP + o.r; o.vy = Math.abs(o.vy); }
+      if (o.y > H - o.r) { o.y = H - o.r; o.vy = -Math.abs(o.vy); }
+    }
+  }
+
+  // ---------- render ----------
+  const stars = Array.from({ length: 70 }, () => ({ x: rand(0, W), y: rand(TOP, H), r: rand(0.4, 1.4), p: rand(0, TAU) }));
+  let tAll = 0;
+
+  function drawOrb(o) {
+    const T = TYPES[o.kind];
+    const s = o.born < 1 ? o.born : 1;
+    const pulse = 1 + Math.sin(o.ph) * 0.08;
+    const r = o.r * s * pulse;
+    ctx.save();
+    ctx.globalAlpha = 0.4 + 0.6 * s;
+    if (o.life !== undefined && o.life < 2.5 && Math.floor(o.life * 8) % 2 === 0) ctx.globalAlpha *= 0.4;
+    const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, r * 3);
+    g.addColorStop(0, T.col + "88"); g.addColorStop(1, T.col + "00");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(o.x, o.y, r * 3, 0, TAU); ctx.fill();
+    if (o.kind === "spark") {
+      ctx.strokeStyle = "#ff4d5e"; ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = o.ph * 1.6 + i * TAU / 8, rr = i % 2 ? r * 0.55 : r * 1.45;
+        const px = o.x + Math.cos(a) * rr, py = o.y + Math.sin(a) * rr;
+        i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      }
+      ctx.closePath(); ctx.stroke();
+      ctx.fillStyle = "#ffd0d4"; ctx.beginPath(); ctx.arc(o.x, o.y, r * 0.4, 0, TAU); ctx.fill();
+    } else if (o.kind === "power") {
+      ctx.strokeStyle = "#39ff9e"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(o.x, o.y, r, 0, TAU); ctx.stroke();
+      ctx.fillStyle = "rgba(57,255,158,.15)"; ctx.fill();
+      ctx.fillStyle = "#e8fff4"; ctx.font = "bold " + Math.round(13 * s) + "px Segoe UI, system-ui, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(POWERS[o.pw].ic, o.x, o.y + 1);
+    } else {
+      ctx.fillStyle = T.col;
+      ctx.beginPath(); ctx.arc(o.x, o.y, r * 0.7, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#ffffffcc";
+      ctx.beginPath(); ctx.arc(o.x - r * 0.2, o.y - r * 0.2, r * 0.25, 0, TAU); ctx.fill();
+      if (o.kind === "shell" && o.shell) {
+        ctx.strokeStyle = "#d9c2ff"; ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]); ctx.lineDashOffset = -o.ph * 4;
+        ctx.beginPath(); ctx.arc(o.x, o.y, r * 1.25, 0, TAU); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      if (o.kind === "gold") {
+        ctx.strokeStyle = "#fff3b0"; ctx.lineWidth = 1.5;
+        for (let i = 0; i < 4; i++) {
+          const a = o.ph * 0.8 + i * TAU / 4;
+          ctx.beginPath(); ctx.moveTo(o.x + Math.cos(a) * r, o.y + Math.sin(a) * r);
+          ctx.lineTo(o.x + Math.cos(a) * r * 1.8, o.y + Math.sin(a) * r * 1.8); ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = "#050813"; ctx.fillRect(0, 0, W, H);
+    // grilla y estrellas
+    ctx.strokeStyle = "rgba(138,75,255,.07)"; ctx.lineWidth = 1;
+    for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x, TOP); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = TOP; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    for (const s of stars) {
+      ctx.fillStyle = "rgba(200,230,255," + (0.25 + 0.25 * Math.sin(tAll * 1.5 + s.p)) + ")";
+      ctx.fillRect(s.x, s.y, s.r, s.r);
+    }
+
+    // flashes de lazos cerrados
+    for (const f of flashes) {
+      ctx.save();
+      ctx.globalAlpha = clamp(f.t / 0.55, 0, 1);
+      ctx.beginPath();
+      f.poly.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+      ctx.closePath();
+      ctx.fillStyle = f.col + "33"; ctx.fill();
+      ctx.strokeStyle = f.col; ctx.lineWidth = 3; ctx.shadowColor = f.col; ctx.shadowBlur = 16; ctx.stroke();
+      ctx.restore();
+    }
+
+    if (orbs) for (const o of orbs) drawOrb(o);
+
+    // línea del lazo
+    if (trail && trail.length > 1) {
+      const M = maxLen(), used = trailLen() / M;
+      ctx.save();
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
+      const col = used > 0.85 ? "#ffd23b" : pw.long > 0 ? "#39ff9e" : "#27e8ff";
+      ctx.shadowColor = col; ctx.shadowBlur = 14;
+      for (let i = 1; i < trail.length; i++) {
+        ctx.globalAlpha = 0.25 + 0.75 * (i / trail.length);
+        ctx.strokeStyle = i > trail.length - 4 ? "#ffffff" : col;
+        ctx.lineWidth = 2.5 + 1.5 * (i / trail.length);
+        ctx.beginPath(); ctx.moveTo(trail[i - 1].x, trail[i - 1].y); ctx.lineTo(trail[i].x, trail[i].y); ctx.stroke();
+      }
+      ctx.restore();
+      const h = trail[trail.length - 1];
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(h.x, h.y, 4, 0, TAU); ctx.fill();
+      // marca del inicio para ayudar a cerrar
+      const s0 = trail[0];
+      ctx.strokeStyle = "rgba(255,43,214,.7)"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(s0.x, s0.y, 9 + Math.sin(tAll * 8) * 2, 0, TAU); ctx.stroke();
+    }
+
+    // lápiz de teclado
+    if (pen.kb && state === "play") {
+      ctx.strokeStyle = cutStun > 0 ? "#ff4d5e" : keys[" "] ? "#ffffff" : "#27e8ffaa"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(pen.x, pen.y, 8, 0, TAU);
+      ctx.moveTo(pen.x - 13, pen.y); ctx.lineTo(pen.x - 4, pen.y); ctx.moveTo(pen.x + 4, pen.y); ctx.lineTo(pen.x + 13, pen.y);
+      ctx.moveTo(pen.x, pen.y - 13); ctx.lineTo(pen.x, pen.y - 4); ctx.moveTo(pen.x, pen.y + 4); ctx.lineTo(pen.x, pen.y + 13);
+      ctx.stroke();
+    }
+
+    for (const p of parts) {
+      ctx.globalAlpha = clamp(p.t * 1.6, 0, 1);
+      ctx.fillStyle = p.col; ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+
+    // panel superior dentro del canvas
+    ctx.fillStyle = "rgba(8,12,28,.92)"; ctx.fillRect(0, 0, W, TOP);
+    ctx.strokeStyle = "rgba(138,75,255,.4)"; ctx.beginPath(); ctx.moveTo(0, TOP); ctx.lineTo(W, TOP); ctx.stroke();
+    if (state !== "menu" && goal) {
+      ctx.font = "bold 12px Segoe UI, system-ui, sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+      ctx.fillStyle = "#7fa6c8"; ctx.fillText("META", 12, 15);
+      ctx.fillStyle = "#e8f6ff"; ctx.fillText(Math.min(got, goal) + " / " + goal, 50, 15);
+      // barra de meta
+      ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.fillRect(12, 25, 150, 6);
+      ctx.fillStyle = "#39ff9e"; ctx.fillRect(12, 25, 150 * Math.min(1, got / goal), 6);
+      // tiempo
+      ctx.textAlign = "center";
+      ctx.fillStyle = timeLeft < 8 && Math.floor(tAll * 4) % 2 ? "#ff4d5e" : "#e8f6ff";
+      ctx.font = "900 20px Segoe UI, system-ui, sans-serif";
+      ctx.fillText(Math.max(0, Math.ceil(timeLeft)) + "s", W / 2 + 10, 19);
+      // racha
+      ctx.textAlign = "right";
+      ctx.font = "900 18px Segoe UI, system-ui, sans-serif";
+      ctx.fillStyle = mult >= 5 ? "#ffd23b" : mult > 1 ? "#ff2bd6" : "#7fa6c8";
+      ctx.fillText("RACHA x" + mult, W - 12, 17);
+      // largo de la línea
+      const used = trail && trail.length > 1 ? trailLen() / maxLen() : 0;
+      ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.fillRect(W - 160, 30, 148, 5);
+      ctx.fillStyle = used > 0.85 ? "#ffd23b" : "#27e8ff"; ctx.fillRect(W - 160, 30, 148 * used, 5);
+      ctx.font = "10px Segoe UI, system-ui, sans-serif"; ctx.fillStyle = "#7fa6c8";
+      ctx.fillText("LÍNEA", W - 166, 33);
+      // premios activos
+      let px = 12;
+      ctx.textAlign = "left"; ctx.font = "bold 11px Segoe UI, system-ui, sans-serif";
+      for (const k of ["slow", "long", "x2"]) {
+        if (pw[k] > 0) {
+          ctx.fillStyle = "#39ff9e"; ctx.fillText(POWERS[k].ic + " " + Math.ceil(pw[k]), px, 46); px += 46;
+        }
+      }
+    }
+
+    // textos flotantes
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (const t of texts) {
+      ctx.globalAlpha = clamp(t.t * 2, 0, 1);
+      ctx.fillStyle = t.col || "#fff";
+      ctx.shadowColor = t.col || "#fff"; ctx.shadowBlur = 10;
+      ctx.font = (t.big ? "900 30px" : "900 18px") + " Segoe UI, system-ui, sans-serif";
+      ctx.fillText(t.s, t.x, t.y);
+      if (t.sub) {
+        ctx.font = (t.big ? "bold 15px" : "bold 12px") + " Segoe UI, system-ui, sans-serif";
+        ctx.fillStyle = "#e8f6ff";
+        ctx.fillText(t.sub, t.x, t.y + (t.big ? 30 : 18));
+      }
+      ctx.shadowBlur = 0;
+    }
+    ctx.globalAlpha = 1;
+
+    if (paused && state === "play") {
+      ctx.fillStyle = "rgba(5,7,15,.7)"; ctx.fillRect(0, TOP, W, H - TOP);
+      ctx.fillStyle = "#27e8ff"; ctx.font = "900 34px Segoe UI, system-ui, sans-serif";
+      ctx.fillText("PAUSA", W / 2, H / 2);
+      ctx.font = "13px Segoe UI, system-ui, sans-serif"; ctx.fillStyle = "#7fa6c8";
+      ctx.fillText("Tocá o apretá P para seguir", W / 2, H / 2 + 30);
+    }
+  }
+
+  // ---------- loop ----------
+  let lastT = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now; tAll += dt;
+    if (!paused) update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- entrada ----------
+  function toLocal(e) {
+    const r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
+  }
+  cv.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    ensureAudio();
+    if (paused) { paused = false; return; }
+    try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+    pen.kb = false;
+    const p = toLocal(e);
+    beginDraw(p.x, clamp(p.y, TOP + 2, H - 2));
+  });
+  cv.addEventListener("pointermove", e => {
+    if (!drawing || pen.kb) return;
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of (evs.length ? evs : [e])) {
+      const p = toLocal(ev);
+      addPoint(p.x, p.y);
+      if (!drawing) break;
+    }
+  });
+  const up = () => { if (!pen.kb) endDraw(); };
+  cv.addEventListener("pointerup", up);
+  cv.addEventListener("pointercancel", up);
+
+  window.addEventListener("keydown", e => {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(k)) e.preventDefault();
+    if (k === "p" && state === "play") { paused = !paused; if (paused) endDraw(); return; }
+    if ((k === "Enter" || k === " ") && (state === "menu" || state === "over") && !e.repeat) {
+      if (state === "menu" || !ovEnd.classList.contains("hidden")) { startGame(); return; }
+    }
+    if (k === " " && !keys[" "] && state === "play" && !paused) {
+      pen.kb = true;
+      keys[" "] = true;
+      beginDraw(pen.x, pen.y);
+      return;
+    }
+    keys[k] = true;
+  });
+  window.addEventListener("keyup", e => {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    keys[k] = false;
+    if (k === " " && pen.kb) endDraw();
+  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && state === "play") { paused = true; endDraw(); } });
+
+  $("btnStart").addEventListener("click", startGame);
+  $("btnAgain").addEventListener("click", startGame);
+
+  // fondo de portada con algunas luces dando vueltas
+  orbs = []; parts = []; texts = []; flashes = []; trail = []; pw = { slow: 0, long: 0, x2: 0 }; level = 1;
+  for (let i = 0; i < 9; i++) spawn(i % 4 === 3 ? "pink" : "normal", true);
+  spawn("spark", true);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

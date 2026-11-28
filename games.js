@@ -963,6 +963,13 @@
       desc: "El clásico de cartas españolas contra la CPU: tocá una carta de tu mano y las de la mesa hasta sumar 15 justo para levantarlas (sota 8, caballo 9, rey 10). Si dejás la mesa vacía es ESCOBA y sumás un punto al toque. Al final de cada mano se cuentan más cartas, más oros, el 7 de oro y más sietes. Cuidado con lo que tirás: si la mesa queda sumando entre 5 y 14, la CPU te barre. Tres dificultades, partidas a 15, 21 o 30, 3 pistas por partida y racha de victorias guardada.",
       controles: "Tocá una carta de tu mano, después las de la mesa, y LEVANTAR (o TIRAR A LA MESA). Teclado: 1-3 tu mano, A-Z cartas de la mesa, Enter levantar, T tirar, H pista, Esc limpiar",
       fecha: "2026-11-27", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
+    },
+    {
+      id: "lazo-neon", titulo: "Lazo Neón", archivo: "lazo-neon.html",
+      emoji: "➰", categoria: "reflejos", tags: ["lazo", "dibujar", "encerrar", "luces", "trazo", "combo", "táctil", "un jugador"],
+      desc: "Dibujá un lazo de luz con el dedo y cruzá tu propia línea para cerrarlo: todo lo que quede adentro es tuyo. Varias luces en un mismo lazo multiplican los puntos y suben la racha hasta x5 (5 o más es PERFECTO). Las chispas rojas cortan tu línea si la tocan y te sacan una vida si las encerrás; las moradas tienen cáscara y hay que enlazarlas dos veces, las doradas dan tiempo. La línea tiene largo limitado, cada nivel tiene una meta contra reloj y desde el nivel 5 las chispas te persiguen. Premios: cámara lenta, lazo largo, puntos x2 y vida. Récord guardado.",
+      controles: "Arrastrá para dibujar y cruzá tu propia línea (o volvé cerca del inicio) para cerrar el lazo. Teclado: flechas / WASD mueven el lápiz, mantené espacio para dibujar, P pausa",
+      fecha: "2026-11-28", origen: "propio", autor: "Neon Arcade", licencia: "MIT"
     }
   ];
 

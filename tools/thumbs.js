@@ -66,6 +66,8 @@ const OVERRIDES = {
   "barrilete-neon": { steps: ["#btnStart"], wait: 2400 },
   // Un toque abajo del canvas (prende un instante el quemador) para que Playwright scrollee hasta el globo en la terraza de salida con la ciudad y los vientos.
   // Arrancamos la partida y tocamos el mazo (no hace nada) para que Playwright scrollee a la mesa con las cartas españolas.
+  // Un toque arriba del canvas (no cierra ningún lazo) para que Playwright scrollee al tope y la miniatura muestre el panel con meta, tiempo y racha.
+  "lazo-neon": { steps: ["#btnStart", { canvas: [0.5, 0.02] }], wait: 2600 },
   "escoba-neon": { steps: ["#startBtn", "#deck"], wait: 1400 },
   "globo-neon": { steps: ["#btnStart", { canvas: [0.3, 0.78] }], wait: 2200 },
   "esqui-neon": { steps: ["#btnStart", { canvas: [0.6, 0.05] }], wait: 2600 },
